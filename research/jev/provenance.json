@@ -1,0 +1,28 @@
+{
+  "recorded": "2026-09-18",
+  "status": "research only; no training or benchmarks run",
+  "source_notes": [
+    {
+      "source": "/Users/han/notes/Wiki/RE Jev working brief.md",
+      "destination": "README.md"
+    },
+    {
+      "source": "/Users/han/notes/Wiki/Schema-conditioned prediction architectures.md",
+      "destination": "architecture.md"
+    },
+    {
+      "source": "/Users/han/notes/Wiki/Calibrated structured predictions.md",
+      "destination": "calibration.md"
+    },
+    {
+      "source": "/Users/han/notes/Wiki/RE Jev training data plan.md",
+      "destination": "training-data.md"
+    },
+    {
+      "source": "/Users/han/notes/Wiki/Autoregressive, looped, and diffusion language models.md",
+      "destination": "model-families.md"
+    }
+  ],
+  "reference_count": 49,
+  "scope": "Sources cited or considered in the RE Jev conversation; preserves excluded and inaccessible leads."
+}

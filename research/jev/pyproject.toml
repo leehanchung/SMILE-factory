@@ -1,0 +1,49 @@
+[project]
+name = "jev-research"
+version = "0.1.0"
+description = "Isolated schema-conditioned modeling and calibration research"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "torch>=2.6,<3",
+    "gliner2[train]==2.0.0",
+    "transformers>=4.48,<5",
+    "datasets>=3,<5",
+    "accelerate>=1,<2",
+    "peft>=0.14,<1",
+    "safetensors>=0.4,<1",
+    "sentencepiece>=0.2,<1",
+    "protobuf>=5,<7",
+    "numpy>=1.26,<3",
+    "scipy>=1.13,<2",
+    "scikit-learn>=1.6,<2",
+    "pandas>=2.2,<3",
+    "pyarrow>=18",
+    "matplotlib>=3.9,<4",
+    "seaborn>=0.13,<1",
+    "pyyaml>=6,<7",
+    "tqdm>=4.66,<5",
+    "python-dotenv>=1,<2",
+    "requests>=2.32,<3",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<9", "ruff>=0.15,<1"]
+notebook = ["jupyterlab>=4,<5", "ipykernel>=6,<8", "nbclient>=0.10,<1"]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jev_research"]
+
+[tool.uv]
+cache-dir = ".cache/uv"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
