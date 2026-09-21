@@ -1,0 +1,147 @@
+experiment:
+  id: exp_01ky0ztpc9eqn9g67e30pjt5k9
+  seed: 17
+
+sources:
+  model:
+    repo_id: Qwen/Qwen3-8B
+    revision: b968826d9c46dd6066d109eabc6255188de91218
+  trajectories:
+    repo_id: benchflow/skillsbench-leaderboard
+    revision: f104580363a9642563593c475620196ecd36687d
+  skillsbench_tasks:
+    repo: https://github.com/benchflow-ai/skillsbench.git
+    revision: 5720102e3d6b0d3471b9715995ff96144d9eefb7
+  toolathlon:
+    repo: https://github.com/hkust-nlp/Toolathlon.git
+    revision: 3b647e60713703d653584c23ff185e3b6cd67722
+  bfcl:
+    repo: https://github.com/ShishirPatil/gorilla.git
+    revision: 6ea57973c7a6097fd7c5915698c54c17c5b1b6c8
+
+corpus:
+  conditions:
+    - no_skill_success
+    - with_skill_success
+  splits:
+    train: 0.70
+    validation: 0.15
+    audit: 0.15
+  group_key: task_id
+  stratify_by:
+    - domain
+    - difficulty
+  match_by:
+    - domain
+    - difficulty
+    - source_model
+    - harness
+    - tool_turn_count_bin
+    - total_context_token_bin
+    - assistant_loss_token_bin
+  max_loss_tokens_per_condition: 5000000
+  max_sequence_tokens: 16384
+  segment_at_tool_turn_boundaries: true
+  cross_example_packing: false
+  assistant_only_loss: true
+  forbidden_content:
+    - skill_documents
+    - benchmark_scaffolding
+    - verifier_logs
+    - oracle_solutions
+    - hidden_reasoning
+    - encrypted_reasoning
+    - private_chain_of_thought
+    - provider_system_boilerplate
+    - provider_developer_boilerplate
+
+training:
+  method: lora
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  rank: 16
+  alpha: 32
+  dropout: 0.05
+  precision: bf16
+  flash_attention: false
+  attention_implementation: sdpa
+  gradient_checkpointing: true
+  microbatch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 0.0001
+  scheduler: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  epochs: 1.0
+  seed: 17
+  wandb:
+    project: default-exp-exp_01ky0ztpc9eqn9g67e30pjt5k9
+    group: skillsbench-qwen3-8b-lora-minimal
+    key_metrics:
+      - train/loss
+      - eval/loss
+      - train/grad_norm
+      - train/tokens_per_second
+
+evaluation:
+  toolathlon:
+    tasks_per_category: 3
+    expected_task_count: 21
+    generation:
+      enable_thinking: true
+      temperature: 0.6
+      top_p: 0.95
+      top_k: 20
+  bfcl:
+    version: v4
+    include_live_categories: false
+    generation:
+      enable_thinking: false
+      temperature: 0.7
+      top_p: 0.8
+      top_k: 20
+  ifeval:
+    dataset: google/IFEval
+    revision: 966cd89545d6b6acfd7638bc708b98261ca58e84
+    generation:
+      enable_thinking: false
+      temperature: 0.7
+      top_p: 0.8
+      top_k: 20
+  mmlu:
+    dataset: cais/mmlu
+    revision: c30699e8356da336a370243923dbaf21066bb9fe
+    sample_size: 500
+    seed: 17
+    mode: completion_logprob
+    chain_of_thought: false
+  tool_restraint:
+    prompt_count: 120
+    categories:
+      - arithmetic
+      - extraction
+      - table_reading
+      - formatting
+    paired_tool_conditions:
+      - no_tools
+      - irrelevant_tools
+    generation:
+      enable_thinking: false
+      temperature: 0.7
+      top_p: 0.8
+      top_k: 20
+
+analysis:
+  bootstrap_replicates: 10000
+  bootstrap_seed: 17
+  confidence_level: 0.95
+  overlap:
+    token_ngram_size: 5
+    sensitivity_quantiles: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]

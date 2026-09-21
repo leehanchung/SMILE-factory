@@ -1,0 +1,26 @@
+schema_version: 1
+experiment_eid: exp_01ky0ztpc9eqn9g67e30pjt5k9
+title: SkillsBench trajectory transfer and direct-response regressions
+date: 2026-07-21
+status: completed
+outcome: inconclusive
+primary_question: Does with-skill trajectory SFT improve unfamiliar tool use versus matched no-skill trajectory SFT?
+primary_metric: BFCL v4 paired accuracy difference, with-skill minus no-skill
+primary_result:
+  n_pairs: 2190
+  delta: -0.008675799086757991
+  paired_ci_95: [-0.019178082191780823, 0.0018264840182648401]
+limitations:
+  seeds: 1
+  supervised_tokens_per_arm: 604737
+  planned_token_cap_per_arm: 5000000
+  toolathlon: unavailable before preprocessing
+files:
+  config: config.resolved.yaml
+  provenance: provenance.json
+  reproduction: reproduction.json
+  checksums: checksums.sha256
+  paired_rows: data/normalized_paired_rows.jsonl
+  metrics: metrics/final_metrics.json
+  artifacts: artifacts/manifest.json
+  report: report/index.html

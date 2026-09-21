@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "source_experiment_eid": "exp_01ky0ztpc9eqn9g67e30pjt5k9",
+  "source_worktree_commit": "fb87419060ae4b29e03f59ddc9b458d021b20268",
+  "training_code_commit": "5432d10",
+  "run_date": "2026-07-21",
+  "seed": 17,
+  "outcome": "inconclusive",
+  "integrity": {
+    "algorithm": "sha256",
+    "manifest": "checksums.sha256",
+    "scope": "every committed run file except the checksum manifest itself"
+  },
+  "models": {
+    "base": {
+      "id": "Qwen/Qwen3-8B",
+      "revision": "b968826d9c46dd6066d109eabc6255188de91218"
+    },
+    "no_skill": {
+      "adapter_ref": "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/training/no_skill_success/seed17-v1/final_adapter.tar.gz",
+      "peft_version": "0.19.1"
+    },
+    "with_skill": {
+      "adapter_ref": "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/training/with_skill_success/seed17-v1/final_adapter.tar.gz",
+      "peft_version": "0.19.1"
+    }
+  },
+  "source_revisions": {
+    "trajectories": "f104580363a9642563593c475620196ecd36687d",
+    "skillsbench": "5720102e3d6b0d3471b9715995ff96144d9eefb7",
+    "bfcl": "6ea57973c7a6097fd7c5915698c54c17c5b1b6c8",
+    "toolathlon": "3b647e60713703d653584c23ff185e3b6cd67722",
+    "ifeval": "966cd89545d6b6acfd7638bc708b98261ca58e84",
+    "mmlu": "c30699e8356da336a370243923dbaf21066bb9fe",
+    "lm_eval_upstream_release": "v0.4.9.2"
+  },
+  "training_jobs": {
+    "no_skill": "136023025108",
+    "with_skill": "796254214269"
+  },
+  "wandb_runs": {
+    "no_skill": "https://wandb.ai/han/default-exp-exp_01ky0ztpc9eqn9g67e30pjt5k9/runs/iq0d7r5f",
+    "with_skill": "https://wandb.ai/han/default-exp-exp_01ky0ztpc9eqn9g67e30pjt5k9/runs/k4juvf0j"
+  },
+  "deviations": [
+    "Training used 604737 supervised tokens per arm (12.09474% of the planned 5000000-token cap) because only 238 matched train pairs survived the audited corpus construction.",
+    "Toolathlon was unavailable after seven busy-service admission attempts; no task entered preprocessing, execution, or verification.",
+    "The v7 condition-blind redaction policy replaced an earlier whole-trial exclusion policy and was applied identically to both arms before final training."
+  ]
+}

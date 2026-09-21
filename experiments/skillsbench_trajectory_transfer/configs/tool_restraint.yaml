@@ -1,0 +1,13 @@
+benchmark: tool_restraint
+seed: 17
+prompt_count: 120
+categories: [arithmetic, extraction, table_reading, formatting]
+paired_tool_conditions: [no_tools, irrelevant_tools]
+generation:
+  enable_thinking: false
+  temperature: 0.7
+  top_p: 0.8
+  top_k: 20
+exact_match: strip_edges_only
+unnecessary_call_metric: any_tool_call
+manifest_sha256: 50dacb36289608ac19c47d664ef6b762da89513ba5abbf759b324464840c5fc3

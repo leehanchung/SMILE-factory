@@ -1,0 +1,45 @@
+{
+  "benchmark": "BFCL_v4_non_live_expanded",
+  "total_items": 2190,
+  "checkpoints": {
+    "base": {"correct": 1386, "accuracy": 0.6328767123, "wilson_95": [0.6124724640, 0.6528156213]},
+    "no_skill": {"correct": 1360, "accuracy": 0.6210045662, "wilson_95": [0.6004909332, 0.6410944365]},
+    "with_skill": {"correct": 1341, "accuracy": 0.6123287671, "wilson_95": [0.5917433649, 0.6325207897]}
+  },
+  "deltas": {
+    "with_skill_minus_no_skill": -0.0086757991,
+    "no_skill_minus_base": -0.0118721461,
+    "with_skill_minus_base": -0.0205479452
+  },
+  "paired_bootstrap_95": {
+    "with_skill_minus_no_skill": [-0.0191780822, 0.0018264840],
+    "no_skill_minus_base": [-0.0232876712, -0.0004566210],
+    "with_skill_minus_base": [-0.0315068493, -0.0095890411]
+  },
+  "single_turn": {
+    "n": 1390,
+    "base": {"correct": 1242, "accuracy": 0.8935251799},
+    "no_skill": {"correct": 1223, "accuracy": 0.8798561151},
+    "with_skill": {"correct": 1213, "accuracy": 0.8726618705}
+  },
+  "multi_turn": {
+    "n": 800,
+    "base": {"correct": 144, "accuracy": 0.18},
+    "no_skill": {"correct": 137, "accuracy": 0.17125},
+    "with_skill": {"correct": 128, "accuracy": 0.16}
+  },
+  "categories": [
+    {"category":"irrelevance","n":240,"base":0.8625,"no_skill":0.875,"with_skill":0.8625},
+    {"category":"multiple","n":200,"base":0.965,"no_skill":0.925,"with_skill":0.91},
+    {"category":"parallel_multiple","n":200,"base":0.9,"no_skill":0.89,"with_skill":0.86},
+    {"category":"parallel","n":200,"base":0.92,"no_skill":0.88,"with_skill":0.89},
+    {"category":"simple_java","n":100,"base":0.65,"no_skill":0.66,"with_skill":0.63},
+    {"category":"simple_javascript","n":50,"base":0.62,"no_skill":0.62,"with_skill":0.64},
+    {"category":"simple_python","n":400,"base":0.955,"no_skill":0.9425,"with_skill":0.9475},
+    {"category":"multi_turn_base","n":200,"base":0.23,"no_skill":0.215,"with_skill":0.21},
+    {"category":"multi_turn_long_context","n":200,"base":0.135,"no_skill":0.135,"with_skill":0.125},
+    {"category":"multi_turn_miss_func","n":200,"base":0.19,"no_skill":0.19,"with_skill":0.175},
+    {"category":"multi_turn_miss_param","n":200,"base":0.165,"no_skill":0.145,"with_skill":0.13}
+  ],
+  "interpretation": "No positive transfer is detected on short-horizon BFCL versus no-skill: the paired 95% CI includes zero. Both trained arms are paired-significantly below base. Long-horizon transfer remains unmeasured."
+}
