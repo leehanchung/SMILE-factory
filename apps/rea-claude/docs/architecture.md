@@ -264,8 +264,12 @@ navigations such as `silico://signup-ready`, plus argv / `open-url` /
 `second-instance` when the OS delivers them). Rea Claude calls
 `app.setAsDefaultProtocolClient("silico")` **only** when
 `REA_CLAUDE_REGISTER_PROTOCOL=1` (and packaged), so it does not hijack the real
-Silico. The packaged `Info.plist` must not declare `CFBundleURLSchemes:
-["silico"]` unless that env-gated mode is the intended deployment.
+Silico. macOS only honors that call for schemes the bundle declares in
+`Info.plist`, which is fixed at build time. The default build
+(`electron-builder.yml`, `make package`) does not declare `silico`, so it can
+never take the scheme. The opt-in build (`electron-builder.protocol.yml`,
+`make package-protocol`) declares `CFBundleURLSchemes: ["silico"]`. Use it, with
+the env var, only when Rea Claude should own `silico://` return links.
 
 **D4 Updater disabled by default.** The updater is wired only when
 `REA_CLAUDE_UPDATE_URL` is set (generic provider; packaged builds). Otherwise
@@ -308,6 +312,14 @@ still applies when enabled.
    destination (`ssh … -- <dest> <cmd>`, tunnel `… -L … -- <dest>`,
    `ssh -G -- <host>`, `ssh-keyscan … -- <host>`). The manual-tunnel hint text
    is unchanged.
+7. **Sign-in survives an `identity.json` write failure.** If the write fails
+   during browser sign-in or signup-proof adoption (read-only userData, full
+   disk), the session stays in memory, a warning is logged, and sign-in
+   completes normally (`auth:changed` broadcast, signed-in hooks). This is the
+   same memory-only mode used when keychain encryption is unavailable. Silico
+   rejects the sign-in instead, but only after installing the session, which
+   leaves the UI on the error screen while the app is signed in
+   (`AuthCore.persistOrKeepInMemory`).
 
 **D6 Fonts and assets.** Inter (for the commercial Suisse Intl), IBM Plex Mono
 and Newsreader via the `@fontsource` packages. No assets are copied from the

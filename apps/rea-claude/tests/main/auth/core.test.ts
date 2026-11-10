@@ -709,6 +709,18 @@ describe("signup adoption + desktop-continue", () => {
     await expect(setup().core.adoptSignupProof(proof(extra), false)).rejects.toThrow("Gateway returned an invalid signup identity proof.");
   });
 
+  it("completes sign-in in memory when identity.json cannot be written", async () => {
+    const a = setup();
+    mkdirSync(a.idFile); // rename onto a directory fails
+    const signed: unknown[] = [];
+    a.core.onSignedIn((i) => signed.push(i));
+    const state = await a.core.adoptSignupProof(proof(), false);
+    expect(state.status).toBe("signed-in");
+    expect(signed).toHaveLength(1);
+    expect((await a.core.status()).status).toBe("signed-in");
+    expect(statSync(a.idFile).isDirectory()).toBe(true);
+  });
+
   it("cancels an in-flight browser sign-in", async () => {
     const a = setup({ route: () => json(200, {}) });
     const pending = a.core.signIn(false, false);

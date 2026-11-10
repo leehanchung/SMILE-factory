@@ -1,4 +1,4 @@
-.PHONY: help install dev build typecheck test check package clean
+.PHONY: help install dev build typecheck test check package package-protocol clean
 
 help:
 	@echo "rea-claude targets:"
@@ -9,6 +9,7 @@ help:
 	@echo "  make test       vitest unit tests"
 	@echo "  make check      typecheck + test + build"
 	@echo "  make package    unsigned macOS .app into dist/ (electron-builder --dir)"
+	@echo "  make package-protocol  same, but Info.plist declares silico:// (opt-in, see D3)"
 
 install:
 	@if [ -f package-lock.json ]; then npm ci; else npm install; fi
@@ -29,6 +30,9 @@ check: typecheck test build
 
 package:
 	npm run package:mac
+
+package-protocol:
+	npm run package:mac:protocol
 
 clean:
 	rm -rf out dist

@@ -12,6 +12,7 @@ reverse engineering. Node/npm project (not uv), independent of the rest of the m
 - `make typecheck`: `tsc` for the node (main/preload/shared) and web (renderer) projects
 - `make check`: typecheck, then test, then build. Run this before declaring work done.
 - `make package`: unsigned macOS `.app` in `dist/` (electron-builder `--dir`)
+- `make package-protocol`: same, but `Info.plist` declares `silico://` (needed for `REA_CLAUDE_REGISTER_PROTOCOL=1` on macOS)
 
 ## Layout
 

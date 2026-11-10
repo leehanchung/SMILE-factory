@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "package:mac": "electron-vite build && electron-builder --mac --dir"
+    "package:mac": "electron-vite build && electron-builder --mac --dir",
+    "package:mac:protocol": "electron-vite build && electron-builder --mac --dir --config electron-builder.protocol.yml"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.92.0",

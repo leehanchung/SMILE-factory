@@ -42,7 +42,7 @@ Environment switches:
 | Variable | Effect |
 |---|---|
 | `REA_CLAUDE_UPDATE_URL` | Enables auto-update from this generic electron-updater feed. Off by default. |
-| `REA_CLAUDE_REGISTER_PROTOCOL=1` | Registers the app as the OS handler for `silico://` (otherwise deep links are handled only inside the app, so the real Silico keeps them). |
+| `REA_CLAUDE_REGISTER_PROTOCOL=1` | Registers the app as the OS handler for `silico://` (otherwise deep links are handled only inside the app, so the real Silico keeps them). On macOS this works only in a build from `make package-protocol`, which declares the scheme in `Info.plist`. |
 | `REA_CLAUDE_E2E_USER_DATA` | Test mode: alternate userData directory; the session is not persisted. |
 
 Sign-in uses the production gateway (`https://my.silico.run`) unless the

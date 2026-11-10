@@ -199,6 +199,20 @@ export class AuthCore {
     });
   }
 
+  /**
+   * Persist a freshly installed sign-in session. A write failure (read-only
+   * userData, full disk) keeps the session in memory, like the no-keyring
+   * path, so the sign-in still completes and its notifications fire instead
+   * of leaving an installed session behind a rejected sign-in.
+   */
+  private async persistOrKeepInMemory(session: Session): Promise<void> {
+    try {
+      await this.persist(session);
+    } catch (err) {
+      this.log.warn("could not write identity.json; session kept in memory, not persisted", err);
+    }
+  }
+
   private readSessionFile(text: string): Session | null {
     return parseIdentity(text, this.decryptor(), {
       currentBackend: this.backend(),
@@ -651,7 +665,7 @@ export class AuthCore {
       ...(a.refreshToken ? { refreshToken: a.refreshToken } : {}),
       ...(claims.developer ? { developer: true as const } : {}),
     });
-    await this.persist(next);
+    await this.persistOrKeepInMemory(next);
     const state = await this.status();
     if (epoch !== this.signInEpoch || this.session !== next) throw new Error(ERR_SIGN_IN_RESTARTED);
     return state;
@@ -675,7 +689,7 @@ export class AuthCore {
       ...(claims.developer ? { developer: true as const } : {}),
     });
     this.sessionDeathPending = false;
-    await this.persist(next);
+    await this.persistOrKeepInMemory(next);
     const state = await this.status();
     if (epoch !== this.signInEpoch || this.session !== next) throw new Error(ERR_SIGN_IN_RESTARTED);
     this.fireSignedIn(state);
