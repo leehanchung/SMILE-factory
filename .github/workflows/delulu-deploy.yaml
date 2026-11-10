@@ -54,8 +54,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # ``prd`` is not part of the Conventional Commits spec but is
-          # used in this repo for changes under ``prd/`` — adding or
-          # revising a Product Requirements Document. ``docs:`` is
+          # used in this repo for changes under a ``prd/`` directory
+          # (``docs/prd/`` or ``apps/<app>/prd/``) — adding or revising
+          # a Product Requirements Document. ``docs:`` is
           # technically accurate for a plan-doc commit but ``prd:`` is
           # more specific and already in use on main (e.g. PR #44).
           types: |
