@@ -1,0 +1,25 @@
+# electron-builder config for Rea Claude (owner: I6).
+# Separate identity (architecture D1): never the real Silico's appId/name.
+# No `publish` block: no app-update.yml is baked in, so the updater stays off
+# unless REA_CLAUDE_UPDATE_URL is set at runtime (D4).
+# No `protocols` block: silico:// is not declared in Info.plist (D3), so this
+# build can never take the scheme from the real Silico. To let
+# REA_CLAUDE_REGISTER_PROTOCOL=1 work on macOS, build with
+# electron-builder.protocol.yml instead (make package-protocol).
+appId: dev.smilefactory.rea-claude
+productName: Rea Claude
+directories:
+  output: dist
+  buildResources: resources
+files:
+  - out/**
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
+mac:
+  target:
+    - target: dir
+  icon: resources/icon.png
+  category: public.app-category.developer-tools
+  # Unsigned local builds.
+  identity: null

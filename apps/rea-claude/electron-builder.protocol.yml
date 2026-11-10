@@ -1,0 +1,11 @@
+# Opt-in variant of electron-builder.yml that declares silico:// in the macOS
+# Info.plist (CFBundleURLTypes). macOS only lets an app become a scheme's
+# handler if its bundle declares that scheme at build time, so
+# REA_CLAUDE_REGISTER_PROTOCOL=1 has no effect on a build from the default
+# config. Use this config (make package-protocol) only when Rea Claude should
+# own silico:// return links instead of the real Silico (architecture D3).
+extends: electron-builder.yml
+protocols:
+  - name: Silico
+    schemes:
+      - silico

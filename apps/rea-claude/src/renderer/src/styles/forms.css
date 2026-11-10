@@ -1,0 +1,331 @@
+/*
+ * Form controls — design-system.md §4.5 (ConfigureForm: .form, .nest, host
+ * picker, icon picker, radio, test row, actions) and §4.6 (ToggleRow toggle).
+ * Inputs show focus via a --solar border only; outline is suppressed here
+ * and that border stands in for the X5 focus ring.
+ */
+
+/* ── Field layout ─────────────────────────────────────────── */
+.form {
+  display: grid;
+  gap: 14px;
+}
+.field {
+  display: grid;
+  gap: 5px;
+}
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--alabaster);
+}
+.hint {
+  margin-left: 6px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--sandstone-400);
+}
+.hint--warn {
+  align-self: center;
+  color: var(--warning);
+}
+
+.form input,
+.form select {
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--alabaster);
+  background: var(--paper);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-panel);
+}
+.form input:focus,
+.form select:focus {
+  outline: none;
+  border-color: var(--solar);
+}
+
+/* ── "New host" nested sub-fields ─────────────────────────── */
+.nest {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.fld {
+  display: grid;
+  gap: 5px;
+}
+.lbl {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.lbl__opt {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--sandstone-400);
+}
+.nest input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 11px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--alabaster);
+  background: var(--paper);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-panel);
+}
+.nest input:focus {
+  outline: none;
+  border-color: var(--solar);
+}
+
+.row2 {
+  display: flex;
+  gap: 9px;
+}
+.row2 .fld {
+  flex: 1;
+  min-width: 0;
+}
+.fld--port {
+  flex: 0 0 84px;
+}
+.row2 .fld--port {
+  flex: 0 0 84px;
+}
+.keyrow {
+  display: flex;
+  gap: 7px;
+}
+.keyrow input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Name + icon picker ───────────────────────────────────── */
+.nameicon {
+  display: flex;
+  gap: 10px;
+}
+.nameicon__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.iconpick {
+  position: relative;
+  display: inline-flex;
+}
+.iconpick__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  line-height: 1;
+  color: var(--alabaster);
+  background: var(--paper);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+.iconpick__btn:hover {
+  background: var(--ember-50);
+  border-color: var(--solar);
+}
+.iconpick__car {
+  color: var(--sandstone-400);
+}
+
+/* Flat popout (no shadow, stronger border), 7 × 30px cells. */
+.icon-grid {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: var(--z-menu);
+  display: grid;
+  grid-template-columns: repeat(7, 30px);
+  gap: 4px;
+  padding: 8px;
+  background: var(--paper);
+  border: 1px solid var(--juniper);
+  border-radius: var(--radius-panel);
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--alabaster);
+  background: var(--paper);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease;
+}
+.icon-btn:hover {
+  color: var(--ember);
+  background: var(--ember-50);
+  border-color: var(--solar);
+}
+.icon-btn--active {
+  color: var(--ember);
+  background: var(--ember-50);
+  border-color: var(--ember);
+}
+
+/* ── Host picker ──────────────────────────────────────────── */
+.hostpick__search {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--alabaster);
+  background: var(--paper);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-control);
+  outline: none;
+}
+.hostpick__search::placeholder {
+  color: var(--sandstone-400);
+}
+.hostpick__search:focus {
+  border-color: var(--solar);
+}
+
+.hostpick {
+  max-height: 340px;
+  margin: 10px 0 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-panel);
+}
+.hostpick > li + li {
+  border-top: 1px solid var(--juniper-100);
+}
+.hostpick__opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.hostpick__opt:hover {
+  background: var(--card-hover);
+}
+.hostpick__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.hostpick__alias {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.hostpick__host {
+  font-size: 12px;
+  color: var(--sandstone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hostpick__new {
+  margin-top: 10px;
+  background: var(--card-50);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-panel);
+}
+.hostpick__none {
+  padding: 12px;
+  font-size: 12.5px;
+  color: var(--sandstone-400);
+}
+
+/* ── Radio ────────────────────────────────────────────────── */
+.choice__radio {
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--ember);
+  cursor: pointer;
+}
+
+/* ── Test connection row ──────────────────────────────────── */
+.test-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.test-msg {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.test-msg--err {
+  color: var(--danger);
+}
+.test-msg--warn {
+  color: var(--warning);
+}
+
+/* ── Actions row: primary leads, left-aligned ─────────────── */
+.form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* ── §4.6 Toggle (38 × 22 track, 16px knob) ──────────────── */
+.toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 22px;
+  padding: 0;
+  background: var(--juniper-200);
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--paper);
+  border: 1px solid var(--juniper);
+  border-radius: 50%;
+  transition: left 0.12s ease;
+}
+.toggle--on {
+  background: var(--ember);
+}
+.toggle--on::after {
+  left: 18px;
+}
+.toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
