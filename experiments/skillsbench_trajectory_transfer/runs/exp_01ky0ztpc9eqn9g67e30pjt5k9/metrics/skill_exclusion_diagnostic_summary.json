@@ -1,0 +1,63 @@
+{
+  "examples_by_detail_kind": {
+    "assistant|content|path=True|known=False": [
+      "The helper module is at `/skills/pcap-analysis/`. Let me read it carefully to verify implementations match the task definitions.",
+      "recalc.py is at `/skills/xlsx/recalc.py`. Let me write an exploration script to a file to understand the workbook structure.",
+      "I will check if there is a `mesh_tool.py` or any existing tool in the `/skills/mesh-analysis` folder."
+    ],
+    "assistant|tool_calls[0].arguments|path=False|known=True": [
+      "        <!-- JWT Support -->\n        <dependency>\n            <groupId>io.jsonwebtoken</groupId>\n            <artifactId>jjwt-api</artifactId>\n            <version>0.12.3</version>\n        </dependency>\n        <dependency>\n            <gro",
+      "package com.example.userservice.config;\n\nimport org.springframework.beans.factory.annotation.Autowired;\nimport org.springframework.context.annotation.Bean;\nimport org.springframework.context.annotation.Configuration;\nimport org.springframew",
+      "        <!-- JWT Support -->\n        <dependency>\n            <groupId>io.jsonwebtoken</groupId>\n            <artifactId>jjwt-api</artifactId>\n            <version>0.12.3</version>\n        </dependency>\n        <dependency>\n            <gro"
+    ],
+    "tool|content|path=False|known=True": [
+      "python3 -c \"\n\u001b[?2004l\u001b[?2004himport urllib.request\n\u001b[?2004l\u001b[?2004hurl = 'https://gitlab.com/openpowerlifting/opl-data/-/raw/main/crates/coefficients/src/dots.rs'\n\u001b[?2004l\u001b[?2004hreq = urllib.request.Request(url, headers={'User-Agent': 'Moz",
+      "\u001b[?2004lCONTRIBUTING.md  \u001b[0m\u001b[01;34mdocs\u001b[0m                owasp-dependency-check-suppressions.xml\nLABELS           \u001b[01;34mexamples\u001b[0m            pom.xml\nLICENSE          \u001b[01;34mextendedset\u001b[0m         \u001b[01;34mprocessing\u001b[0m\nNOTICE    ",
+      "\u001b[?2004l<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!--\n * (C) Copyright Uwe Schindler (Generics Policeman) and others.\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with"
+    ],
+    "user|content|path=True|known=False": [
+      "Fill the California Small Claims Court form at `/root/sc100-blank.pdf` based on the case description below, and save the filled one to `/root/sc100-filled.pdf`. Only fill in the necessary fields and leave the court-filled, optional fields o",
+      "You have some earthquake traces stored at `/root/data/wave.mseed`, and station information stored at `/root/data/stations.csv`.\n\nYour task is seismic phase association i.e. grouping waveforms recorded at different measuring stations to iden",
+      "You are helping an HR department identify differences between its old employee records and the current database. The company previously saved employee data as a backup in a PDF file (`/root/employees_backup.pdf`). Since then, changes have b"
+    ]
+  },
+  "hit_details_by_role_field_kind": {
+    "assistant|content|True|False": 76,
+    "assistant|tool_calls[0].arguments|False|True": 90,
+    "tool|content|False|True": 8,
+    "user|content|True|False": 118
+  },
+  "records_by_reason": {
+    "history_compaction_suspected": 5,
+    "retained_skill_text": 172
+  },
+  "records_by_reason_condition": {
+    "history_compaction_suspected|with_skill_success": 5,
+    "retained_skill_text|no_skill_success": 46,
+    "retained_skill_text|with_skill_success": 126
+  },
+  "records_by_reason_condition_model": {
+    "history_compaction_suspected|with_skill_success|gemini-3.5-flash": 2,
+    "history_compaction_suspected|with_skill_success|minimax-m3": 3,
+    "retained_skill_text|no_skill_success|gemini-3.5-flash": 23,
+    "retained_skill_text|no_skill_success|minimax-m3": 23,
+    "retained_skill_text|with_skill_success|gemini-3.5-flash": 56,
+    "retained_skill_text|with_skill_success|minimax-m3": 48,
+    "retained_skill_text|with_skill_success|opus-4.8": 22
+  },
+  "retained_skill_record_field_sets": {
+    "('assistant', 'content')": 23,
+    "('assistant', 'content')|('assistant', 'tool_calls[0].arguments')": 8,
+    "('assistant', 'content')|('assistant', 'tool_calls[0].arguments')|('user', 'content')": 1,
+    "('assistant', 'tool_calls[0].arguments')": 23,
+    "('assistant', 'tool_calls[0].arguments')|('user', 'content')": 15,
+    "('tool', 'content')|('user', 'content')": 4,
+    "('user', 'content')": 98
+  },
+  "retained_skill_record_hit_combinations": {
+    "False|True": 23,
+    "True|False": 121,
+    "True|True": 28
+  },
+  "total_records": 177
+}

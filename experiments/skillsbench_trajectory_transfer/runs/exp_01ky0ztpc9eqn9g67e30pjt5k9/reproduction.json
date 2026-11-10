@@ -1,0 +1,159 @@
+{
+  "full_record_comparison": {
+    "compared_leaf_metrics": 856,
+    "mismatches": [],
+    "status": "passed",
+    "tolerance": 1e-10
+  },
+  "metrics": [
+    {
+      "name": "BFCL base accuracy",
+      "recorded": 0.6328767123,
+      "reproduced": 0.6328767123287671,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL no_skill accuracy",
+      "recorded": 0.6210045662,
+      "reproduced": 0.6210045662100456,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL with_skill accuracy",
+      "recorded": 0.6123287671,
+      "reproduced": 0.6123287671232877,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL with_skill-no_skill delta",
+      "recorded": -0.0086757991,
+      "reproduced": -0.008675799086757991,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL with_skill-no_skill CI low",
+      "recorded": -0.0191780822,
+      "reproduced": -0.019178082191780823,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL with_skill-no_skill CI high",
+      "recorded": 0.001826484,
+      "reproduced": 0.0018264840182648401,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL no_skill-base delta",
+      "recorded": -0.0118721461,
+      "reproduced": -0.011872146118721462,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL no_skill-base CI low",
+      "recorded": -0.0232876712,
+      "reproduced": -0.023287671232876714,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL no_skill-base CI high",
+      "recorded": -0.000456621,
+      "reproduced": -0.00045662100456621003,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL with_skill-base delta",
+      "recorded": -0.0205479452,
+      "reproduced": -0.02054794520547945,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL with_skill-base CI low",
+      "recorded": -0.0315068493,
+      "reproduced": -0.031506849315068496,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "BFCL with_skill-base CI high",
+      "recorded": -0.0095890411,
+      "reproduced": -0.009589041095890411,
+      "tolerance": 1e-10,
+      "within": true
+    },
+    {
+      "name": "ifeval base correct",
+      "recorded": 440,
+      "reproduced": 440,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "ifeval no_skill correct",
+      "recorded": 438,
+      "reproduced": 438,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "ifeval with_skill correct",
+      "recorded": 438,
+      "reproduced": 438,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "mmlu base correct",
+      "recorded": 252,
+      "reproduced": 252,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "mmlu no_skill correct",
+      "recorded": 255,
+      "reproduced": 255,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "mmlu with_skill correct",
+      "recorded": 257,
+      "reproduced": 257,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "tool restraint base rows",
+      "recorded": 240,
+      "reproduced": 240,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "tool restraint no_skill rows",
+      "recorded": 240,
+      "reproduced": 240,
+      "tolerance": "exact",
+      "within": true
+    },
+    {
+      "name": "tool restraint with_skill rows",
+      "recorded": 240,
+      "reproduced": 240,
+      "tolerance": "exact",
+      "within": true
+    }
+  ],
+  "status": "passed",
+  "tolerance": 1e-10
+}

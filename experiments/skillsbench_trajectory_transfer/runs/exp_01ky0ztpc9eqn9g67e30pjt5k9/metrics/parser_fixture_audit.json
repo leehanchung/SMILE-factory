@@ -1,0 +1,150 @@
+{
+  "archive_revision": "f104580363a9642563593c475620196ecd36687d",
+  "tokenizer_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+  "fixtures": [
+    {
+      "condition": "with",
+      "source_model": "gemini-3.5-flash",
+      "task_id": "3d-scan-calc",
+      "trial_id": "7443f4d2",
+      "source_path": "submissions/skillsbench/v1.1/openhands-with-skills__gemini-3.5-flash/2026-06-04__19-34-24-maxeffort/3d-scan-calc__7443f4d2/trajectory/llm_trajectory.jsonl",
+      "source_bytes": 12086938,
+      "provider_adapter": "openai_chat_completions",
+      "message_count": 55,
+      "roles": {
+        "user": 1,
+        "assistant": 30,
+        "tool": 24
+      },
+      "assistant_tool_calls": 29,
+      "tool_schema_count": 7,
+      "segments": 2,
+      "context_tokens": 31771,
+      "loss_tokens": 4596,
+      "omitted_context_tokens": 0,
+      "contains_system_or_developer": false,
+      "contains_think_tag": false,
+      "contains_skill_document_reference": false
+    },
+    {
+      "condition": "with",
+      "source_model": "minimax-m3",
+      "task_id": "3d-scan-calc",
+      "trial_id": "c09e7e2c",
+      "source_path": "submissions/skillsbench/v1.1/openhands-with-skills__minimax-MiniMax-M3/2026-06-04__19-34-24-maxeffort/3d-scan-calc__c09e7e2c/trajectory/llm_trajectory.jsonl",
+      "source_bytes": 1207318,
+      "provider_adapter": "openai_chat_completions",
+      "message_count": 11,
+      "roles": {
+        "user": 1,
+        "assistant": 6,
+        "tool": 4
+      },
+      "assistant_tool_calls": 5,
+      "tool_schema_count": 7,
+      "segments": 1,
+      "context_tokens": 6798,
+      "loss_tokens": 589,
+      "omitted_context_tokens": 0,
+      "contains_system_or_developer": false,
+      "contains_think_tag": false,
+      "contains_skill_document_reference": false
+    },
+    {
+      "condition": "with",
+      "source_model": "opus-4.8",
+      "task_id": "citation-check",
+      "trial_id": "aaf3cf84",
+      "source_path": "submissions/skillsbench/v1.1/openhands-with-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__aaf3cf84/trajectory/llm_trajectory.jsonl",
+      "source_bytes": 2625455,
+      "provider_adapter": "bedrock_converse",
+      "message_count": 31,
+      "roles": {
+        "user": 1,
+        "assistant": 16,
+        "tool": 14
+      },
+      "assistant_tool_calls": 15,
+      "tool_schema_count": 7,
+      "segments": 2,
+      "context_tokens": 28088,
+      "loss_tokens": 5419,
+      "omitted_context_tokens": 0,
+      "contains_system_or_developer": false,
+      "contains_think_tag": false,
+      "contains_skill_document_reference": false
+    },
+    {
+      "condition": "without",
+      "source_model": "gemini-3.5-flash",
+      "task_id": "citation-check",
+      "trial_id": "b1de1228",
+      "source_path": "submissions/skillsbench/v1.1/openhands-no-skills__gemini-3.5-flash/2026-06-04__18-45-18-maxeffort/citation-check__b1de1228/trajectory/llm_trajectory.jsonl",
+      "source_bytes": 2035909,
+      "provider_adapter": "gemini_generate_content",
+      "message_count": 40,
+      "roles": {
+        "user": 1,
+        "assistant": 20,
+        "tool": 19
+      },
+      "assistant_tool_calls": 19,
+      "tool_schema_count": 7,
+      "segments": 3,
+      "context_tokens": 44406,
+      "loss_tokens": 6189,
+      "omitted_context_tokens": 0,
+      "contains_system_or_developer": false,
+      "contains_think_tag": false,
+      "contains_skill_document_reference": false
+    },
+    {
+      "condition": "without",
+      "source_model": "minimax-m3",
+      "task_id": "citation-check",
+      "trial_id": "38b0812a",
+      "source_path": "submissions/skillsbench/v1.1/openhands-no-skills__minimax-MiniMax-M3/2026-06-05__03-40-06-maxeffort/citation-check__38b0812a/trajectory/llm_trajectory.jsonl",
+      "source_bytes": 15802819,
+      "provider_adapter": "openai_chat_completions",
+      "message_count": 45,
+      "roles": {
+        "user": 1,
+        "assistant": 17,
+        "tool": 27
+      },
+      "assistant_tool_calls": 27,
+      "tool_schema_count": 7,
+      "segments": 3,
+      "context_tokens": 42812,
+      "loss_tokens": 7174,
+      "omitted_context_tokens": 0,
+      "contains_system_or_developer": false,
+      "contains_think_tag": false,
+      "contains_skill_document_reference": false
+    },
+    {
+      "condition": "without",
+      "source_model": "opus-4.8",
+      "task_id": "citation-check",
+      "trial_id": "b03eb950",
+      "source_path": "submissions/skillsbench/v1.1/openhands-no-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__b03eb950/trajectory/llm_trajectory.jsonl",
+      "source_bytes": 4054198,
+      "provider_adapter": "bedrock_converse",
+      "message_count": 60,
+      "roles": {
+        "user": 1,
+        "assistant": 30,
+        "tool": 29
+      },
+      "assistant_tool_calls": 29,
+      "tool_schema_count": 7,
+      "segments": 3,
+      "context_tokens": 39652,
+      "loss_tokens": 8255,
+      "omitted_context_tokens": 0,
+      "contains_system_or_developer": false,
+      "contains_think_tag": false,
+      "contains_skill_document_reference": false
+    }
+  ]
+}

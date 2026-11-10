@@ -1,0 +1,223 @@
+{
+  "all_sampled_canonical_files_downloadable": true,
+  "dataset_info_listed_files": 17901,
+  "dataset_info_listed_submission_groups": {
+    ".gitkeep": 1,
+    "claude-code-no-skills__anthropic-claude-haiku-4-5-20251001-src-paper-v1": 6062,
+    "claude-code-no-skills__anthropic-claude-opus-4-5-20251101-src-paper-v1": 6479,
+    "claude-code-no-skills__anthropic-claude-opus-4-6-src-paper-v1": 5285
+  },
+  "dataset_info_listed_trajectory_files_by_condition": {
+    "without": 7488
+  },
+  "dataset_info_listing_is_incomplete": true,
+  "direct_probe_count": 6,
+  "direct_probes": {
+    "with::gemini-3.5-flash": {
+      "files": {
+        "config.json": {
+          "bytes": 2385,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__gemini-3.5-flash/2026-06-04__19-34-24-maxeffort/3d-scan-calc__7443f4d2/config.json"
+        },
+        "result.json": {
+          "bytes": 2825,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__gemini-3.5-flash/2026-06-04__19-34-24-maxeffort/3d-scan-calc__7443f4d2/result.json"
+        },
+        "timing.json": {
+          "bytes": 120,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__gemini-3.5-flash/2026-06-04__19-34-24-maxeffort/3d-scan-calc__7443f4d2/timing.json"
+        },
+        "trajectory/acp_trajectory.jsonl": {
+          "bytes": 236061,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__gemini-3.5-flash/2026-06-04__19-34-24-maxeffort/3d-scan-calc__7443f4d2/trajectory/acp_trajectory.jsonl"
+        },
+        "trajectory/llm_trajectory.jsonl": {
+          "bytes": 12086938,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__gemini-3.5-flash/2026-06-04__19-34-24-maxeffort/3d-scan-calc__7443f4d2/trajectory/llm_trajectory.jsonl"
+        }
+      },
+      "task": "3d-scan-calc",
+      "trial_id": "7443f4d2"
+    },
+    "with::minimax-m3": {
+      "files": {
+        "config.json": {
+          "bytes": 2622,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__minimax-MiniMax-M3/2026-06-04__19-34-24-maxeffort/3d-scan-calc__c09e7e2c/config.json"
+        },
+        "result.json": {
+          "bytes": 2799,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__minimax-MiniMax-M3/2026-06-04__19-34-24-maxeffort/3d-scan-calc__c09e7e2c/result.json"
+        },
+        "timing.json": {
+          "bytes": 119,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__minimax-MiniMax-M3/2026-06-04__19-34-24-maxeffort/3d-scan-calc__c09e7e2c/timing.json"
+        },
+        "trajectory/acp_trajectory.jsonl": {
+          "bytes": 55268,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__minimax-MiniMax-M3/2026-06-04__19-34-24-maxeffort/3d-scan-calc__c09e7e2c/trajectory/acp_trajectory.jsonl"
+        },
+        "trajectory/llm_trajectory.jsonl": {
+          "bytes": 1207318,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__minimax-MiniMax-M3/2026-06-04__19-34-24-maxeffort/3d-scan-calc__c09e7e2c/trajectory/llm_trajectory.jsonl"
+        }
+      },
+      "task": "3d-scan-calc",
+      "trial_id": "c09e7e2c"
+    },
+    "with::opus-4.8": {
+      "files": {
+        "config.json": {
+          "bytes": 2490,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__aaf3cf84/config.json"
+        },
+        "result.json": {
+          "bytes": 2922,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__aaf3cf84/result.json"
+        },
+        "timing.json": {
+          "bytes": 119,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__aaf3cf84/timing.json"
+        },
+        "trajectory/acp_trajectory.jsonl": {
+          "bytes": 130656,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__aaf3cf84/trajectory/acp_trajectory.jsonl"
+        },
+        "trajectory/llm_trajectory.jsonl": {
+          "bytes": 2625455,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-with-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__aaf3cf84/trajectory/llm_trajectory.jsonl"
+        }
+      },
+      "task": "citation-check",
+      "trial_id": "aaf3cf84"
+    },
+    "without::gemini-3.5-flash": {
+      "files": {
+        "config.json": {
+          "bytes": 2138,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__gemini-3.5-flash/2026-06-04__18-45-18-maxeffort/citation-check__b1de1228/config.json"
+        },
+        "result.json": {
+          "bytes": 2717,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__gemini-3.5-flash/2026-06-04__18-45-18-maxeffort/citation-check__b1de1228/result.json"
+        },
+        "timing.json": {
+          "bytes": 119,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__gemini-3.5-flash/2026-06-04__18-45-18-maxeffort/citation-check__b1de1228/timing.json"
+        },
+        "trajectory/acp_trajectory.jsonl": {
+          "bytes": 205927,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__gemini-3.5-flash/2026-06-04__18-45-18-maxeffort/citation-check__b1de1228/trajectory/acp_trajectory.jsonl"
+        },
+        "trajectory/llm_trajectory.jsonl": {
+          "bytes": 2035909,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__gemini-3.5-flash/2026-06-04__18-45-18-maxeffort/citation-check__b1de1228/trajectory/llm_trajectory.jsonl"
+        }
+      },
+      "task": "citation-check",
+      "trial_id": "b1de1228"
+    },
+    "without::minimax-m3": {
+      "files": {
+        "config.json": {
+          "bytes": 2487,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__minimax-MiniMax-M3/2026-06-05__03-40-06-maxeffort/citation-check__38b0812a/config.json"
+        },
+        "result.json": {
+          "bytes": 2727,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__minimax-MiniMax-M3/2026-06-05__03-40-06-maxeffort/citation-check__38b0812a/result.json"
+        },
+        "timing.json": {
+          "bytes": 119,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__minimax-MiniMax-M3/2026-06-05__03-40-06-maxeffort/citation-check__38b0812a/timing.json"
+        },
+        "trajectory/acp_trajectory.jsonl": {
+          "bytes": 130993,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__minimax-MiniMax-M3/2026-06-05__03-40-06-maxeffort/citation-check__38b0812a/trajectory/acp_trajectory.jsonl"
+        },
+        "trajectory/llm_trajectory.jsonl": {
+          "bytes": 15802819,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__minimax-MiniMax-M3/2026-06-05__03-40-06-maxeffort/citation-check__38b0812a/trajectory/llm_trajectory.jsonl"
+        }
+      },
+      "task": "citation-check",
+      "trial_id": "38b0812a"
+    },
+    "without::opus-4.8": {
+      "files": {
+        "config.json": {
+          "bytes": 2349,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__b03eb950/config.json"
+        },
+        "result.json": {
+          "bytes": 2784,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__b03eb950/result.json"
+        },
+        "timing.json": {
+          "bytes": 119,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__b03eb950/timing.json"
+        },
+        "trajectory/acp_trajectory.jsonl": {
+          "bytes": 114298,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__b03eb950/trajectory/acp_trajectory.jsonl"
+        },
+        "trajectory/llm_trajectory.jsonl": {
+          "bytes": 4054198,
+          "downloadable": true,
+          "path": "submissions/skillsbench/v1.1/openhands-no-skills__aws-bedrock-us.anthropic.claude-opus-4-8/2026-06-04__18-45-18-maxeffort/citation-check__b03eb950/trajectory/llm_trajectory.jsonl"
+        }
+      },
+      "task": "citation-check",
+      "trial_id": "b03eb950"
+    }
+  },
+  "matched_corpus_precondition": "pending full parse, split, matching, and token audit",
+  "repo_id": "benchflow/skillsbench-leaderboard",
+  "requested_revision": "f104580363a9642563593c475620196ecd36687d",
+  "resolved_revision": "f104580363a9642563593c475620196ecd36687d",
+  "reviewed_selected_rows": 1138,
+  "revision_matches": true,
+  "source_access_precondition_met": true,
+  "successful_reviewed_rows": 482,
+  "successful_reviewed_rows_by_condition": {
+    "with": 316,
+    "without": 166
+  },
+  "successful_reviewed_rows_by_model_condition": {
+    "with::gemini-3.5-flash": 119,
+    "with::minimax-m3": 125,
+    "with::opus-4.8": 72,
+    "without::gemini-3.5-flash": 95,
+    "without::minimax-m3": 69,
+    "without::opus-4.8": 2
+  }
+}

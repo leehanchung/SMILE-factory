@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-07-24T06:52:00Z",
+  "probe": "Silico durable artifact metadata stat; no object bodies downloaded",
+  "objects": {
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/training/no_skill_success/seed17-v1/final_adapter.tar.gz": {
+      "exists": true,
+      "size_bytes": 163006027,
+      "etag": "46af848651ebe48603d4a7b3252af89e-20",
+      "provider_version": "YqrPuxZH2NuTD.JWImyHX1u4xTKATKQE",
+      "mtime": "2026-07-21T04:49:49Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/training/with_skill_success/seed17-v1/final_adapter.tar.gz": {
+      "exists": true,
+      "size_bytes": 162979846,
+      "etag": "e2523d22806dbaa500126dc712b6db78-20",
+      "provider_version": "dtrP5jwJk6Axm.XY9HQ7.ayHNa.vbg93",
+      "mtime": "2026-07-21T04:51:28Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/corpus_audit.json": {
+      "exists": true,
+      "size_bytes": 17392,
+      "etag": "b36a4dc4d99efae82264dfc8d0a01980",
+      "provider_version": "TbkSzUHQCEtxUtihgNV2FONFzJ2o6Ipq",
+      "mtime": "2026-07-21T04:02:59Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/exclusion_manifest.jsonl": {
+      "exists": true,
+      "size_bytes": 4790,
+      "etag": "52fb2c36c3e0cbd62564f5640496790b",
+      "provider_version": "sdV9eho1x7l7uqBi0xOeVcMXV559JC19",
+      "mtime": "2026-07-21T04:02:59Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/source_manifest.jsonl": {
+      "exists": true,
+      "size_bytes": 886024,
+      "etag": "2c3a4039d9b4593c3b0e68f2a5595872",
+      "provider_version": "M4n6H27POsj5E2Xj3lI8.PJj1km_VvG0",
+      "mtime": "2026-07-21T04:02:59Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/task_splits.json": {
+      "exists": true,
+      "size_bytes": 3265,
+      "etag": "89a195dc1696ea9e9b18278c5e5b776a",
+      "provider_version": "2ZsR.HrwEGXr9gMk4OxwF3oJQtLw2901",
+      "mtime": "2026-07-21T04:03:00Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/training_overlap_manifest.jsonl": {
+      "exists": true,
+      "size_bytes": 1347348,
+      "etag": "b0dbc3085ba4460d5852ffc8e99e4d61",
+      "provider_version": "WdxDlBE6mCyPZhZgVMx3998RN80RePIK",
+      "mtime": "2026-07-21T04:03:00Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/no_skill_success/audit.parquet": {
+      "exists": true,
+      "size_bytes": 20937581,
+      "etag": "302e18d44171989e42a6d04c9d63aecf-3",
+      "provider_version": "Y_Mc_XXmOYkOjs2LiuYMGpILCE0bGXJo",
+      "mtime": "2026-07-21T04:03:01Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/no_skill_success/train.parquet": {
+      "exists": true,
+      "size_bytes": 59778922,
+      "etag": "bfb1c54acc724bc688fc4f43393bb817-8",
+      "provider_version": "gjx_uUe7t3PyllL4T2bXf4xAhr72UxDg",
+      "mtime": "2026-07-21T04:03:01Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/no_skill_success/validation.parquet": {
+      "exists": true,
+      "size_bytes": 26510294,
+      "etag": "a9f98ec1cd9c0995911c2e384c97b84a-4",
+      "provider_version": "SQiWiOrsWEBcTcjVtCTcRJPpaoAycv8t",
+      "mtime": "2026-07-21T04:03:02Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/with_skill_success/audit.parquet": {
+      "exists": true,
+      "size_bytes": 21239988,
+      "etag": "1d502bb5c64e95ab5146af6f7976528e-3",
+      "provider_version": "JosJQLnnbffDtWVxUZ9mF_G5ppAlLf4Y",
+      "mtime": "2026-07-21T04:03:00Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/with_skill_success/train.parquet": {
+      "exists": true,
+      "size_bytes": 61011425,
+      "etag": "9deb1e07e03957ea5c0d758d393c3d90-8",
+      "provider_version": "6JjoKL3Rf5X7zhQxCpAN.xaCZr0868xh",
+      "mtime": "2026-07-21T04:03:00Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/data/skillsbench_sft/v7/with_skill_success/validation.parquet": {
+      "exists": true,
+      "size_bytes": 26774513,
+      "etag": "eb1e3ed8f3000c6c8ed0cfd76d9e2dc1-4",
+      "provider_version": "YK_LTNgBSnTA_DfSAA4R6Y181Nh3aUx1",
+      "mtime": "2026-07-21T04:03:01Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/eval_manifests/overlap/v2/manifest.jsonl": {
+      "exists": true,
+      "size_bytes": 2532067,
+      "etag": "57d86e591a4ffed7efd6e2a65be3fcd4",
+      "provider_version": "GknujjU_HTThIRZX22jr0AkJEn1lXeTZ",
+      "mtime": "2026-07-21T05:24:08Z"
+    },
+    "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/eval_manifests/overlap/v2/summary.json": {
+      "exists": true,
+      "size_bytes": 314,
+      "etag": "cd54bdadfe4ee6bd912d01acf35f8d1b",
+      "provider_version": "FGe5kIauRHBug3W.MT4Rqfzp6QJtZvJW",
+      "mtime": "2026-07-21T05:24:09Z"
+    }
+  }
+}

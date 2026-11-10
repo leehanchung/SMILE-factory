@@ -1,0 +1,17 @@
+{
+  "benchmark": "mmlu_fixed500",
+  "n": 500,
+  "metric": "acc",
+  "checkpoints": {
+    "base": {"acc": 0.504, "acc_norm": 0.502},
+    "no_skill": {"acc": 0.510, "acc_norm": 0.514},
+    "with_skill": {"acc": 0.514, "acc_norm": 0.510}
+  },
+  "deltas": {
+    "with_skill_minus_no_skill": 0.004,
+    "no_skill_minus_base": 0.006,
+    "with_skill_minus_base": 0.010
+  },
+  "approximate_standard_error_per_checkpoint": 0.0224,
+  "interpretation": "All three accuracies are statistically indistinguishable at this sample size; no direct-knowledge regression is detected."
+}

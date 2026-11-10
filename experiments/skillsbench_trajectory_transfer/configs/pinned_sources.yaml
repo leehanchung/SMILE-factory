@@ -1,0 +1,24 @@
+model:
+  repo_id: Qwen/Qwen3-8B
+  revision: b968826d9c46dd6066d109eabc6255188de91218
+trajectories:
+  repo_id: benchflow/skillsbench-leaderboard
+  revision: f104580363a9642563593c475620196ecd36687d
+skillsbench_tasks:
+  repository: https://github.com/benchflow-ai/skillsbench.git
+  revision: 5720102e3d6b0d3471b9715995ff96144d9eefb7
+bfcl_v4:
+  repository: https://github.com/ShishirPatil/gorilla.git
+  revision: 6ea57973c7a6097fd7c5915698c54c17c5b1b6c8
+ifeval:
+  dataset: google/IFEval
+  revision: 966cd89545d6b6acfd7638bc708b98261ca58e84
+mmlu:
+  dataset: cais/mmlu
+  revision: c30699e8356da336a370243923dbaf21066bb9fe
+toolathlon_verified:
+  repository: https://github.com/hkust-nlp/Toolathlon.git
+  revision: 3b647e60713703d653584c23ff185e3b6cd67722
+lm_evaluation_harness:
+  upstream_release: v0.4.9.2
+  source_revision: ad3f4d0cad1cfcdb815f1e795f7947e49ed9f2e9

@@ -1,0 +1,10 @@
+{
+  "status": "unavailable",
+  "official_admission_attempts": 7,
+  "accepted_submissions": 0,
+  "preprocessing_started": false,
+  "execution_started": false,
+  "verification_started": false,
+  "score": null,
+  "interpretation": "The official service returned busy before admission on every attempt. Toolathlon is unavailable, not a model failure."
+}

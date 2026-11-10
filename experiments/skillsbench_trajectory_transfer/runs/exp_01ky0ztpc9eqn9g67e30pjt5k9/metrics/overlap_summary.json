@@ -1,0 +1,12 @@
+{
+  "by_benchmark": {
+    "bfcl_v4": 2190,
+    "ifeval": 541,
+    "mmlu_fixed500": 500,
+    "tool_restraint": 120,
+    "toolathlon_verified_subset": 21
+  },
+  "ifeval_revision": "966cd89545d6b6acfd7638bc708b98261ca58e84",
+  "manifest_ref": "artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/eval_manifests/overlap/v2/manifest.jsonl",
+  "rows": 3372
+}
