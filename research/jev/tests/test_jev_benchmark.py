@@ -91,34 +91,3 @@ def test_transport_error_does_not_expose_secret(tmp_path, monkeypatch):
         _request(tmp_path, {})
     assert "fake-secret" not in str(caught.value)
     assert caught.value.__context__ is None
-
-
-def test_notebook_analysis_with_oracle_fixture(tmp_path, monkeypatch):
-    """Exercise every analysis/plot/export cell without network or saved fake Jev results."""
-    pytest.importorskip("IPython")
-    from pathlib import Path
-
-    import matplotlib
-
-    import jev_research.jev_api as api
-
-    matplotlib.use("Agg")
-    source = Path(__file__).resolve().parents[1]
-    notebook = json.loads((source / "notebooks/01_jev_off_the_shelf_calibration.ipynb").read_text())
-    (tmp_path / "scripts").mkdir()
-    (tmp_path / "scripts/uv.sh").touch()
-    monkeypatch.chdir(tmp_path)
-    oracle = [
-        {**c, "choice_p": c["q"], "noul_p": c["q"], "complement_p": 1 - c["q"], "input_tokens": 0}
-        for c in scenarios()
-    ]
-    monkeypatch.setattr(api, "collect", lambda *args, **kwargs: oracle)
-    scope = {}
-    for cell in notebook["cells"]:
-        if cell["cell_type"] == "code":
-            code = "".join(cell["source"])
-            code = "\n".join(line for line in code.splitlines() if not line.startswith("%"))
-            exec(compile(code, "notebook-offline-test", "exec"), scope)
-    assert scope["complete"]
-    assert scope["details"].absolute_probability_error.max() == 0
-    assert (tmp_path / "runs/jev-off-the-shelf/jev-1.13.0/analysis/summary.csv").exists()

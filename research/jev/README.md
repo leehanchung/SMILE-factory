@@ -1,6 +1,8 @@
 # RE Jev research project
 
-Compact research handoff. No model has been trained or benchmarked in this investigation. Our proposed implementation is not a reconstruction of verified Jev internals.
+Latest completed evaluation: [calibration experiment report](notebooks/04_jev_calibration_report.ipynb). Notebook 04 retains its original standalone writeup, experiment code, executed results, and figures. The later statistical reanalysis is preserved under `runs/revised-exploratory-v1/`; see the [methodological audit](methodology-audit.md) and [next-run protocol draft](confirmatory-protocol.md) for its findings.
+
+Compact research handoff. The Jev calibration pilot, supervised logistic-regression/CatBoost baselines, and held-out probability corrections are complete in notebook 04. Open-weight language-model training remains proposed. Our proposed implementation is not a reconstruction of verified Jev internals.
 
 ## Documents
 
@@ -10,12 +12,13 @@ Compact research handoff. No model has been trained or benchmarked in this inves
 - [Calibration and evaluation](calibration.md)
 - [Experiment plan](experiments.md)
 - [GLiNER2 benchmark and calibration protocol](gliner2-benchmark.md)
+- [ConfTuner literature review and training comparison](conftuner-benchmark.md)
 - [Monte Carlo calibration study](monte-carlo-calibration.md)
 - [Model-family background](model-families.md)
 - [References and attributions](references.md)
 - [Source-note provenance](provenance.json)
 
-This folder is an independent Python/uv project inside the monorepo. Research protocols remain proposed; the environment smoke check is not a model benchmark.
+This folder is an independent Python/uv project inside the monorepo. Notebook 04 records completed experiments; the protocols distinguish those pilot results from proposed training and confirmatory evaluation. The environment smoke check is not a model benchmark.
 
 ## Local Python environment
 
@@ -39,15 +42,13 @@ The offline smoke check imports model/trainer classes, runs a tiny optimizer loo
 
 To rebuild, recreate the local environment with `make setup` using the lockfile. To remove the installed environment, remove this folder's `.venv` and `.cache`; preserve `uv.lock`, source files, and research documents. No root-level monorepo configuration is required.
 
-## First Jev notebook
+## Jev calibration notebook
 
-Open [01_jev_off_the_shelf_calibration.ipynb](notebooks/01_jev_off_the_shelf_calibration.ipynb) with `make notebook`. The `Jev (.venv)` kernel is registered only inside this project's `.venv`.
+Open [04_jev_calibration_report.ipynb](notebooks/04_jev_calibration_report.ipynb) with `make notebook`. It is the single report notebook for this experiment; notebooks 01–03 were removed after consolidation. The `Jev (.venv)` kernel is registered only inside this project's `.venv`. Saved outputs can be read without execution. Running all cells executes the original end-to-end experiment, including live API requests; it is not an offline reanalysis.
 
-The local `.env` is owner-readable/writable only and ignored by Git, along with `.env.*` variants (the empty `.env.example` is safe to track). Set `TYPESAFE_API_KEY` there using an editor, not a shell command containing the key. Never paste the key in chat, notebook cells, output, or a command line. The client reads `.env` directly without exporting the key into the notebook's environment.
+For live collection from the notebook or `scripts/run_fresh_experiments.py`, the local `.env` is owner-readable/writable only and ignored by Git, along with `.env.*` variants (the empty `.env.example` is safe to track). Set `TYPESAFE_API_KEY` there using an editor, not a shell command containing the key. Never paste the key in chat, notebook cells, output, or a command line. The client reads `.env` directly.
 
-The initial grid contains 63 synthetic scenarios and three typed questions per request. API calls are off by default: set `RUN_LIVE=True` in the setup cell to collect missing scores, or leave it false to analyze the local cache. There is an 80-request cap and no automatic retry. Results resume from `runs/jev-off-the-shelf/jev-1.13.0/`; no raw response bodies or authorization headers are saved. The Monte Carlo calculation runs locally over cached predictions. It evaluates raw Jev probabilities without fitting a calibrator.
-
-Run `sh scripts/uv.sh run --group notebook pytest -q` to include the complete offline notebook analysis/plot check. Its oracle fixtures are test data, not Jev benchmark results. The live API benchmark still requires the local key.
+Run `sh scripts/uv.sh run --group notebook pytest -q` for the offline evaluator tests. Oracle fixtures are test data, not Jev benchmark results. Historical predictions and run artifacts remain under `runs/`.
 
 ## Objective
 
@@ -77,8 +78,16 @@ Add Nimble-inspired contrastive pairs: change one decisive fact, keep the rule/q
 
 Follow [Calibrated structured predictions](calibration.md): freeze the predictor, fit held-out calibration, test by schema/population/time, and distinguish probability correction from conformal coverage. Contrastive discrimination alone does not establish calibration.
 
+[ConfTuner (NeurIPS 2025)](conftuner-benchmark.md) adds a training objective for verbal confidence in an answer. Compare it with ordinary Brier/log-loss training and held-out correction on identical fixed answers. Its confidence tokens represent numerical confidence levels, not event classes; applying its loss directly to yes/no outcome tokens would encourage winner selection. Event-probability training is a separate proposed adaptation.
+
 Value-function use remains an extension: condition on history, action, goal, horizon, and continuation policy; supervise with rollout returns. Estimate each action's return independently, without softmax across action values. Evaluate actual policy return in addition to prediction error and calibration.
 
 ## Next experiment
 
-Use a fixed dataset and evaluation protocol to compare base-model candidate scoring, Nimble-style fine-tuning, and a GLiClass/GLiNER2 baseline. The [GLiNER2 experiment](experiments.md#gliner2-baseline) starts with `fastino/gliner2-base-v1` from the [Fastino repository](https://github.com/fastino-ai/GLiNER2), comparing pretrained and domain-fine-tuned variants. Test schema/order/chunk stability and latency as field count grows. Add custom readouts and continuous-return heads only when measured gaps justify them. Open specifications: target domain, hardware, context/schema limits, numerical support, and quantitative acceptance thresholds.
+Use a fixed dataset and evaluation protocol to compare base-model candidate scoring, Nimble-style fine-tuning, and a GLiClass/GLiNER2 baseline. Add the [ConfTuner comparison](conftuner-benchmark.md#5-proposed-experiment) on matching probability targets, beginning with audited confidence-token handling and fixed-answer correctness. Reserve new confirmatory data for choices informed by notebook 04. The [GLiNER2 experiment](experiments.md#gliner2-baseline) starts with `fastino/gliner2-base-v1` from the [Fastino repository](https://github.com/fastino-ai/GLiNER2), comparing pretrained and domain-fine-tuned variants. Test schema/order/chunk stability and latency as field count grows. Add custom readouts and continuous-return heads only when measured gaps justify them. Open specifications: target domain, hardware, context/schema limits, numerical support, and quantitative acceptance thresholds.
+
+## Notebook convention
+
+Keep this experiment consolidated in notebook 04. For a distinct experiment, use `notebooks/NN_descriptive_name.ipynb`, increasing the two-digit index. Each numbered notebook includes its latest executed outputs; do not create `.executed.ipynb` or `fresh` variants. Preserve the research writeup structure established in 04 unless a formatting change is requested. Reruns update the same notebook and retain inputs, predictions, and metrics under `runs/`.
+
+Notebook 04 preserves the original Abstract → Objective → Experimental design → Results → Discussion → Appendix structure, with its EDA, training, inference, and scoring code. Its historical filtered-population results remain exploratory. The replaced reanalysis notebook is archived at `runs/revised-exploratory-v1/04_jev_calibration_report.reanalysis.ipynb`; supporting evaluator code and revised results are retained. To recompute that analysis offline into a **new** directory: `sh scripts/uv.sh run --locked python scripts/reanalyze_calibration.py --output runs/revised-exploratory-NEW --bootstrap 1000`. Existing revised results cannot be overwritten. Full-population scores and independent confirmation require new data/predictions; see the frozen-protocol draft. The separate live runner preserves source observations by default; its historical filtered population is an explicit sensitivity option.

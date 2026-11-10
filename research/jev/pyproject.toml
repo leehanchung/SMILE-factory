@@ -25,6 +25,7 @@ dependencies = [
     "tqdm>=4.66,<5",
     "python-dotenv>=1,<2",
     "requests>=2.32,<3",
+    "catboost>=1.2,<2",
 ]
 
 [dependency-groups]

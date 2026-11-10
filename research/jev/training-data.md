@@ -14,6 +14,16 @@ Store source/entity identifiers, cutoff time, context, schema version, descripti
 
 Deduplicate and split source records before augmentation; keep descendants together. Separate training, development, calibration, and final test partitions. Hold out complete schema families as well as familiar-schema examples; paraphrases alone are not new task families.
 
+## ConfTuner answer-correctness records
+
+The [ConfTuner study](conftuner-benchmark.md) needs a frozen answer bank in addition to outcome records. Store the source/question ID, question/context, submitted answer, answer-model revision, prompt and decoding policy, reference/evidence, correctness label, and validator or judge version. Keep correctness labels and reference answers out of assessor inputs. Separate event outcome `Y` from answer correctness `Z`; a correct numerical forecast need not predict the realized event with certainty.
+
+Generate answers once for the fixed-answer comparison and retain both correct and incorrect answers. Use executable checks first, human review for ambiguous cases, and audited judges where necessary. Unresolved judgments are missing labels, never automatic errors. Audit 200–500 examples, including disagreements and a random sample; report excluded-label counts and their potential bias.
+
+Split original sources before answer generation or augmentation, keeping all answer variants and related fields together. The proposed 10,000-context allocation is 5,000 train, 1,000 development, 2,000 calibration, and 2,000 test, including prespecified held-out families absent from training, development selection, and calibration for the transfer test. Use nested training budgets and count post-hoc calibration labels separately. This is a study-wide planning target, subject to available independent records and outcome prevalence. Notebook 04's inspected data cannot serve as a new untouched test for methods chosen from its findings.
+
+If fine-tuning changes the answer policy, regenerate and relabel answers for a separate joint-generation evaluation. Labels for an old answer do not establish correctness of a new one.
+
 ## Generation and validation
 
 2026-09-18 update: [RE Jev working brief](README.md) adds Bespoke Nimble's contrastive-pair curation as a concrete method to test: alter one decisive fact, verify the changed label, and check that required evidence cannot be removed without making the proposition unknown. This augments the plan without establishing calibration.

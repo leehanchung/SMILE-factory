@@ -95,6 +95,41 @@ def scenarios() -> list[dict]:
     return cases
 
 
+def dice_scenarios():
+    sums = np.arange(2, 13)
+    counts = np.array([sum(a + b == s for a in range(1, 7) for b in range(1, 7)) for s in sums])
+    q = counts / 36
+    assert counts.sum() == 36 and counts[5] == 6
+    cases = []
+    for total, count, probability in zip(sums, counts, q, strict=True):
+        state = (
+            "Two independent fair six-sided dice, each numbered 1 through 6, "
+            "will be rolled once. The roll has not happened."
+        )
+        for track in ["parameters", "explicit"]:
+            cases.append(
+                {
+                    "scenario_id": f"two-dice-{track}-sum-{total}",
+                    "family": "two_dice",
+                    "track": track,
+                    "sum": int(total),
+                    "q": float(probability),
+                    "state": state
+                    + (
+                        f" The probability that their sum equals {total} "
+                        f"is {count}/36 ({probability:.12g})."
+                        if track == "explicit"
+                        else ""
+                    ),
+                    "event": f"The next roll's sum equals {total}.",
+                    "opposite": f"The next roll's sum does not equal {total}.",
+                    "true_key": "equals_sum",
+                    "false_key": "other_sum",
+                }
+            )
+    return cases
+
+
 def evaluate(rows: list[dict], *, trials: int = 2000, repetitions: int = 500, seed: int = 42):
     """MC ranges are conditional on the fixed scenarios and cached predictions."""
     if not rows:

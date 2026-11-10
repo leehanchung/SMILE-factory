@@ -44,6 +44,14 @@ Split training, calibration, and final testing by time or entity where needed. A
 
 Supporting references: [temperature scaling](https://proceedings.mlr.press/v70/guo17a.html), [probabilistic regression](https://arxiv.org/abs/1910.03225), and [deep ensembles](https://papers.neurips.cc/paper_files/paper/2017/hash/9ef2ed4b7fd2c810847ffa5fa85bce38-Abstract.html).
 
+## Confidence training with ConfTuner
+
+[ConfTuner (NeurIPS 2025)](conftuner-benchmark.md) trains numerical confidence tokens against binary answer-correctness labels. It adds a training-time comparison to the post-hoc methods here. Confidence in the answer “the chance of heads is .60” is a different target from the chance of heads itself. Jev's distribution-concentration statistic is neither a correctness label nor a substitute for event outcomes.
+
+For normalized confidence-token weights `w_j` and values `c_j`, tokenized Brier is `sum_j w_j (y-c_j)^2`. With `mu=sum_j w_j c_j`, this equals ordinary Brier on `mu` plus the variance of the confidence values under `w`. Its ideal solution selects the nearest confidence value. Applying the same formula to just yes/no outcome tokens instead favors the majority outcome; use ordinary Brier/log loss on event probabilities or a properly defined confidence-value grid.
+
+Compare these objectives on identical fixed answers and labels before testing joint answer generation. Evaluate the numerical confidence actually returned, report decoding/parse failures, and retain raw versus held-out-calibrated comparisons for every trained model. Brier remains a probability-quality measure, with reliability and discrimination needed to interpret changes. The [detailed protocol](conftuner-benchmark.md) covers the released code's scale and split issues, source grouping, sample budgets, transfer, and decision rules.
+
 ## Dynamic schemas and question chunking
 
 Independent design proposal, added 2026-09-16. A learned scoring head is a shared parameterized function, not a fixed output slot. One scalar candidate scorer can process arbitrarily many question–candidate pairs in batches. Keep parameter count, runtime query count, transformer attention-head count, and question microbatch size separate. Use a small family of output modules determined by probability semantics (categorical candidate scores, binary probabilities, numerical distribution parameters), adding specialization only when held-out losses justify it.
