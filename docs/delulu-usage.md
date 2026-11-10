@@ -2,7 +2,7 @@
 
 A hands-on guide to using the delulu Discord bot to run Claude Code
 against a repo from inside Discord. If you want the *design* of the
-bot, read [`ARCHITECTURE.md`](../ARCHITECTURE.md) at the repo root.
+bot, read [`docs/delulu-architecture.md`](delulu-architecture.md).
 If you're setting up a fresh deployment for the first time, read
 [`README.md`](../README.md) — this guide assumes the bot is already
 running in your server.
@@ -15,7 +15,7 @@ running in your server.
 | `/setrepo repo:owner/repo ref:HEAD` | anyone | Binds the current channel to a GitHub repo. Repo must be on the server's allowlist. |
 | `/unsetrepo` | anyone | Clears the channel's repo binding. New `@delulu` mentions fall back to empty-workspace general Q&A. |
 | `/commit message:<msg>` | anyone | Commits any pending changes in the current thread's workspace to a `claude/<thread-id>` branch and pushes to GitHub. Must be run inside an active thread. |
-| `/admin_addrepo repo:owner/repo` | Manage Server | Adds a public GitHub repo to the server's allowlist. Validates existence via the GitHub REST API at add time. |
+| `/admin_addrepo repo:owner/repo` | Manage Server | Adds a GitHub repo (public or private) to the server's allowlist. Validates it exists and is reachable via `git ls-remote` at add time. Private repos need the `github-pat` secret. |
 | `/admin_removerepo repo:owner/repo` | Manage Server | Removes a repo from the allowlist. Existing channel bindings are NOT retroactively cleared. |
 | `/admin_listrepos` | Manage Server | Ephemeral list of the current server's allowed repos. |
 
@@ -56,10 +56,11 @@ admins by default):
 Expected: `✅ leehanchung/SMILE-factory added to this server's
 allowlist. Users can now /setrepo against it.`
 
-The bot validates the repo exists by calling
-`api.github.com/repos/<owner>/<repo>` — if the repo is private,
-doesn't exist, or GitHub rate-limits you, the command refuses with
-a specific error and the allowlist is unchanged.
+The bot validates the repo by running `git ls-remote` against it
+inside the sandbox — anonymously first, then with the `github-pat`
+credential to classify it as public or private. If the repo doesn't
+exist or isn't reachable (even with the PAT), the command refuses
+with a specific error and the allowlist is unchanged.
 
 ### 2. Verify the allowlist
 
@@ -389,8 +390,6 @@ timeouts) will show up there as a traceback.
 Documented in the PRD at [`apps/delulu_discord/prd/repo-provisioning.md`](../apps/delulu_discord/prd/repo-provisioning.md)
 under "Out of scope — park for v2":
 
-- **Public repos only.** Cloning private repos requires
-  auth-rewriting at clone time, which v1 doesn't do.
 - **Single shared PAT.** All commits go through one
   GitHub identity (whoever owns the `github-pat` secret). Real
   multi-user attribution via GitHub App installation tokens is a
@@ -408,7 +407,7 @@ under "Out of scope — park for v2":
 
 ## Getting help
 
-- **Architecture questions** → [`ARCHITECTURE.md`](../ARCHITECTURE.md)
+- **Architecture questions** → [`docs/delulu-architecture.md`](delulu-architecture.md)
 - **Deployment questions** → [`README.md`](../README.md)
 - **Design decisions** → the PRDs under [`apps/delulu_discord/prd/`](../apps/delulu_discord/prd/) and [`apps/delulu_sandbox_modal/prd/`](../apps/delulu_sandbox_modal/prd/)
 - **Anything going wrong** → `journalctl -f CONTAINER_NAME=disco` on

@@ -1,6 +1,8 @@
 # Experiment plan
 
-All experiments below are proposed, not completed. Links and supporting papers are indexed in [references](references.md).
+**Execution status:** the seed-78 pilot completed 1,045 Jev requests, the coin/threshold and two-dice experiments, and all three UCI comparisons, including supervised baselines and held-out recalibration. See the [calibration report](notebooks/04_jev_calibration_report.ipynb); individual results are in its appendix.
+
+Open-weight model training and the ConfTuner comparison remain proposed. Treat the inspected pilot data as development evidence when selecting new methods, and reserve new confirmatory data. Links and supporting papers are indexed in [references](references.md).
 
 ## Sequence
 
@@ -8,7 +10,7 @@ All experiments below are proposed, not completed. Links and supporting papers a
 2. Audit 200–500 generated field examples. Build the initial 5–10-family data pilot described in [training-data](training-data.md). The suggested 10,000 contexts is a planning target, not a calibration sample-size guarantee.
 3. Freeze source-separated development, calibration, and final test partitions. Include unseen-schema families and realistic class prevalence.
 4. Compare an untuned candidate-token scorer, Nimble-style LoRA candidate scoring, and GLiClass/GLiNER2. Restrict comparison to their common supported task types. Do not fabricate numerical capabilities for classification/extraction baselines.
-5. Compare real-only supervision, schema augmentation, and added contrastive synthetic supervision. Use the same evaluation sets and report source counts separately from augmented field counts.
+5. Compare real-only supervision, schema augmentation, and added contrastive synthetic supervision. Use the same evaluation sets and report source counts separately from augmented field counts. Add the ConfTuner loss comparison below, using fixed answers for correctness confidence and separately labeled event-probability adaptations.
 6. Fit held-out calibrators after freezing each model. Choose complexity on development data, then assess the untouched final test once the recipe is selected.
 7. Sweep input length, field count, candidate count, and chunk size. Report backend, hardware, precision, warm/cold conditions, concurrency, latency percentiles, throughput, and peak memory. Single-field timing is not evidence of large-schema parallel speed.
 8. Add isolated readouts or continuous numerical heads only when measured gaps justify the change.
@@ -30,6 +32,18 @@ Proposed experiment:
 5. Apply the existing schema/order/chunk stability tests and latency sweeps. Measure CPU and target-GPU performance separately, including preprocessing and decoding. Use local measurements to assess deployment fit.
 
 Decision gate: retain GLiNER2 if it meets the predeclared quality, calibration, and deployment thresholds on supported tasks. Document unsupported fields and measured gaps before proposing custom heads.
+
+## ConfTuner confidence-training comparison
+
+[ConfTuner: literature review and experiment](conftuner-benchmark.md) records the NeurIPS 2025 evidence, loss derivation, pinned code audit, and planned study design. It changes the training comparison, not the proposed shared-input architecture.
+
+1. Verify confidence-token values, loss/gradient behavior, disjoint source IDs, loaded weights, and parser failures before training. Resolve the released coarse-grid train/evaluation scale mismatch.
+2. Freeze an answer bank and correctness labels. Compare untuned confidence, response-only training, tokenized Brier, Brier on mean confidence, binary log loss, and a scalar correctness scorer with matched data and training budgets. Fit held-out corrections for every model.
+3. Keep answer-correctness confidence separate from event probability. Extend tokenized Brier to observed event outcomes only as our adaptation; retain all coin/threshold prompt conditions, dice, and UCI coverage on matching targets.
+4. Use nested 500/2,000-example training pilots and seeds 78/79/80; evaluate post-hoc budgets of 60/120/250/500 separately. Inspect each seed rather than counting them as independent test records.
+5. Make ordinary held-out Brier the primary measure, supported by log loss, reliability, accuracy, discrimination, failures, and compute. Evaluate regenerated answers separately so confidence gains cannot hide changed answer accuracy.
+
+Begin with 2,000 training contexts, 120 calibration contexts, fixed answers, and the three grid losses with a common mean readout; expand only after development checks. The detailed protocol sets proposed advance rules and distinguishes a small paper-style reproduction from a domain adaptation. No ConfTuner training or inference has run.
 
 ## Proposed custom architecture
 
@@ -73,4 +87,10 @@ A probability-of-success head represents value only under the specified binary t
 
 ## Execution status
 
-The original documentation task did not execute experiments. On 2026-09-19, a project-local Python/uv environment was installed and verified with an offline toy training/calibration smoke check; see [setup instructions](README.md#local-python-environment). No research model training, pretrained checkpoint download, API dataset generation, deployment, commit, push, or PR has been performed. The explicitly excluded harshatheg Qwen RLCD checkpoint remains recorded for provenance only.
+The project-local uv environment and offline smoke checks are complete. The pilot collected 85 synthetic requests and 960 UCI requests with Jev 1.13.0 and seed 78: 63 binary-event scenarios (15 coins, 24 thresholds with probabilities supplied, and 24 thresholds with parameters only), 22 two-dice scenarios, and 320 records per UCI dataset. Each UCI comparison used 120 calibration and 200 test records, with logistic-regression/CatBoost baselines and held-out intercept-plus-slope probability corrections. Notebook 04 now reports the cached exploratory reanalysis without making API calls.
+
+These are our pilot results, not a reproduction of [Valeriy M.'s study](https://x.com/predict_addict/status/2101404670488875042). Wider calibration-budget sweeps, open-weight model training, ConfTuner, and confirmatory transfer tests remain proposed. Repeated outcomes for a synthetic prompt do not add independent source contexts.
+
+## Selected real-data experiments
+
+The [UCI study](uci-calibration-plan.md) records the comparison design for South German Credit, Bank Marketing (`bank-additional-full.csv`), and Online Shoppers. The cached results are consolidated in [notebook 04](notebooks/04_jev_calibration_report.ipynb). For new method selection, use these inspected results as pilot evidence and reserve uninspected records or new datasets for confirmation; changing only the seed does not create an untouched test.
