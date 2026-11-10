@@ -19,9 +19,9 @@ A lightweight system that lets users trigger Claude Code tasks from Discord. Mod
                                                       │  (persistent)    │
                                                       │                  │
                                                       │  /workspaces/    │
-                                                      │    <session-id>/ │
-                                                      │  /.claude/       │
-                                                      │    sessions/     │
+                                                      │    <thread-id>/  │
+                                                      │  /claude-home/   │
+                                                      │    .claude/      │
                                                       └──────────────────┘
 ```
 
@@ -29,7 +29,7 @@ A lightweight system that lets users trigger Claude Code tasks from Discord. Mod
 
 ### 1. Discord Bot (`apps/delulu_discord/`)
 
-**Always-on process** hosted on a cheap VM (Fly.io, Railway, or local machine). Responsibilities:
+**Always-on process** running as a Docker container on a VPS droplet (journald logging, secrets in `/root/disco.env`). Responsibilities:
 
 - Listen for messages via discord.py gateway connection
 - **Thread-session mapping**: new channel message → create Discord thread + allocate session ID. Reply in thread → reuse session ID.
@@ -40,8 +40,12 @@ A lightweight system that lets users trigger Claude Code tasks from Discord. Mod
 Key files (under `src/delulu_discord/`):
 - `main.py` — bot entrypoint, client setup, event registration
 - `handlers.py` — message/command event handlers, attachment download
-- `session_manager.py` — thread↔session mapping, TTL expiry
+- `session_manager.py` — thread↔session mapping (workspace keyed on `thread_id`), TTL expiry
 - `dispatcher.py` — `SandboxDispatcher`, a client-side wrapper around `modal.Function.from_name(...).remote()`
+- `commands.py` — slash-command definitions + registration (`/setrepo`, `/commit`, admin repo commands)
+- `repo_allowlist.py` — per-guild repo allowlist with public/private visibility (backed by a `modal.Dict`)
+- `repo_config.py` — active-repo binding per thread/guild
+- `streaming.py` — live status renderer that edits the Discord message as Claude's tool calls stream in
 - `settings.py` — Pydantic Settings model, loads from env vars / .env
 
 ### 2. Modal Sandbox Function (`apps/delulu_sandbox_modal/`)
@@ -50,21 +54,23 @@ Key files (under `src/delulu_discord/`):
 
 - Mounts the persistent volume at `/vol`
 - Has Claude Code installed (via image build)
-- Receives: session_id, workspace_path, prompt, resume flag, and any attachments the user uploaded
-- Runs `claude` CLI with appropriate flags
-- Returns stdout/stderr as the result
+- Receives: thread_id, prompt, a continue flag, and any attachments the user uploaded
+- Runs the `claude` CLI with `--output-format stream-json --verbose` (and `--continue` to resume)
+- Streams stream-json events back to the bot; returns the final result
 - Dies after completion (~4GB RAM, configurable)
 
-Key file (under `src/delulu_sandbox_modal/`):
-- `app.py` — Modal App definition, image build spec, volume config, `run_claude_code` function body
+Key files (under `src/delulu_sandbox_modal/`):
+- `app.py` — Modal App definition, image build spec, volume config, `run_claude_code` function body, and the `--output-format stream-json` parser
+- `events.py` — internal event dict shapes the stream-json parser emits
+- `repo_provisioner.py` — repo validation (`git ls-remote`), clone/fetch, public/private classification
 
 ## Design Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Workspace content** | Git clone onto volume | Most common use case; user provides repo URL, we clone into `/vol/workspaces/<session>/` |
-| **Streaming** | Post final result | Simpler to implement; Discord message edit rate limits make streaming janky. Future enhancement. |
-| **Bot hosting** | Separate always-on process | Bot is lightweight (~50MB RAM), doesn't need Modal. Fly.io or Railway for $5/mo. |
+| **Workspace content** | Git clone onto volume | User binds a repo with `/setrepo`; we clone into `/vol/workspaces/<thread_id>/` |
+| **Streaming** | Live status message | The bot parses Claude's `--output-format stream-json` and edits the Discord message as tool calls stream in (`streaming.py`), with rate-limit backoff. |
+| **Bot hosting** | Separate always-on process | Bot is lightweight (~50MB RAM), doesn't need Modal. Runs as a Docker container on a VPS droplet. |
 | **Auth** | Modal Secret | Anthropic API key stored as a Modal Secret, injected into sandbox env. Discord token lives with the bot process. |
 | **Session TTL** | 1 hour default | Replies in a thread within 1hr resume the Claude Code session. After that, new session, same workspace. |
 
@@ -73,20 +79,19 @@ Key file (under `src/delulu_sandbox_modal/`):
 ```
 1. User sends message in #claude channel
    → Bot creates Discord thread (titled from first ~50 chars)
-   → Bot generates session_id (uuid4)
-   → Bot stores {thread_id: session_id, workspace_path, created_at}
+   → Bot allocates a Session keyed on thread_id (workspace = /vol/workspaces/<thread_id>)
 
-2. Bot calls modal_dispatch.run_task(session_id, prompt, resume=False)
+2. Bot dispatches to the sandbox (thread_id, prompt, resume=False)
    → Modal spins up sandbox
-   → Sandbox runs: claude --print -p "<prompt>" --output-format text
-   → Sandbox returns output string
+   → Sandbox runs: claude -p "<prompt>" --output-format stream-json --verbose
+   → Sandbox streams events back; the bot renders them live and keeps the final result
 
 3. Bot posts output to the thread
    → If > 1900 chars, uploads as file attachment
 
 4. User replies in the thread
-   → Bot looks up session_id from thread_id
-   → If session age < TTL: resume=True (--resume flag)
+   → Bot looks up the Session from thread_id
+   → If session age < TTL: resume=True (--continue flag)
    → If session age >= TTL: resume=False (fresh session, same workspace)
    → Dispatch again
 ```
@@ -96,21 +101,24 @@ Key file (under `src/delulu_sandbox_modal/`):
 ```
 /vol/
 ├── workspaces/
-│   ├── <session-id-1>/
+│   ├── <thread-id-1>/
 │   │   ├── .git/
 │   │   └── <repo contents>
-│   └── <session-id-2>/
+│   └── <thread-id-2>/
 │       └── ...
-└── .claude/
-    └── sessions/
-        └── <session history files>
+└── claude-home/
+    └── .claude/
+        └── projects/<cwd-hash>/   # Claude Code session history (HOME=/vol/claude-home)
 ```
+
+## Shipped since this design
+
+- **Live streaming output** via Discord message edits with rate-limit backoff (`streaming.py`).
+- **File upload** — attachments in Discord are downloaded and placed in the workspace.
+- **Repo provisioning** via slash commands: `/setrepo` binds a repo, `/commit` pushes, plus admin allowlist commands — including private repos via a `github-pat` Modal secret. See the PRDs under `apps/delulu_discord/prd/`.
 
 ## Future Enhancements
 
-- **Streaming output** via Discord message edits (with rate limit backoff)
-- **Slash commands** for workspace management (`/clone`, `/workspace list`, `/workspace delete`)
-- **File upload** — attach files in Discord, they get placed in the workspace
-- **Multi-repo** — switch between repos within a session
+- **Workspace management** slash commands (`/workspace list`, `/workspace delete`, GC of stale workspaces)
 - **Cost tracking** — log Modal compute seconds per user/session
 - **GitHub webhook integration** — trigger Claude Code on PR events

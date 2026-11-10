@@ -32,7 +32,7 @@ Lower review priority unless the PR explicitly touches it.
 **Skip review** if any of these are true:
 
 - The PR is a draft or closed
-- The only changes are under `prd/` (planning docs)
+- The only changes are under a `prd/` directory — `docs/prd/` or a per-app `apps/<app>/prd/` (planning docs)
 - The only changes are documentation wording fixes
 
 If skipping, there is no production code to object to, so the PR is

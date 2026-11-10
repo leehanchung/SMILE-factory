@@ -1,14 +1,18 @@
 # Code-review bot: approve on skip instead of commenting
 
-**Status:** not-started
+**Status:** shipped
 
 Plan to fix a UX gap where the auto code-reviewer leaves a "skipped"
 comment on doc-only PRs without leaving an approving review, so
 GitHub still shows "Review required" and the human has to
 self-approve a PR the bot already triaged as no-code-change.
 
-This is a *plan*, not a spec of implemented behavior. Nothing in this
-document has been executed yet.
+> **Shipped.** This behavior is live in
+> [`.claude/commands/review-pr.md`](../../.claude/commands/review-pr.md)
+> — Step 1 submits an approving review on the doc-only skip path
+> (`gh api .../reviews -f event=APPROVE`), with the `event=COMMENT`
+> fallback for self-authored PRs. Kept for history; a delete candidate
+> under the delete-on-ship convention.
 
 ## Symptom
 

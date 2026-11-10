@@ -83,7 +83,7 @@ delulu apps). Each owns its `pyproject.toml`, `Makefile`, and `CLAUDE.md`.
 
 - **slime via bind-mount vs. baked Dockerfile** — dev uses bind-mount; a pinned
   `engine/Dockerfile` (`FROM slimerl/slime@sha256:…`) may be wanted for CI/repro.
-- **SFT recipe** — `training/lora_instruct` (poetry) stays as-is; if a deep-research
+- **SFT recipe** — `training/lora_instruct` (uv) stays as-is; if a deep-research
   SFT cold-start is needed, add a sibling recipe rather than extending it.
 - **PR strategy** — per "one PR per project," this scaffold should land as several
   PRs (one per new project) plus a cross-cutting PR for root `Makefile`/`CLAUDE.md`.

@@ -32,18 +32,17 @@ SMILE-factory/
 │       ├── utils/, templates/, dataset/, inference/, notebook/
 │       ├── CLAUDE.md
 │       └── README.md
-├── pyproject.toml              (root — kept for legacy tooling, NOT a workspace root)
-├── docs/                       cross-project docs (this file lives here)
-├── prd/                        repo-wide plan docs (per-app plans live under apps/<name>/prd/)
+├── docs/                       all repo docs (this file lives here)
+│   └── prd/                    repo-wide plan docs (per-app plans live under apps/<name>/prd/)
 ├── .pre-commit-config.yaml
 ├── .github/workflows/delulu-deploy.yaml
 └── Makefile                    thin dispatcher, `make -C apps/X ...`
 ```
 
-The important non-obvious thing: **there is no workspace root**. The
-top-level `pyproject.toml` only exists because of the LoRA code at the
-root; it does NOT declare the `apps/*` directories as workspace
-members. `uv sync` from the repo root does nothing useful for delulu.
+The important non-obvious thing: **there is no workspace root** — there
+is no top-level `pyproject.toml` at all. Nothing declares the `apps/*`
+or `training/*` directories as workspace members; each is a standalone
+project. There is nothing useful to `uv sync` at the repo root.
 
 Each `apps/*` directory is an **independent Python project**: own
 `pyproject.toml`, own `uv.lock`, own `.venv`, own `Makefile`, own
@@ -80,30 +79,32 @@ and they all have to agree for the pipeline to be coherent.
 4. If any files match, it invokes the hook binary with those files
    as arguments.
 
-Our config has two ruff hooks scoped by path:
+Our config has a single ruff setup (`v0.15.10`, `ruff` + `ruff-format`)
+scoped by path to the active Python projects:
 
-- **Modern ruff** (`v0.15.10`), `files: ^apps/.*\.py$` — runs on
-  everything under `apps/`.
-- **Legacy ruff** (`v0.0.275`), `exclude: ^apps/` — runs on
-  everything OUTSIDE `apps/` (the archived LoRA code at the root).
+- `files: ^(apps|training)/.*\.py$` — runs on everything under `apps/`
+  and `training/`. Both trees are uv-managed and share this one modern
+  ruff pin. (LoRA used to be linted by a separate legacy ruff hook at
+  the repo root; the Poetry→uv migration folded it into this one.)
 
 The key detail: pre-commit's ruff binary lives in its own isolated
 env, managed by pre-commit. It is NOT the ruff from
 `apps/delulu_discord/.venv`. But when that ruff runs on a file, **ruff
 itself** walks up from the file looking for a `pyproject.toml`, finds
-`apps/delulu_discord/pyproject.toml`, and uses THAT config
+`apps/delulu_discord/pyproject.toml` (or
+`training/lora_instruct/pyproject.toml`), and uses THAT config
 (`target-version`, `line-length`, `[tool.ruff.lint]`, etc.). So the
-ruff *version* is shared across both apps, but the *rules* are
-per-app.
+ruff *version* is shared across all projects, but the *rules* are
+per-project.
 
 ### The version-drift trap
 
-`.pre-commit-config.yaml` pins `rev: v0.15.10`. Each
-`apps/*/pyproject.toml` pins `ruff>=0.15` in its dev extras. Today
-they agree. Tomorrow someone bumps one app to `ruff>=0.16` without
-touching `.pre-commit-config.yaml` and you'll see:
+`.pre-commit-config.yaml` pins `rev: v0.15.10`. Each `apps/*` and
+`training/*` project's `pyproject.toml` pins `ruff>=0.15` in its dev
+extras. Today they agree. Tomorrow someone bumps one project to
+`ruff>=0.16` without touching `.pre-commit-config.yaml` and you'll see:
 
-- Local `uv run ruff` (from the app's venv) uses `0.16.x`
+- Local `uv run ruff` (from the project's venv) uses `0.16.x`
 - Local `pre-commit run` uses `0.15.10` (from the pre-commit pin)
 - Same file, different opinions, mysterious CI flakes
 
@@ -231,9 +232,9 @@ resolution rules.
    shared schema (design). If you need genuinely shared code, the
    right move is a third `apps/delulu_shared/` package that both
    depend on, not cross-reaching.
-5. **The top-level `pyproject.toml` is LoRA's, not the monorepo's.**
-   Don't add delulu deps to it. Don't run `uv sync` at the root and
-   expect delulu to work.
+5. **There is no root `pyproject.toml`.** Every project (`apps/*`,
+   `training/*`, …) owns its own. Don't run `uv sync` at the repo root
+   and expect any app to work — `cd` into the project first.
 6. **Per-app Makefiles are the source of truth** for "how do I
    check/test/build/deploy this app". The top-level `Makefile` is
    just a thin dispatcher that calls them.
@@ -249,12 +250,12 @@ resolution rules.
   write them to be app-aware manually.
 - **Shared tool versions drift silently.** The drift trap from
   "pre-commit in this monorepo" above. Catch it by occasionally
-  running `grep -rn "ruff>=" apps/*/pyproject.toml .pre-commit-config.yaml`
+  running `grep -rn "ruff>=" apps/*/pyproject.toml training/*/pyproject.toml .pre-commit-config.yaml`
   and checking they agree. Not automated today.
 
 ## Related docs
 
 - [`README.md`](../README.md) — the public-facing project landing page
 - [`CLAUDE.md`](../CLAUDE.md) — repo-level instructions for AI assistants
-- [`prd/`](../prd/) — repo-wide plan docs (per-app plans live under [`apps/delulu_discord/prd/`](../apps/delulu_discord/prd/) and [`apps/delulu_sandbox_modal/prd/`](../apps/delulu_sandbox_modal/prd/))
+- [`docs/prd/`](prd/) — repo-wide plan docs (per-app plans live under [`apps/delulu_discord/prd/`](../apps/delulu_discord/prd/) and [`apps/delulu_sandbox_modal/prd/`](../apps/delulu_sandbox_modal/prd/))
 - [`docs/architecture.md`](architecture.md), [`docs/development.md`](development.md) — archived LoRA-era docs

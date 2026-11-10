@@ -28,7 +28,7 @@ It's all one thing — eight zones of the same factory:
 
 The deep-research loop is the spine: `data/datagen` → `eval` → `training/rl_deepresearch`,
 all over the shared `libs/dr_agent`. Architecture + rationale in
-[prd/deep-research-training-eval-infra.md](prd/deep-research-training-eval-infra.md).
+[docs/prd/deep-research-training-eval-infra.md](docs/prd/deep-research-training-eval-infra.md).
 Two zones have their own walkthroughs below: **[Delulu](#delulu)** (the active
 orchestrator) and **[LoRA-Instruct](#lora-instruct)**.
 
@@ -50,7 +50,7 @@ Discord bot that dispatches Claude Code tasks to ephemeral Modal Sandboxes.
 The bot process itself is tiny (~50MB RAM) and just dispatches jobs — all
 heavy lifting (and all Claude Code execution) happens inside Modal sandboxes.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
+See [docs/delulu-architecture.md](docs/delulu-architecture.md) for the full design.
 
 ### Architecture
 
@@ -607,11 +607,12 @@ SMILE-factory/
 │       └── src/delulu_sandbox_modal/
 │           └── app.py                      # Modal App, image, volume, secret, run_claude_code
 │
-├── training/                               # LLM training recipes (currently: lora_instruct)
+├── training/                               # LLM training recipes (lora_instruct SFT + rl_deepresearch RL)
 ├── Makefile                                # top-level dispatcher (check / deploy-bot / deploy-modal / deploy-all)
-├── ARCHITECTURE.md                         # Full design doc
 ├── README.md                               # this file
-├── prd/                                    # repo-wide planning docs (per-app plans live under apps/<name>/prd/)
+├── docs/                                   # all repo docs: delulu-architecture.md (design), usage, conventions, + prd/ plan docs
+│   └── prd/                                # repo-wide planning docs (per-app plans live under apps/<name>/prd/)
+├── .claude/                                # Claude Code config: commands/ agents/ hooks/ settings.json
 └── infra/managed-agents/                   # sibling infra work (unrelated to delulu)
 ```
 
