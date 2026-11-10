@@ -1,5 +1,9 @@
 default_language_version:
     python: python3
+# `pre-commit install` sets up both the file hooks and the commit-msg hook.
+default_install_hook_types: [pre-commit, commit-msg]
+# File hooks run only at commit time; the commit-msg hook declares its own stage.
+default_stages: [pre-commit, manual]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -41,6 +45,15 @@ repos:
         args: [--fix]
     -   id: ruff-format
         files: ^(apps|training)/.*\.py$
+# Conventional Commits on every local commit message. Keep the type list
+# in sync with .github/workflows/pr-title.yml and CLAUDE.md. Merge,
+# fixup! and squash! commits are allowed (no --strict).
+-   repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+    -   id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, docs, refactor, test, chore, ci, build, perf, style, revert, prd]
 ci:
-    autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
-    autoupdate_commit_msg: ⬆ [pre-commit.ci] pre-commit autoupdate
+    autofix_commit_msg: "style: auto-format with pre-commit hooks"
+    autoupdate_commit_msg: "chore: pre-commit autoupdate"

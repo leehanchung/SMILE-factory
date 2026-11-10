@@ -36,6 +36,7 @@ SMILE-factory/
 │   └── prd/                    repo-wide plan docs (per-app plans live under apps/<name>/prd/)
 ├── .pre-commit-config.yaml
 ├── .github/workflows/delulu-deploy.yaml
+├── .github/workflows/pr-title.yml   (Conventional Commits on PR titles, all projects)
 └── Makefile                    thin dispatcher, `make -C apps/X ...`
 ```
 
@@ -172,6 +173,29 @@ skipped. That's the pattern for path-filtered monorepo CI.
 (Not wired up yet; flagged as a follow-up for when branch protection
 becomes important enough to bother with.)
 
+## Commit messages and PR titles
+
+main is squash-merge only and GitHub uses the PR title as the commit
+subject, so the PR title is what lands in main's history. Two checks
+enforce [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Check | Where | What it checks | Blocks |
+|---|---|---|---|
+| `conventional-pre-commit` | `.pre-commit-config.yaml`, `commit-msg` stage | Each local commit message | The local commit (skip with `--no-verify`) |
+| `pr-title-lint` | `.github/workflows/pr-title.yml` | The PR title, re-checked on title edits | The merge (required status check on main) |
+
+Allowed types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`,
+`build`, `perf`, `style`, `revert`, and the local `prd` type for plan
+docs. The list lives in three places — the hook `args`, the workflow
+`types`, and the root `CLAUDE.md` — and they must match.
+
+Merge commits and `fixup!`/`squash!` commits pass the local hook, so
+rebasing and autosquash keep working.
+
+Branch names follow `<type>/<slug>`. Agent tools create branches like
+`claude/<name>`; rename them with `git branch -m <type>/<slug>` before
+the first push.
+
 ## Walkthrough: a file edit, end-to-end
 
 Edit `apps/delulu_discord/src/delulu_discord/handlers.py`:
@@ -180,6 +204,7 @@ Edit `apps/delulu_discord/src/delulu_discord/handlers.py`:
 # LOCAL — pre-commit catches lint at commit time (if installed)
 git add handlers.py
 git commit -m "fix: handle edge case"
+  ↓ git invokes .git/hooks/commit-msg → conventional-pre-commit checks the message
   ↓ git invokes .git/hooks/pre-commit
   ↓ pre-commit runs modern ruff hook (matches apps/.*\.py)
   ↓ ruff reads apps/delulu_discord/pyproject.toml for rules
@@ -201,7 +226,7 @@ git push && gh pr create
     ↓ uv run ruff format --check .
     ↓ uv run pytest
   ↓ delulu-sandbox-modal-ci skipped (no sandbox changes)
-  ↓ pr-title-lint runs (independent, all PRs)
+  ↓ pr-title.yml: pr-title-lint runs (separate workflow, all PRs)
   ↓ CD jobs skipped (pull_request event, not push)
 
 # MERGE — branch protection decides
@@ -217,8 +242,10 @@ resolution rules.
 ## Practical rules of thumb
 
 1. **Install pre-commit once per clone:** `uvx pre-commit install`.
-   Without this, none of the local lint catches anything — the
-   config is dead config.
+   This installs both the file hooks and the commit-msg hook
+   (`default_install_hook_types`). Without it, none of the local
+   checks run — the config is dead config. Clones that installed
+   before the commit-msg hook existed need to run it again.
 2. **Keep tool versions aligned across layers.** When bumping ruff
    in an app's `pyproject.toml`, bump `.pre-commit-config.yaml` in
    the same commit.

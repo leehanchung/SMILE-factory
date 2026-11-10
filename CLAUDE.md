@@ -41,7 +41,7 @@ All docs live under [`docs/`](docs/README.md) (reference + plan docs; cross-cutt
 
 - [Docs index](docs/README.md) — full map of what lives where
 - [Delulu architecture](docs/delulu-architecture.md) — the active orchestrator's design (Discord → Claude Code → Modal sandboxes)
-- [Monorepo conventions](docs/monorepo-conventions.md) — how pre-commit, CI, branch protection, and per-app Makefiles interact in this multi-pyproject layout. Read this before touching `.pre-commit-config.yaml`, `.github/workflows/delulu-deploy.yaml`, or any root-level tooling
+- [Monorepo conventions](docs/monorepo-conventions.md) — how pre-commit, CI, branch protection, and per-app Makefiles interact in this multi-pyproject layout. Read this before touching `.pre-commit-config.yaml`, `.github/workflows/*`, or any root-level tooling
 - [Development](docs/development.md) — setup, linting, testing, training, and code conventions
 - [LoRA-Instruct architecture](docs/architecture.md) — the SFT recipe's design (`training/lora_instruct`)
 
@@ -49,5 +49,7 @@ All docs live under [`docs/`](docs/README.md) (reference + plan docs; cross-cutt
 
 - Never commit to `main` — always branch, push, open a PR.
 - Branch: `<type>/<slug>` (e.g. `feat/streaming-renderer`, `fix/dispatcher-timeout`).
-- Commits + PR titles: [Conventional Commits](https://www.conventionalcommits.org/) (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `style`, plus a local `prd` type for changes under a `prd/` directory — cross-cutting `docs/prd/` or per-app `apps/<app>/prd/`). Squash-merge uses the PR title, so it must be conventional.
+  - Agent sessions often start on a tool-generated branch (`claude/<name>`, `codex/<name>`). Before the first push, rename it: `git branch -m <type>/<slug>`. Never push a `claude/` or `codex/` branch.
+- Commits + PR titles: [Conventional Commits](https://www.conventionalcommits.org/) (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `style`, `revert`, plus a local `prd` type for changes under a `prd/` directory — cross-cutting `docs/prd/` or per-app `apps/<app>/prd/`). Squash-merge uses the PR title, so it must be conventional.
+  - Enforced twice: the `conventional-pre-commit` commit-msg hook checks each local commit (installed by `pre-commit install`), and the required `pr-title-lint` check (`.github/workflows/pr-title.yml`) checks the PR title. Keep the type list identical in `CLAUDE.md`, `.pre-commit-config.yaml` and `pr-title.yml`.
 - Only commit, push, or open PRs when explicitly asked. Never merge PRs — that's a human call.

@@ -6,16 +6,18 @@ name: delulu
 #   - apps/delulu_discord          — Discord bot on a VPS (droplet)
 #   - apps/delulu_sandbox_modal    — Modal sandbox function
 #
-# This one workflow covers both apps, with six jobs:
+# This one workflow covers both apps, with five jobs:
 #   - changes                        paths filter (bot / bot_runtime /
 #                                    sandbox / sandbox_runtime)
-#   - pr-title-lint                  Conventional Commits on PR titles
 #   - delulu-discord-ci              CI — ruff + pytest for the bot
 #   - delulu-sandbox-modal-ci        CI — ruff + pytest for the sandbox
 #   - delulu-sandbox-modal-deploy    CD — modal deploy from the GH runner
 #   - delulu-discord-deploy          CD — SSH droplet + rebuild container
 #
-# CI and PR-title linting run on pull_request and on push to main.
+# PR-title linting (Conventional Commits) lives in its own repo-wide
+# workflow, pr-title.yml.
+#
+# CI runs on pull_request and on push to main.
 # CD jobs only run on push to main (guarded with
 # ``github.event_name != 'pull_request'``). This gives PR authors
 # pre-merge feedback without touching prod.
@@ -28,54 +30,11 @@ on:
       - 'Makefile'
       - '.github/workflows/delulu-deploy.yaml'
   pull_request:
-    # Includes ``edited`` so the pr-title-lint job re-runs when the
-    # title is corrected without a new commit push. No ``paths`` filter
-    # here — if we filter by paths, a title-only edit wouldn't fire
-    # the workflow at all and the linter wouldn't re-check.
-    types: [opened, edited, reopened, synchronize]
+    # No ``paths`` filter here: the ``changes`` job decides which CI
+    # jobs run, so a PR that touches nothing in delulu skips them.
   workflow_dispatch:
 
 jobs:
-  # ── PR title lint (independent) ──────────────────────────────
-  #
-  # Enforces Conventional Commits on PR titles. Since main uses
-  # squash-merge with the PR title as the commit subject, this is what
-  # actually keeps main's history conventional — no commit-msg hook
-  # required. Runs on every pull_request event so title edits
-  # re-validate without a code push.
-  pr-title-lint:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    steps:
-      - uses: amannn/action-semantic-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # ``prd`` is not part of the Conventional Commits spec but is
-          # used in this repo for changes under a ``prd/`` directory
-          # (``docs/prd/`` or ``apps/<app>/prd/``) — adding or revising
-          # a Product Requirements Document. ``docs:`` is
-          # technically accurate for a plan-doc commit but ``prd:`` is
-          # more specific and already in use on main (e.g. PR #44).
-          types: |
-            feat
-            fix
-            docs
-            refactor
-            test
-            chore
-            ci
-            build
-            perf
-            style
-            prd
-          requireScope: false
-          subjectPattern: ^[A-Za-z].+[^.]$
-          subjectPatternError: |
-            PR title subject must start with a letter and not end with a period.
-
   # ── Paths filter ─────────────────────────────────────────────
   #
   # Decide which CI and deploy jobs to run based on the files touched.
