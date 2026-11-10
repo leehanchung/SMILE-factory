@@ -1,6 +1,6 @@
 # Monte Carlo calibration study
 
-Proposed 2026-09-19; no simulations or model evaluations have run. Companion to the [GLiNER2 benchmark](gliner2-benchmark.md). Use known data-generating distributions to separate probability elicitation, calibration-method behavior, and sampling noise. Synthetic success is not evidence of deployment calibration.
+Updated 2026-09-21: [notebook 04](notebooks/04_jev_calibration_report.ipynb) completed 63 binary-event scenarios, 22 two-dice scenarios, and all three UCI comparisons with supervised baselines and held-out recalibration. The wider simulation grid, calibration-budget sweeps, and ConfTuner training below remain proposed. Companion to the [GLiNER2 benchmark](gliner2-benchmark.md) and [ConfTuner study](conftuner-benchmark.md). Use known generators to separate probability elicitation, calibration-method behavior, and sampling noise. Synthetic success is not evidence of deployment calibration.
 
 ## Motivation and source example
 
@@ -15,6 +15,16 @@ The first diagnostic is probability preservation: given a known event probabilit
 **A. Model probability elicitation.** Render known distributions as text, obtain complete GLiNER2 classification scores using the benchmark adapter, and compare with analytic event probabilities. Compare choice and boolean formulations, with matching event semantics. Add Jev Choice/Noul, GLiClass, and Nimble where available, reporting each interface separately. A GLiNER2 true/false classification is an adaptation, not a native Noul interface.
 
 **B. Calibration-method simulation.** Generate scores with known distortions of the true probabilities, fit post-hoc calibrators, and evaluate on independently generated outcomes. This isolates calibrator behavior without repeated model inference. Include cached real-model scores from A as a separate score source. Neither repeated deterministic calls nor random label draws constitute Monte Carlo dropout or a Bayesian posterior over model weights.
+
+## ConfTuner training extension
+
+The [ConfTuner protocol](conftuner-benchmark.md#53-monte-carlo-extension) adds a proposed training comparison to experiment A; experiment B continues to isolate post-hoc correction. The paper trains answer-correctness confidence. Replacing its correctness label with an observed event outcome is our adaptation, not a published result.
+
+Compare scalar Brier/log-loss training, tokenized Brier on numerical confidence values, and Brier on their weighted mean. Keep training data, model, confidence extraction, and update budgets matched. Do not substitute yes/no outcome-token weights for numerical confidence levels: tokenized Brier over only values 0 and 1 selects the more likely outcome instead of recovering its probability.
+
+Use sampled outcomes for the main training arm and exact generator probabilities only for a separately labeled oracle-supervision control. At evaluation, show generator and predicted probability distributions on the same bins, paired probability-recovery plots, and ordinary expected Brier split into irreducible outcome variance `q(1-q)` and probability error `(p-q)^2`. Validate sampled scores with independent Monte Carlo outcomes. Matching marginal histograms alone does not establish that each scenario received the right probability.
+
+Keep coins and thresholds together as binary-event tests, retaining separate rows for coins, thresholds with probabilities supplied, and thresholds with parameters only. Retain the existing dice sum-event/coherence checks and all three UCI datasets. A normalized multiclass dice predictor is an additional proposed arm; confidence in a chosen answer cannot supply a full dice distribution. Reserve new source scenarios and records for confirmation after selecting methods from notebook 04.
 
 ## Distribution and event matrix
 
@@ -88,3 +98,25 @@ Test three shifts separately: change the distribution of `q` while preserving th
 Before scaling, verify generator support, probability sums, tail-bin completeness, complements, the `p=q` control, and agreement between analytic and simulated event frequencies within sampling uncertainty. Use a probability-parser/calculator baseline on explicit-probability tasks and a CDF baseline on parameter tasks to catch prompt/oracle bugs.
 
 Deliver a scenario manifest, per-repetition metrics, recovery curves, reliability plots, distribution-by-method heatmaps, and calibration-budget curves with Monte Carlo uncertainty. Keep distribution-family failures visible; do not reduce this diagnostic to a single aggregate leaderboard. Passing this study supports claims about the tested probability tasks and calibration procedures; the real-domain held-out benchmark remains required.
+
+## Real-data extension prompted by external evidence
+
+### External evidence: real-data calibration
+
+[Valeriy M.'s post](https://x.com/predict_addict/status/2101404670488875042) reports 16,500 predictions across eight real datasets, widespread miscalibration relative to CatBoost, directional overprediction, and substantial improvement using 120 calibration examples. These are **author-reported claims, not results reproduced here**. The visible post does not specify enough detail to identify the exact calibration method, model version/interface, splits, or metric behind its comparative ratios.
+
+This motivates a stronger question than whether Noul beats Choice: **does either forecast improve on a constant base-rate prediction, and in which direction does it err?** The following analysis adds signed probability error, prediction-to-event-rate ratios, Brier skill against a constant forecast, and sensitivity of ECE to bin count.
+
+For this synthetic grid, the constant forecast is the mean oracle probability within each track. It is the best constant forecast for that known mixture, not a baseline estimated from unseen real-data test labels. Positive Brier skill means improvement over that constant; zero means no improvement. Signed error can cancel, so inspect family-level results too. Our events are neutral mathematical events, so their error direction cannot establish the post's claim about adverse-event bias.
+
+### Follow-up: held-out real-data and recalibration study
+
+The completed pilot compared raw Jev Choice/Noul, a training-prevalence constant, logistic regression, and CatBoost on the three selected UCI tasks. The proposed extension expands calibration budgets, methods, and confirmatory populations. Report zero-shot Jev separately from supervised baselines, including their label budgets. Preserve natural prevalence in the final test and exclude outcomes or post-outcome features from prompts. Freeze dataset versions, label mappings, feature descriptions, splits, model IDs, and option ordering before inference. Public benchmark contamination remains a limitation.
+
+Use disjoint training/development, calibration, and test records, grouped by entity or ordered by time where appropriate. Include calibration budgets of 60, **120**, 250, and 500 independent records where feasible. Repeated outcomes on the current 63 prompts do not supply 120 independent calibration contexts. Select methods on development data; compare raw scores with temperature, intercept-plus-slope logistic, beta, and isotonic calibration on untouched test data. The [2017 temperature-scaling paper](https://proceedings.mlr.press/v70/guo17a.html) and [2017 beta-calibration paper](https://proceedings.mlr.press/v54/kull17a.html) motivate candidate arms; neither is identified as the post's method.
+
+Report paired changes in log loss and Brier score, Brier skill against training prevalence, AUROC/AUPRC for discrimination, signed prevalence error, calibration intercept/slope, and reliability with multiple bin counts. Include per-dataset and subgroup results, repeated calibration-set draws, paired entity-level bootstrap intervals, and fit failures. Compare positive and negative event wording for the same records to test directional bias without changing the target.
+
+A held-out improvement from recalibration is evidence about the tested population, not proof that a model is uncalibrated everywhere. A population-calibrated forecast cannot improve its expected strictly proper score using only a deterministic remapping of that forecast, but finite-sample measurements can fluctuate and fitted corrections can overfit. Conformal prediction, mentioned in the quoted discussion, would require a separate prediction-set coverage experiment; it does not itself establish calibrated event probabilities.
+
+**Status:** notebook 04 completed the synthetic and three-dataset UCI pilot, including supervised baselines and 120-record held-out recalibration. Broader budget/method sweeps and the ConfTuner training extension remain proposed. None of these results independently reproduces the external post.

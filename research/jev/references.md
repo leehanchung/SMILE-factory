@@ -1,12 +1,14 @@
 # References and attributions
 
-Consolidated 2026-09-18 from the RE Jev research conversation and five source notes. Links on repository main branches are mutable. No commits or checkpoint artifacts were downloaded/pinned; pin them before experiments. This is a record of sources considered, not a claim that every endpoint was successfully fetched today.
+Consolidated 2026-09-18 from the RE Jev research conversation and five source notes; ConfTuner review added 2026-09-21. Links on repository main branches are mutable and must be pinned before experiments. R59 records the inspected ConfTuner source commit and checkpoint revisions; checkpoint weights were not downloaded. This is a record of sources considered, not a claim that every endpoint was successfully fetched today.
 
 Evidence classes: papers and inspected code support specific mechanisms; vendor documentation supports interface claims; experiment proposals are ours. Source-reported results have not been reproduced.
 
 ## Attributions
 
 Credit Nandakishor Mukkunnoth and ConvAI Innovations for [Laya](https://laya.convaiinnovations.com/) and its accompanying [open implementation](https://github.com/NandhaKishorM/laya). Its discussion informs our review of typed decisions, calibration under language shift, and model routing. This acknowledges related work; it does not establish historical priority over other systems or imply collaboration. No Laya source code, weights, figures, or datasets have been copied into this project. See R54 for source details.
+
+Credit Yibo Li, Miao Xiong, Jiaying Wu, and Bryan Hooi for ConfTuner and its tokenized Brier objective. Our loss comparisons, event-probability adaptation, and implementation checks are proposed extensions. No ConfTuner code, weights, figures, or training data have been incorporated into this project. See R58–R59.
 
 2026-09-19 addition: the [GLiNER2 benchmark protocol](gliner2-benchmark.md) uses R34, R45, R47, and the runtime source R50 below. Pilot allocations and acceptance gates are proposed experiment choices.
 
@@ -407,3 +409,41 @@ Nandakishor Mukkunnoth / ConvAI Innovations. 2026. [Laya research article](https
 Article read in the browser and repository README reviewed 2026-09-19. First-party engineering article and implementation documentation, not a peer-reviewed evaluation. Calibration, speed, and comparative results remain author-reported. The website's historical-priority claims were not independently established. Recheck repository and artifact licenses before any future reuse; this entry records scholarly attribution only.
 
 Used in: [Laya literature survey](architecture.md#literature-survey-laya), [attributions](#attributions)
+
+## R55 — Valeriy M. real-data Jev calibration diagnostic
+
+[User-supplied X post](https://x.com/predict_addict/status/2101404670488875042), 2026-09-19. Read in the browser. Reports eight datasets / 16,500 predictions, failures on seven datasets, roughly tenfold miscalibration versus CatBoost, directional overprediction, and about three-quarters error reduction with 120 calibration records. Claims are not independently reproduced. Exact datasets, splits, metric definitions, model/interface, and recalibration method are unresolved from the visible post; do not infer the method from its year. Motivates constant and supervised baselines, signed bias checks, and held-out calibration-budget experiments.
+
+Used in: calibration notebook and [Monte Carlo study](monte-carlo-calibration.md).
+
+## R56 — Murphy decomposition and normalized reliability figure
+
+Allan H. Murphy (1973), [A New Vector Partition of the Probability Score](https://doi.org/10.1175/1520-0450%281973%29012%3C0595:ANVPOT%3E2.0.CO;2). Decomposes forecast scores into uncertainty, reliability, and resolution. We explicitly report the residual between raw and binned forecast scores.
+
+The image attached to [R55](https://x.com/predict_addict/status/2101404670488875042) was inspected directly. Its title is “Murphy decomposition of the Brier score, pooled test folds”; its vertical measure is reliability / uncertainty. Its legend distinguishes Jev zero-shot, Jev few-shot, and CatBoost (80% train). Binning, exact folds, and few-shot construction remain unspecified. Our synthetic figure uses known event probabilities, ten equal-width bins, and Choice/Noul; it is an adaptation of the metric and layout, not a reproduction of those results.
+
+## R57 — Selected UCI real-data benchmarks
+
+- [South German Credit](https://archive.ics.uci.edu/dataset/522/south+german+credit), 2019, DOI 10.24432/C5X89F. Corrected coding for 1,000 historical credit records; adverse outcomes oversampled to 30%.
+- Moro, Rita, and Cortez, [Bank Marketing](https://archive.ics.uci.edu/dataset/222/bank+marketing), 2014, DOI 10.24432/C5K306. Selected `bank-additional-full.csv`: 41,188 records; do not confuse it with the older 45,211-record table.
+- Sakar and Kastro, [Online Shoppers Purchasing Intention Dataset](https://archive.ics.uci.edu/dataset/468/online+shoppers+purchasing+intention+dataset), 2018, DOI 10.24432/C5F88Q. 12,330 sessions, including 1,908 purchases.
+
+UCI lists all three under CC BY 4.0. Downloads were profiled locally; archive and table hashes are recorded in `uci-datasets.json`. See [UCI study](uci-calibration-plan.md). [Notebook 04](notebooks/04_jev_calibration_report.ipynb) now contains Jev inference, logistic-regression/CatBoost baselines, and held-out recalibration for all three. These are our pilot results, not a reproduction of R55.
+
+## R58 — ConfTuner (NeurIPS 2025)
+
+Yibo Li, Miao Xiong, Jiaying Wu, and Bryan Hooi. 2025. **ConfTuner: Training Large Language Models to Express Their Confidence Verbally.** Advances in Neural Information Processing Systems 38, Main Conference Track. DOI [10.52202/085713-1783](https://doi.org/10.52202/085713-1783).
+
+[Official proceedings](https://proceedings.neurips.cc/paper_files/paper/2025/hash/4d4f7cf206bb00f9a38a5b6ae92cf79a-Abstract-Conference.html), [conference PDF](https://proceedings.neurips.cc/paper_files/paper/2025/file/4d4f7cf206bb00f9a38a5b6ae92cf79a-Paper-Conference.pdf), [arXiv v2](https://arxiv.org/abs/2508.18847v2).
+
+Reviewed 2026-09-21. Source for the tokenized Brier objective, verbal-confidence theorem, QA benchmark design, and source-reported calibration results. The black-box example trains an assessor of GPT-4o answers; it does not fine-tune GPT-4o. Reported results concern answer correctness and have not been reproduced here. Our event-probability extension and controlled loss comparisons are proposals.
+
+Used in: [ConfTuner study](conftuner-benchmark.md), [experiment plan](experiments.md#conftuner-confidence-training-comparison), [calibration](calibration.md#confidence-training-with-conftuner), [training data](training-data.md#conftuner-answer-correctness-records), [literature survey](architecture.md#literature-survey-conftuner), and [Monte Carlo extension](monte-carlo-calibration.md#conftuner-training-extension).
+
+## R59 — ConfTuner implementation and checkpoints
+
+[Official repository at inspected commit](https://github.com/liushiliushi/ConfTuner/tree/faedc8c1bf1dbd856a5146637247fe650eb3c4e3), reviewed 2026-09-21. Code was inspected without executing training or inference. The [audit](conftuner-benchmark.md#4-reproduction-checks-from-the-released-code) links individual source paths and records confidence-grid scaling, tokenization, default validation/test reuse, loss selection, dependency, parsing, and checkpoint-loading issues. These are observations about this snapshot, not proof that the published experiments used every default path.
+
+Verified checkpoint revisions: [ConfTuner-LLaMA](https://huggingface.co/liushiliushi/ConfTuner-LLaMA/tree/f4074f4ecfd7773e81ccd7e60b2a1d21d8ef367d), [ConfTuner-Qwen](https://huggingface.co/liushiliushi/ConfTuner-Qwen/tree/dff6fa9a519470c040e3f1f11eda85193695afba), and [ConfTuner-Ministral](https://huggingface.co/liushiliushi/ConfTuner-Ministral/tree/a2f5775b0d3a51b1c7bbbe4fd9b5cc2fea247be3). Model cards and artifact metadata were inspected, not weights. The repository lacks a root license file; derivative model-card licensing detail varies and base-model terms still need to be recorded for any reuse.
+
+Used in: [ConfTuner reproduction checks](conftuner-benchmark.md#4-reproduction-checks-from-the-released-code) and [attributions](#attributions).

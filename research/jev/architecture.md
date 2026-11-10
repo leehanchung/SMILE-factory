@@ -26,6 +26,12 @@ The author's research article reports domain-specific temperature calibration re
 
 Research implication: Laya motivates comparisons of raw versus calibrated probabilities, language-conditioned reliability, and routing decisions under shift. Before evaluating it, inspect score semantics, calibration splits, checkpoint revisions, and candidate truncation. Include routing and model loading in latency accounting. Our [benchmark](gliner2-benchmark.md) and [Monte Carlo study](monte-carlo-calibration.md) provide the evaluation protocol. Credit and provenance are recorded in [R54 and attributions](references.md#attributions); no Laya code or weights have been incorporated.
 
+## Literature survey: ConfTuner
+
+[Li, Xiong, Wu, and Hooi (NeurIPS 2025)](https://proceedings.neurips.cc/paper_files/paper/2025/hash/4d4f7cf206bb00f9a38a5b6ae92cf79a-Abstract-Conference.html) introduce ConfTuner, a loss for learning verbal answer-correctness confidence from binary correctness labels. It is a training-objective precedent, not evidence for shared-input question isolation or Jev's internal architecture.
+
+Our [review and experiment protocol](conftuner-benchmark.md) distinguishes confidence-token probability from the numerical confidence it represents, audits the released implementation, and adds matched ordinary-Brier/log-loss and post-hoc controls. Applying the method to coin, dice, or UCI event probabilities is a separate adaptation. A black-box Jev comparison would train an additional answer assessor, with its own cost, rather than update Jev's inaccessible weights. See R58–R59 in [references](references.md).
+
 ## Code entry points
 
 - GLiNER2 schema packing: [`SchemaTransformer`](https://github.com/fastino-ai/GLiNER2/blob/main/gliner2/processor.py).
