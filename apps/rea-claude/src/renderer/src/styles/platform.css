@@ -1,0 +1,32 @@
+/*
+ * Platform overrides — design-system.md §5.6 (html[data-platform] for win32
+ * window-controls-overlay and linux native frame) and §5.1 (macOS is the
+ * default when the attribute is absent). --wco-clearance is in tokens.css.
+ */
+
+/* No traffic lights to clear on Windows / Linux. */
+html[data-platform="win32"] .rail__top,
+html[data-platform="linux"] .rail__top {
+  padding-top: 12px;
+}
+
+html[data-platform="win32"] .pane__bar {
+  padding-right: var(--wco-clearance);
+}
+
+/* Symmetric so the title stays window-centred. */
+html[data-platform="win32"] .labbar {
+  padding: 0 var(--wco-clearance);
+}
+html[data-platform="linux"] .labbar {
+  padding: 0 16px;
+}
+
+html[data-platform="win32"] .signup-shell__bar,
+html[data-platform="linux"] .signup-shell__bar {
+  height: 56px;
+  padding: 12px 16px;
+}
+html[data-platform="win32"] .signup-shell__bar {
+  padding-right: var(--wco-clearance);
+}

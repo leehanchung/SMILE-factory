@@ -1,0 +1,25 @@
+/*
+ * rea-claude renderer stylesheet entry.
+ * Implements docs/spec/design-system.md (all sections). Import this once from
+ * the React entry (main.tsx). Order matters: fonts → tokens → base, then
+ * component groups, then motion and platform overrides last so they win ties.
+ */
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./base.css";
+@import "./buttons.css";
+@import "./menu.css";
+@import "./forms.css";
+@import "./feedback.css";
+@import "./banners.css";
+@import "./hostkey.css";
+@import "./rail.css";
+@import "./picker.css";
+@import "./labs.css";
+@import "./settings.css";
+@import "./signin.css";
+@import "./labview.css";
+@import "./chrome.css";
+@import "./viewer.css";
+@import "./motion.css";
+@import "./platform.css";

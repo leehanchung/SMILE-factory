@@ -1,0 +1,75 @@
+/*
+ * Global base — design-system.md §2.8 (reset, html/body, links, inline code,
+ * scrollbar) plus the :focus-visible ring (§8.1, deviation X5 in
+ * docs/architecture.md: the original has no focus-visible rules).
+ */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--alabaster);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums slashed-zero;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Links: ember, underlined. */
+a {
+  color: var(--ember);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+a:hover {
+  color: var(--ember-700);
+}
+
+/* Inline code. */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--card);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* Scrollbar — 10px transparent track with an ~8px sandstone pill.
+ * Firefox fallback is gated so it never suppresses the WebKit styling. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--sandstone-200) transparent;
+  }
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  min-width: 48px;
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background-color: var(--sandstone-200);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sandstone-300);
+}
+
+/* X5 (deviation): visible keyboard focus. Inputs that already show a --solar
+ * focus border (.form, .nest, .hostpick__search) override this with
+ * outline: none via higher specificity / later cascade. */
+:focus-visible {
+  outline: 2px solid var(--solar);
+  outline-offset: 2px;
+}

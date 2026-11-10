@@ -1,0 +1,28 @@
+/*
+ * Fonts — design-system.md §3.1 and §8.2; architecture.md decision D6.
+ * Inter substitutes the commercial Suisse Intl (never shipped). Newsreader and
+ * IBM Plex Mono are SIL OFL and loaded from @fontsource, not from the original
+ * app. @fontsource faces use font-display: swap, matching the original.
+ */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-ext-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-ext-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-ext-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/inter/latin-ext-700.css";
+
+@import "@fontsource/newsreader/latin-400.css";
+@import "@fontsource/newsreader/latin-ext-400.css";
+@import "@fontsource/newsreader/latin-500.css";
+@import "@fontsource/newsreader/latin-ext-500.css";
+@import "@fontsource/newsreader/latin-600.css";
+@import "@fontsource/newsreader/latin-ext-600.css";
+@import "@fontsource/newsreader/latin-700.css";
+@import "@fontsource/newsreader/latin-ext-700.css";
+
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-ext-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/ibm-plex-mono/latin-ext-500.css";

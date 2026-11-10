@@ -1,0 +1,111 @@
+/*
+ * Overflow menu — design-system.md §4.3 (.ov__btn trigger) and §4.4
+ * (OverflowMenu: .ov, .ov__backdrop, .ov__menu, .ov__item, .ov__context).
+ * Keyframes ovMenuIn / ovMenuInUp live in motion.css (§6).
+ */
+.ov {
+  position: relative;
+  display: inline-flex;
+}
+
+/* 28px square icon trigger with the .btn quiet hover. */
+.ov__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  line-height: 1;
+  color: var(--sandstone);
+  background: var(--paper);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition:
+    border-color 0.12s var(--ease-out),
+    color 0.12s var(--ease-out),
+    background 0.12s var(--ease-out),
+    transform 0.09s var(--ease-out);
+}
+.ov__btn:hover {
+  color: var(--alabaster);
+  border-color: var(--juniper-500);
+}
+.ov__btn:active {
+  transform: scale(0.97);
+}
+
+/* Transparent click-catcher (also reused by the icon picker). */
+.ov__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-backdrop);
+}
+
+/* The app's only shadowed surface. */
+.ov__menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  min-width: 162px;
+  padding: 5px;
+  background: var(--paper);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-menu);
+  transform-origin: top right;
+}
+/* Flipped above the trigger when it would clip the window bottom. */
+.ov__menu--up {
+  top: auto;
+  bottom: 36px;
+  transform-origin: bottom right;
+}
+
+.ov__item {
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--alabaster);
+  text-align: left;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.ov__item:hover {
+  background: var(--card);
+}
+.ov__item--danger {
+  color: var(--danger);
+}
+
+/* Non-interactive header naming what the menu acts on. */
+.ov__context {
+  max-width: 240px;
+  padding: 4px 11px 5px;
+  font-size: 11px;
+  color: var(--sandstone-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Second header line (version read-out). */
+.ov__context-sub {
+  margin-top: 1px;
+  margin-bottom: 4px;
+  color: var(--sandstone-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--juniper-100);
+}
+
+/* An open row menu stacks above the rows below it. */
+.labrow:has(.ov__menu) {
+  position: relative;
+  z-index: var(--z-row-menu-open);
+}
