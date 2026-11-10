@@ -1,0 +1,46 @@
+name: pr-title
+
+# Enforces Conventional Commits on PR titles for every project in the
+# monorepo. main is squash-merge only and uses the PR title as the commit
+# subject, so this check is what keeps main's history conventional.
+# Individual branch commits are checked locally by the
+# conventional-pre-commit commit-msg hook (.pre-commit-config.yaml).
+#
+# Keep the type list in sync with .pre-commit-config.yaml and CLAUDE.md.
+# Branch protection on main should require the `pr-title-lint` check.
+
+on:
+  pull_request:
+    # ``edited`` re-runs the check when only the title changes.
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # ``prd`` is a local type for adding or revising Product
+          # Requirements Documents under any ``prd/`` directory.
+          types: |
+            feat
+            fix
+            docs
+            refactor
+            test
+            chore
+            ci
+            build
+            perf
+            style
+            revert
+            prd
+          requireScope: false
+          subjectPattern: ^[A-Za-z].+[^.]$
+          subjectPatternError: |
+            PR title subject must start with a letter and not end with a period.
