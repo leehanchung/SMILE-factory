@@ -1,0 +1,13 @@
+{
+  "name": "rea-astra",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Recovered Silico workspace UI with an independent real research backend",
+  "scripts": {
+    "build": "python3 scripts/build_hosted.py",
+    "start": "python3 -m backend.app",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
