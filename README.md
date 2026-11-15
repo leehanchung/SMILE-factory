@@ -28,7 +28,7 @@ It's all one thing — eight zones of the same factory:
 
 The deep-research loop is the spine: `data/datagen` → `eval` → `training/rl_deepresearch`,
 all over the shared `libs/dr_agent`. Architecture + rationale in
-[prd/deep-research-training-eval-infra.md](prd/deep-research-training-eval-infra.md).
+[docs/prd/deep-research-training-eval-infra.md](docs/prd/deep-research-training-eval-infra.md).
 Two zones have their own walkthroughs below: **[Delulu](#delulu)** (the active
 orchestrator) and **[LoRA-Instruct](#lora-instruct)**.
 
@@ -50,7 +50,7 @@ Discord bot that dispatches Claude Code tasks to ephemeral Modal Sandboxes.
 The bot process itself is tiny (~50MB RAM) and just dispatches jobs — all
 heavy lifting (and all Claude Code execution) happens inside Modal sandboxes.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
+See [docs/delulu-architecture.md](docs/delulu-architecture.md) for the full design.
 
 ### Architecture
 
@@ -422,13 +422,12 @@ available targets.
 
 The workflow at
 [`.github/workflows/delulu-deploy.yaml`](.github/workflows/delulu-deploy.yaml)
-handles both continuous integration and continuous deployment in six
-jobs:
+handles both continuous integration and continuous deployment in five
+jobs. PR titles are checked separately by
+[`.github/workflows/pr-title.yml`](.github/workflows/pr-title.yml)
+(`pr-title-lint`, Conventional Commits, every PR in the repo); see
+[`docs/monorepo-conventions.md`](docs/monorepo-conventions.md#commit-messages-and-pr-titles).
 
-- **`pr-title-lint`** — enforces Conventional Commits on PR titles.
-  Since main uses squash-merge with the PR title as the commit subject,
-  this is what keeps main's history conventional — no commit-msg hook
-  required.
 - **`changes`** — a `dorny/paths-filter` job that emits four outputs
   (`bot` / `bot_runtime` / `sandbox` / `sandbox_runtime`) driving
   which CI and deploy jobs run. The `_runtime` variants exclude
@@ -450,7 +449,7 @@ jobs:
   the bot against a stale Modal function), and the event not being a
   `pull_request`.
 
-CI + `pr-title-lint` run on every PR; CD runs only on push to main.
+CI runs on every PR; CD runs only on push to main.
 Modal deploys happen on the GH runner with a dedicated CI-only token,
 not the droplet's runtime token — the droplet's role is now narrowed
 to rebuilding the bot container.
@@ -508,7 +507,7 @@ without pushing a commit:
 
 1. GitHub → **Actions** tab → **delulu** → **Run workflow** → pick
    `main` → **Run workflow**.
-2. Watch the six jobs run in order:
+2. Watch the five jobs run in order:
    - `changes` classifies which files changed
    - `delulu-discord-ci` and `delulu-sandbox-modal-ci` run in parallel
      on their own runners
@@ -516,8 +515,6 @@ without pushing a commit:
      Modal app from the GH runner
    - `delulu-discord-deploy` chains after discord CI and the Modal
      deploy, SSHing into the droplet to rebuild the bot container
-   - `pr-title-lint` only runs on `pull_request` events, so on a
-     manual dispatch it's skipped
 3. On the droplet, `docker ps` should show the `disco` container running,
    and `journalctl CONTAINER_NAME=disco --since "5 minutes ago"` (or
    `make -C apps/delulu_discord logs`) should show a clean startup.
@@ -607,11 +604,12 @@ SMILE-factory/
 │       └── src/delulu_sandbox_modal/
 │           └── app.py                      # Modal App, image, volume, secret, run_claude_code
 │
-├── training/                               # LLM training recipes (currently: lora_instruct)
+├── training/                               # LLM training recipes (lora_instruct SFT + rl_deepresearch RL)
 ├── Makefile                                # top-level dispatcher (check / deploy-bot / deploy-modal / deploy-all)
-├── ARCHITECTURE.md                         # Full design doc
 ├── README.md                               # this file
-├── prd/                                    # repo-wide planning docs (per-app plans live under apps/<name>/prd/)
+├── docs/                                   # all repo docs: delulu-architecture.md (design), usage, conventions, + prd/ plan docs
+│   └── prd/                                # repo-wide planning docs (per-app plans live under apps/<name>/prd/)
+├── .claude/                                # Claude Code config: commands/ agents/ hooks/ settings.json
 └── infra/managed-agents/                   # sibling infra work (unrelated to delulu)
 ```
 

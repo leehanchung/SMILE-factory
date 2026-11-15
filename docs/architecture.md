@@ -17,7 +17,8 @@ training/lora_instruct/
 ├── finetune.py              # Main training entrypoint (uses python-fire CLI)
 ├── utils/
 │   ├── prompter.py          # Prompt template loading and formatting
-│   └── callbacks.py         # Streaming generation helpers (Stream, Iteratorize)
+│   ├── callbacks.py         # Streaming generation helpers (Stream, Iteratorize)
+│   └── monitoring.py        # Training-monitoring callback (GPU mem, perplexity, sample gens)
 ├── inference/
 │   ├── bench.py             # Async LLM endpoint benchmarking tool
 │   ├── deploy_local.sh      # Local deployment script
@@ -34,11 +35,11 @@ training/lora_instruct/
 ### Fine-tuning (`training/lora_instruct/finetune.py`)
 
 - **Entry point**: `fire.Fire(train)` — all training params are CLI flags.
-- **Model loading**: `AutoModelForCausalLM` with bfloat16, optional 8-bit quantization via BitsAndBytes.
-- **LoRA**: Applied via `peft.LoraConfig` with configurable rank, alpha, dropout, and target modules (default: `["up_proj"]`).
+- **Model loading**: `AutoModelForCausalLM` with bfloat16, optional 4-bit (nf4) or 8-bit QLoRA quantization via BitsAndBytes (`--bits 4`/`--bits 8`).
+- **LoRA**: Applied via `peft.LoraConfig` with configurable rank, alpha, dropout, and target modules (default: `all-linear` — PEFT auto-targets every linear layer).
 - **Data**: Loads from HuggingFace Hub or local JSON/JSONL files.
 - **Distributed training**: Supports DDP via `torchrun` with `WORLD_SIZE` and `LOCAL_RANK` env vars.
-- **`TrainConfig` dataclass**: Structured config (currently used by `setup_model()`, but `train()` function uses flat kwargs).
+- **Monitoring**: `MonitorCallback` (`utils/monitoring.py`) reports peak GPU memory, eval perplexity, and sample generations, with optional early stopping.
 - **`TokenizerHelper`**: Handles prompt tokenization and optional input masking (`train_on_inputs=False`).
 
 ### Prompt System (`training/lora_instruct/utils/prompter.py`)

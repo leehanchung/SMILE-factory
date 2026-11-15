@@ -11,13 +11,19 @@ Each project owns its own Makefile and tooling -- there is no repo-wide `poetry`
 
 ## Docs
 
+All docs live under [`docs/`](docs/README.md) (reference + plan docs; cross-cutting PRDs under `docs/prd/`):
+
+- [Docs index](docs/README.md) -- full map of what lives where
+- [Delulu architecture](docs/delulu-architecture.md) -- the active orchestrator's design (Discord -> Claude Code -> Modal sandboxes)
 - [Monorepo conventions](docs/monorepo-conventions.md) -- how pre-commit, CI, branch protection, and per-app Makefiles interact in this multi-pyproject layout. Read this before touching `.pre-commit-config.yaml`, `.github/workflows/delulu-deploy.yaml`, or any root-level tooling
-- [Architecture](docs/architecture.md) -- project structure, key components, and dependencies
 - [Development](docs/development.md) -- setup, linting, testing, training, and code conventions
+- [LoRA-Instruct architecture](docs/architecture.md) -- the SFT recipe's design (`training/lora_instruct`)
 
 ## Git workflow
 
 - Never commit to `main` -- always branch, push, open a PR.
 - Branch: `<type>/<slug>` (e.g. `feat/streaming-renderer`, `fix/dispatcher-timeout`).
-- Commits + PR titles: [Conventional Commits](https://www.conventionalcommits.org/) (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `style`, plus a local `prd` type for changes under any `prd/` directory -- root or per-app). Squash-merge uses the PR title, so it must be conventional.
+- Commits + PR titles: [Conventional Commits](https://www.conventionalcommits.org/) (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `style`, plus a local `prd` type for changes under a `prd/` directory -- cross-cutting `docs/prd/` or per-app `apps/<app>/prd/`). Squash-merge uses the PR title, so it must be conventional.
 - Only commit, push, or open PRs when explicitly asked. Never merge PRs -- that's a human call.
+
+## Imported Claude Cowork project instructions

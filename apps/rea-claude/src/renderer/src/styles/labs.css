@@ -1,0 +1,195 @@
+/*
+ * Lab list and labs page — design-system.md §4.13 (App labs view, ChooseLab
+ * add-a-lab picker): .lablist / .labrow* rows, .labs__* page header and
+ * section copy, .addacct. Row pills are in feedback.css.
+ * .addlocal and .labs (modifier on .pane__inner) intentionally have no rules
+ * (Observed: none in the original).
+ */
+
+/* Overhangs the text column by 8px per side so hover fills breathe. */
+.lablist {
+  margin: 0 -8px;
+  padding: 0;
+  list-style: none;
+}
+
+.labrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  height: 52px;
+  padding: 0 8px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: background 0.12s var(--ease-out);
+}
+/* Divider inset to align with the text column. */
+.labrow::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: 0;
+  left: 8px;
+  border-bottom: 1px solid var(--juniper-100);
+}
+.labrow:hover {
+  background: var(--card);
+}
+
+.labrow__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  color: var(--sandstone);
+}
+.labrow__name {
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.labrow__name--muted {
+  color: var(--sandstone);
+}
+.labrow__hint {
+  font-size: 11.5px;
+  color: var(--sandstone-400);
+  white-space: nowrap;
+}
+.labrow__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+/* Compact "Open" (modifier on .btn). */
+.labrow__open {
+  padding: 4px 12px;
+  font-weight: 500;
+}
+.labrow__addlink {
+  margin-left: auto;
+  font-size: 13px;
+}
+
+/* Discovered (empty state): not clickable. */
+.labrow--disc {
+  cursor: default;
+}
+.labrow--disc:hover {
+  background: transparent;
+}
+
+/* A real <button> row in the add flow. */
+.labrow--pick {
+  width: 100%;
+  height: auto;
+  min-height: 52px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.labrow--pick:hover {
+  background: var(--card);
+}
+/* Two-line row outside the picker. */
+.labrow--stacked {
+  height: auto;
+  min-height: 52px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+/* Two-line anatomy. */
+.labrow__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.labrow__titlerow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.labrow__host {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--sandstone-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.labrow__chev {
+  flex: 0 0 auto;
+  color: var(--sandstone-400);
+}
+
+/* ── Page header and copy ─────────────────────────────────── */
+.labs__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+.labs__head--tight {
+  margin-bottom: 4px;
+}
+.labs__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.labs__subhead {
+  margin: 30px 0 2px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--sandstone);
+}
+.labs__subhead--first {
+  margin-top: 0;
+}
+.labs__sub {
+  max-width: 64ch;
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--sandstone);
+}
+.labs__question {
+  margin: 0 0 16px;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--sandstone);
+}
+.labs__nudge {
+  font-size: 12px;
+  color: var(--sandstone-400);
+}
+
+/* ── Add account (empty picker) ───────────────────────────── */
+.addacct {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 18px;
+}
+.addacct .btn {
+  margin-left: auto;
+}
+.addacct__note {
+  margin: 14px 0 0;
+}

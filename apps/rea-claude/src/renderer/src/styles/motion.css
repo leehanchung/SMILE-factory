@@ -1,0 +1,105 @@
+/*
+ * Motion — design-system.md §6 (keyframes, entrance assignments,
+ * reduced-motion block) and §4.8 (loading marks / sweep / splash pulse).
+ * "ease-out" everywhere means var(--ease-out).
+ */
+
+@keyframes viewFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes viewCardIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes viewRiseIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ovMenuIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+}
+@keyframes ovMenuInUp {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes flamePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes openTrackSweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+@keyframes viewer-splash-pulse {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 0.38; }
+}
+
+/* View entrances: full-page views fade; centred cards rise and settle. */
+.shell,
+.picker,
+.pane__inner,
+.opening {
+  animation: viewFadeIn var(--dur-view) var(--ease-out) backwards;
+}
+.gate {
+  animation: viewCardIn var(--dur-view) var(--ease-out) backwards;
+}
+.panel {
+  animation: viewRiseIn 180ms var(--ease-out) backwards;
+}
+/* Re-keyed per status text so each new phase fades in. */
+.opening__phase {
+  animation: viewFadeIn 180ms var(--ease-out) backwards;
+}
+.ov__menu {
+  animation: ovMenuIn 140ms var(--ease-out) backwards;
+}
+.ov__menu--up {
+  animation-name: ovMenuInUp;
+}
+/* The OS sheet animation is the settings sheet's entrance. */
+.smodal .pane__inner {
+  animation: none;
+}
+
+/* Loading indicators. */
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+.opening__logo,
+.labcover__mark {
+  animation: flamePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.opening--loading .opening__logo {
+  animation: none;
+}
+.opening__track::after {
+  animation: openTrackSweep 1.7s var(--ease-out) infinite;
+}
+.viewer-splash img {
+  animation: viewer-splash-pulse 1.6s ease-in-out infinite;
+}
+
+/* Reduced motion — exactly the observed list. Not covered (as observed):
+ * .picker fade, .spinner, .opening__track::after sweep, .viewer-splash img. */
+@media (prefers-reduced-motion: reduce) {
+  .gate,
+  .shell,
+  .pane__inner,
+  .opening,
+  .panel,
+  .ov__menu,
+  .labcover__mark,
+  .opening__logo,
+  .opening__phase {
+    animation: none;
+  }
+  .btn:active:not(:disabled),
+  .ov__btn:active {
+    transform: none;
+  }
+}

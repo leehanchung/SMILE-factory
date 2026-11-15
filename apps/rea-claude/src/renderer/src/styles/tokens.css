@@ -1,0 +1,79 @@
+/*
+ * Tokens — design-system.md §2.1 (color), §2.2 (font stacks), §2.3 (radius),
+ * §2.4 (elevation / z-index), §2.5 (motion), §2.6 (platform tokens).
+ * Light theme only: the original ships no dark theme, prefers-color-scheme
+ * query or data-theme attribute (§1, §7.5.1), so none is defined here.
+ */
+:root {
+  /* Ink and muted text */
+  --alabaster: #1d272a;
+  --sandstone: #7b7b7b;
+  --sandstone-200: #d6d6d6;
+  --sandstone-300: #acacac;
+  --sandstone-400: #999999;
+
+  /* Borders / dividers */
+  --juniper-100: #efefef;
+  --juniper-200: #e3e3e3;
+  --juniper: #b4b4b4;
+  --juniper-500: #9c9c9c;
+
+  /* Accent */
+  --ember: #c4650d;
+  --ember-50: #fdf1e7;
+  --ember-700: #854208;
+  --solar: #d07533;
+
+  /* Surfaces */
+  --card: #f7f7f3;
+  --card-hover: #eeeee8;
+  --card-50: #fdfdfc;
+  --paper: #ffffff;
+  --selected: #e3e3db;
+
+  /* Status (success-* declared but unused, kept for parity) */
+  --success: #2e6e4e;
+  --success-50: #e8f3ec;
+  --success-100: #c8e1d2;
+  --warning: #a66e0e;
+  --warning-soft: #ffebaa;
+  --warning-border: #e2c98a;
+  --danger: #8c3a2c;
+  --danger-soft: #f5dcd7;
+  --danger-border: #d9a99e;
+
+  /* Font stacks — "Inter" replaces "Suisse Intl" at the head (§8.2). */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Newsreader", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Radius */
+  --radius-control: 4px;
+  --radius-panel: 6px;
+
+  /* Elevation: the single sanctioned shadow (overflow menu), Tailwind shadow-lg. */
+  --shadow-menu: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Z-index scale (§2.4) */
+  --z-backbar: 2;
+  --z-sheet-close: 2;
+  --z-backdrop: 10;
+  --z-menu: 11;
+  --z-row-menu-open: 20;
+
+  /* Motion (§2.5) — merged into one :root block (§8.1). */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-view: 200ms;
+
+  /* Window chrome (§5.4) — must match TITLEBAR_STRIP_HEIGHT / LAB_VIEW_TOP_INSET in main. */
+  --titlebar-h: 32px;
+
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+/* Windows window-controls-overlay clearance (§2.6, §5.6). */
+[data-platform="win32"] {
+  --wco-clearance: calc(
+    100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - 138px)) + 12px
+  );
+}

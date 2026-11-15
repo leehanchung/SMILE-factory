@@ -9,7 +9,7 @@ name: Codex Code Review
 #     billed on the ChatGPT plan. That path is described below; it
 #     needs the droplet/secret token plumbing the API-key path skips.
 #
-# Auth lifecycle (see prd/codex-ci-auth.md for the full design):
+# Auth lifecycle (see docs/prd/codex-ci-auth.md for the full design):
 #
 #   1. The repo owner runs `codex login` once on a trusted local
 #      machine. This produces ~/.codex/auth.json — an OAuth bundle

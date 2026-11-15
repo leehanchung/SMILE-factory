@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Silico · Local research workspace</title><link rel="stylesheet" href="./style.css"><script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="chrome"><a href="/shell/" aria-label="Return to Labs connection manager">‹ &nbsp; Labs</a><span>Research workspace</span><span class="simulation">● Local simulation</span></header>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Research navigation">
+      <a class="brand" href="./">Silico<span class="brand-mark">✳</span></a>
+      <button id="new-thread" class="nav-button primary-nav"><span>＋</span> New thread <kbd>⌘ K</kbd></button>
+      <button id="reports-nav" class="nav-button"><span>▤</span> Reports <span id="report-count" class="count">0</span></button>
+      <div class="section-label">Threads <button id="new-folder" class="icon-button" title="Create folder" aria-label="Create folder">＋</button></div>
+      <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search threads" aria-label="Search threads"></label>
+      <label class="sr-only" for="folder-filter">Filter threads by folder</label><select id="folder-filter" class="folder-filter"><option value="all">All folders</option></select>
+      <nav id="thread-list" class="thread-list" aria-label="Saved threads"></nav>
+      <div class="sidebar-bottom"><button id="export-all" class="export-all">↥ &nbsp; Export workspace JSON</button><div class="identity"><span class="avatar">D</span><span>Demo workspace<small>Local · stored in this browser</small></span></div></div>
+    </aside>
+    <main id="main">
+      <section id="research-view" class="research-view">
+        <div id="thread-toolbar" class="thread-toolbar" hidden><h1 id="thread-title"></h1><div><button id="rename-thread" class="quiet-button">Rename</button><button id="export-thread" class="quiet-button">Export</button><button id="delete-thread" class="quiet-button">Delete</button></div></div>
+        <div id="messages" class="messages" aria-live="polite" aria-label="Conversation"></div>
+        <div id="welcome" class="welcome"><h1>What do you want to research?</h1></div>
+        <div class="composer-area">
+          <form id="composer" class="composer">
+            <label class="sr-only" for="prompt">Research question</label><textarea id="prompt" maxlength="20000" rows="4" placeholder="Describe what you want to explore. Silico can run experiments, create diagrams, and synthesize results." required></textarea>
+            <div id="attachments" class="attachments"></div>
+            <div class="composer-tools"><div class="tools-left"><button type="button" id="attach" class="tool" aria-label="Add attachment metadata">＋ <span>Add files</span></button><button type="button" id="code-prompt" class="tool" aria-label="Insert an experiment planning prompt">&lt;/&gt;</button><button type="button" id="models-info" class="tool" aria-label="About simulated models">◈</button></div><div class="tools-right"><label class="auto-control"><input id="auto-research" type="checkbox" checked><span class="switch" aria-hidden="true"></span> Auto-research</label><label class="sr-only" for="model">Simulated research model</label><select id="model"></select><button class="send" type="submit" aria-label="Send research question">↑</button></div></div>
+          </form>
+          <input id="file-input" type="file" multiple hidden>
+          <div class="context-row"><label><span aria-hidden="true">⌘</span><select id="repository" aria-label="Repository context"><option>No repository</option><option>Example research repo (synthetic)</option></select></label><label><span aria-hidden="true">▱</span><select id="thread-folder" aria-label="Thread folder"><option value="">No folder</option></select></label></div>
+          <div id="suggestions" class="suggestions"><button data-prompt="Help me turn my research idea into a measurable question and investigation plan.">Describe your research <span>↗</span></button><button data-prompt="Plan how to replicate a paper, including its baseline, data, metrics, and expected limitations.">Replicate a paper <span>↗</span></button><button data-prompt="Outline criteria and a research process for finding an appropriate open source model.">Find an open source model <span>↗</span></button></div>
+          <p id="status" class="status" role="status">Local simulation · No model called · Attachments stay on your device</p>
+        </div>
+      </section>
+      <section id="reports-view" class="reports-view" hidden><div class="reports-heading"><div><p class="eyebrow">YOUR RESEARCH</p><h1>Reports</h1><p>Planning outlines from your local simulated conversations.</p></div></div><div id="reports-list"></div></section>
+    </main>
+  </div>
+</body>
+</html>

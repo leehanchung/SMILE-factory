@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "composite": true, "lib": ["ES2023", "DOM", "DOM.Iterable"], "jsx": "react-jsx", "types": ["vite/client"] },
+  "include": ["src/renderer/src/**/*", "src/preload/*.d.ts", "src/shared/**/*", "tests/renderer/**/*"]
+}

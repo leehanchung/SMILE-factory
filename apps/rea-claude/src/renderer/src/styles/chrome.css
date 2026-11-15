@@ -1,0 +1,75 @@
+/*
+ * Window chrome — design-system.md §5.4 (drag regions: .dragstrip) and §5.5
+ * (TitlebarStrip .labbar: 32px strip, symmetric 92px traffic-light gutters,
+ * back/forward nav). Other drag regions (.rail__top, .pane__bar,
+ * .signup-shell__bar) are declared next to their components;
+ * platform variants are in platform.css.
+ */
+
+/* 32px drag strip for full-window views outside the shell. */
+.dragstrip {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--titlebar-h);
+  -webkit-app-region: drag;
+}
+
+/* Lab titlebar strip; the native Lab view sits flush below (no border). */
+.labbar {
+  --mac-traffic-gutter: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--titlebar-h);
+  padding: 0 var(--mac-traffic-gutter);
+  background: var(--paper);
+  -webkit-app-region: drag;
+}
+/* The original asks for weight 300, which rendered as 400 (no 300 Suisse face).
+ * Inter ships a real 300, so 400 is used to match the original's appearance
+ * (design-system.md §7.4, §8.2). */
+.labbar__title {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--sandstone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.labbar__nav {
+  position: absolute;
+  top: 0;
+  left: var(--mac-traffic-gutter);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--titlebar-h);
+  -webkit-app-region: no-drag;
+}
+.labbar__navbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--sandstone);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.labbar__navbtn:hover:not(:disabled) {
+  color: var(--alabaster);
+  background: var(--card-hover);
+}
+.labbar__navbtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}

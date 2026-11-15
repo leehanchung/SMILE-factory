@@ -1,8 +1,0 @@
-{
-  "name": "code-review",
-  "description": "Advisory PR code review scoped to the SMILE-factory monorepo. Approve-or-comment only (never request-changes), submits one formal review via `gh pr review --body-file`.",
-  "version": "0.1.0",
-  "author": {
-    "name": "leehanchung"
-  }
-}

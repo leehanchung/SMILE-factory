@@ -1,7 +1,7 @@
 .PHONY: help check lora-check dr-check deploy-bot deploy-modal deploy-all
 
 APPS := apps/delulu_discord apps/delulu_sandbox_modal
-# Deep-research training+eval projects (uv-based; see prd/deep-research-training-eval-infra.md)
+# Deep-research training+eval projects (uv-based; see docs/prd/deep-research-training-eval-infra.md)
 DR_PROJECTS := libs/dr_agent services/search_server data/datagen training/rl_deepresearch
 
 help:
@@ -23,7 +23,7 @@ check:
 	$(MAKE) -C apps/delulu_sandbox_modal check
 
 lora-check:
-	cd training/lora_instruct && poetry run ruff check .
+	cd training/lora_instruct && uv run ruff check .
 
 dr-check:
 	@for p in $(DR_PROJECTS); do echo "== $$p =="; $(MAKE) -C $$p check || exit 1; done

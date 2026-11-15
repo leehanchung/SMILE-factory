@@ -1,0 +1,339 @@
+{
+  "generated_by": "rea-agents analyze-javascript-application (out/main/index.js, out/preload/index.js, out/preload/lab.js)",
+  "target": {
+    "app": "Silico.app 0.137.0",
+    "app_code_sha256": "798b76d64031d1bc8b43da75a7dcccfa2b60ab940400e1469f64f1212cb8ae66"
+  },
+  "evidence_id": "ev_4ae4b4f626afa434e11738906b31fe23f932c54fdcbc58bb37277b4716839f97",
+  "summary": {
+    "browser_windows": 4,
+    "explicit_web_preferences": 9,
+    "preload_entrypoints": 3,
+    "context_bridge_apis": 2,
+    "exposed_api_members": 0,
+    "ipc": {
+      "operations": 133,
+      "literal_channels": 77,
+      "dynamic_channel_operations": 1,
+      "renderer_transmissions": 55,
+      "renderer_listeners": 24,
+      "main_handlers": 54,
+      "paired_renderer_transmissions": 55,
+      "ambiguous_renderer_transmissions": 0,
+      "unpaired_literal_renderer_transmissions": 0
+    },
+    "sender_validation_observations": 0,
+    "utility_processes": 0,
+    "resolved_utility_entrypoints": 0,
+    "native_addon_bindings": 0,
+    "resolved_native_addon_bindings": 0
+  },
+  "statistics": {
+    "relevant_files": 6,
+    "nested_asar_containers": 0,
+    "text_bytes_read": 155716,
+    "invalid_utf8_files": 0,
+    "parsed_javascript_files": 3,
+    "skipped_javascript_files": 0,
+    "visited_ast_nodes": 41923,
+    "findings": 199,
+    "modules": 0,
+    "parse_failures": 0
+  },
+  "dynamic_channel_observations": 1,
+  "endpoints": [
+    "about:blank",
+    "activation_code",
+    "connect",
+    "new URL(\"/healthz\",e)",
+    "open",
+    "proof",
+    "s"
+  ],
+  "channels": {
+    "app:isDevBuild": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "app:navigate": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "auth:changed": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "auth:expired": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "auth:persistence": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "auth:signIn": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "auth:signOutAll": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "auth:status": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "connections:changed": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "connections:list": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "connections:remove": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "connections:upsert": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "dialog:confirm": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "dialog:pickFile": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:cancel": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:connect": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:down": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:goBack": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:goForward": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:hide": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:hostKey:accept": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:hostKey:scan": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:navstate": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "lab:open": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:opened": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "lab:output": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "lab:phase": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "lab:state": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "lab:status": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:test": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:update": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lab:viewvis": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "labs:focus-held": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "labs:held-elsewhere": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "labs:list": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lastOpened:get": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "lastOpened:set": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "local:detectStacks": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "ping": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "settings:changed": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "settings:get": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "settings:set": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "signup:close": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "signup:closed": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "signup:open": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "signup:opened": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "signup:status": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "silico:badge-counts": [
+      "main:on@out/main/index.js",
+      "renderer:send@out/preload/lab.js"
+    ],
+    "silico:begin-checkout": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/lab.js"
+    ],
+    "silico:begin-github-connect": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/lab.js"
+    ],
+    "silico:begin-mcp-oauth": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/lab.js"
+    ],
+    "silico:checkout-return": [
+      "renderer:on@out/preload/lab.js"
+    ],
+    "silico:foreground": [
+      "renderer:on@out/preload/lab.js"
+    ],
+    "silico:github-connect-return": [
+      "renderer:on@out/preload/lab.js"
+    ],
+    "silico:mcp-oauth-return": [
+      "renderer:on@out/preload/lab.js"
+    ],
+    "silico:navigate": [
+      "renderer:on@out/preload/lab.js"
+    ],
+    "silico:notify": [
+      "main:on@out/main/index.js",
+      "renderer:send@out/preload/lab.js"
+    ],
+    "silico:open-desktop-settings": [
+      "main:on@out/main/index.js",
+      "renderer:send@out/preload/lab.js"
+    ],
+    "silico:open-lab-switcher": [
+      "main:on@out/main/index.js",
+      "renderer:send@out/preload/lab.js"
+    ],
+    "silico:recover-session": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/lab.js"
+    ],
+    "silico:report-issue": [
+      "renderer:on@out/preload/lab.js"
+    ],
+    "silico:shell-event-nudge": [
+      "renderer:on@out/preload/lab.js"
+    ],
+    "silico:shell-events:drain": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/lab.js"
+    ],
+    "silico:take-github-connect-return": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/lab.js"
+    ],
+    "silico:take-mcp-oauth-return": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/lab.js"
+    ],
+    "ssh:addHost": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "ssh:listHosts": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "update:get-state": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "update:install": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "update:state": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "viewer:content-ready": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "viewer:recovery": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "viewer:retry": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "viewer:title": [
+      "renderer:on@out/preload/index.js"
+    ],
+    "window:is-initial": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "window:open-settings-sheet": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ],
+    "window:set-compact": [
+      "main:handle@out/main/index.js",
+      "renderer:invoke@out/preload/index.js"
+    ]
+  }
+}

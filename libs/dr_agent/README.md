@@ -4,19 +4,20 @@ The **shared deep-research agent library** for SMILE-factory. This is the single
 source of truth for the agent loop, the tools, the prompts, and the reward
 scorers — so that **training, evaluation, and serving can never drift**.
 
-It is imported by:
+It is imported by `training/rl_deepresearch/` today; `eval/` and `apps/` are the
+next consumers, sharing the same loop so the three can never drift:
 
 - `training/rl_deepresearch/` — the agent loop is the RL *environment*; the reward
-  registry is the RL *reward*.
-- `eval/` — the same agent loop generates rollouts; the same reward registry scores them.
-- `apps/` — production serving runtimes call the same agent.
+  registry is the RL *reward*. **(imports it today)**
+- `eval/` — the same agent loop generates rollouts; the same reward registry scores them. *(planned)*
+- `apps/` — production serving runtimes call the same agent. *(planned)*
 
 ## Layout
 
 ```
 src/dr_agent/
   agent/      ReAct loop (provider-agnostic) + AgentConfig
-  tools/      one implementation each: search, visit, scholar, python, mcp
+  tools/      search + visit implemented today; scholar, python, mcp planned
   rewards/    flat per-task scorer registry, dispatched by `data_source`
   prompts/    versioned prompt templates (jinja) — NOT hardcoded in code
 ```

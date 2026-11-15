@@ -167,4 +167,4 @@ The following are `NotImplementedError` stubs awaiting implementation:
   [DeepResearcher](https://github.com/GAIR-NLP/DeepResearcher),
   [StepDeepResearch](https://github.com/stepfun-ai/StepDeepResearch),
   [context-1-data-gen](https://github.com/chroma-core/context-1-data-gen)
-- PRD (status tracker): [prd/deep-research-training-eval-infra.md](../prd/deep-research-training-eval-infra.md)
+- PRD (status tracker): [docs/prd/deep-research-training-eval-infra.md](prd/deep-research-training-eval-infra.md)

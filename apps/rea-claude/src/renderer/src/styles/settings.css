@@ -1,0 +1,111 @@
+/*
+ * Settings — design-system.md §4.14 (SettingsView rows, ToggleRow layout,
+ * Avatar) and §5.7 (SettingsModal sheet: 188px mini-rail, close button).
+ * The toggle control itself is in forms.css.
+ */
+
+/* ── Settings view ────────────────────────────────────────── */
+.sview__sec {
+  margin-top: 26px;
+}
+.labs__subhead + .sview__sec {
+  margin-top: 0;
+}
+.sview .labs__subhead--first {
+  margin-top: 20px;
+}
+.sview__secsub {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--sandstone);
+}
+
+.settings__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--juniper-100);
+}
+/* The last row in a section keeps its rule. */
+.sview__sec .settings__item:last-child {
+  border-bottom: 1px solid var(--juniper-100);
+}
+.settings__k {
+  font-size: 14px;
+  font-weight: 500;
+}
+.settings__kk {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--sandstone);
+}
+.settings__id {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+/* Size comes from width/height attributes (18/22/34/36, default 32). */
+.avatar {
+  flex: 0 0 auto;
+  object-fit: cover;
+  background: var(--card);
+  border-radius: 50%;
+}
+
+/* ── Settings sheet (modal child window) ──────────────────── */
+.smodal {
+  position: relative;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--paper);
+  /* Keeps the frameless window edge visible. */
+  border: 1px solid var(--juniper-200);
+}
+.smodal__rail {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 188px;
+  padding-top: 16px;
+  background: var(--card);
+  border-right: 1px solid var(--juniper-200);
+}
+.smodal__main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+/* The OS sheet animation is the entrance; no column cap. */
+.smodal .pane__inner {
+  max-width: none;
+  padding: 24px 28px 32px;
+}
+
+.smodal__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: var(--z-sheet-close);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--sandstone);
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
+}
+.smodal__close:hover {
+  color: var(--alabaster);
+  background: var(--card);
+}

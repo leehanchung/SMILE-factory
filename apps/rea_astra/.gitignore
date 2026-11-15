@@ -1,0 +1,8 @@
+evidence/
+extracted/
+vendor/
+preview/
+.local/
+hosted-preview/
+__pycache__/
+*.pyc

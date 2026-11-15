@@ -1,0 +1,39 @@
+/*
+ * Viewer window — design-system.md §4.18 (ViewerShell: .viewer-splash below
+ * the 32px titlebar, .viewer-recovery). Pulse keyframes are in motion.css.
+ */
+.viewer-splash {
+  position: fixed;
+  inset: var(--titlebar-h) 0 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+}
+.viewer-splash img {
+  width: auto;
+  height: 2rem;
+}
+
+.viewer-recovery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: calc(100vh - var(--titlebar-h));
+  padding: 32px;
+  text-align: center;
+}
+.viewer-recovery img {
+  width: 40px;
+}
+.viewer-recovery h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+.viewer-recovery p {
+  max-width: 440px;
+  margin: 0 0 8px;
+}

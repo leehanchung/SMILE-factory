@@ -1,0 +1,261 @@
+/*
+ * Lab state and opening screens — design-system.md §4.8 (flame pulse marks,
+ * sweep track), §4.17 (LabStatePanel, .openfull / .opening* branches of App,
+ * .centered), §4.2 (.opening__logs), §4.12 (.opening__console) and §5.2
+ * (.labcover backdrop under the native Lab view).
+ * .labstate__logo is dead CSS in the original and is omitted.
+ */
+
+/* ── Lab cover (backdrop beneath the native Lab view) ─────── */
+.labcover {
+  position: fixed;
+  top: var(--titlebar-h);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  pointer-events: none;
+}
+.labcover__mark {
+  width: 34px;
+  height: auto;
+  opacity: 0.5;
+}
+
+/* ── Centered lab-state panel ─────────────────────────────── */
+.centered {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+.labstate {
+  max-width: 440px;
+  text-align: center;
+}
+.labstate__icon {
+  display: flex;
+  justify-content: center;
+  color: var(--sandstone);
+}
+.labstate__title {
+  margin-top: 14px;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.labstate__sub {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--sandstone);
+}
+.labstate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.labstate__actions .btn {
+  white-space: nowrap;
+}
+
+/* ── Full-window opening screen ───────────────────────────── */
+.openfull {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-y: auto;
+  background: var(--paper);
+}
+/* margin:auto centres inside .openfull and collapses to top-aligned when tall. */
+.opening {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 880px;
+  margin: auto;
+  padding: 40px 32px;
+  text-align: center;
+}
+.opening--loading {
+  flex: 1 1 auto;
+  align-items: stretch;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.opening__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.opening__logo {
+  width: 34px;
+  height: auto;
+  opacity: 0.5;
+}
+.opening__title {
+  margin-top: 16px;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.opening--loading .opening__logo {
+  opacity: 1;
+}
+.opening--loading .opening__title {
+  margin-top: 18px;
+  font-size: 22px;
+}
+.opening__phase {
+  max-width: 56ch;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--sandstone);
+}
+
+/* Indeterminate sweep. */
+.opening__track {
+  width: 200px;
+  max-width: 55%;
+  height: 3px;
+  margin-top: 18px;
+  overflow: hidden;
+  background: var(--juniper-100);
+  border-radius: 3px;
+}
+.opening__track::after {
+  content: "";
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--ember), transparent);
+  border-radius: 3px;
+}
+
+.opening__actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.opening__actions--secondary {
+  margin-top: 12px;
+}
+
+/* Tiny "show logs" link. */
+.opening__logs {
+  margin-top: 4px;
+  padding: 0;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sandstone-400);
+  background: none;
+  border: none;
+  opacity: 0.6;
+  text-decoration: none;
+  cursor: pointer;
+}
+.opening__logs:hover {
+  color: var(--ember);
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* Footer pinned at the bottom of the loading variant. */
+.opening__footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 12px;
+  padding: 14px 0 24px;
+}
+.opening__sep {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--juniper);
+  user-select: none;
+}
+.opening__footer .linkaction,
+.opening__footer .opening__logs {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sandstone);
+  opacity: 1;
+  text-decoration: none;
+}
+.opening__footer .linkaction:hover,
+.opening__footer .opening__logs:hover {
+  color: var(--sandstone);
+  text-decoration: underline;
+}
+
+/* Failure branch. */
+.opening__fail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 560px;
+}
+.opening__fail-icon {
+  color: var(--danger);
+}
+.opening__fail-title {
+  margin: 14px 0 0;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--alabaster);
+}
+.opening__fail-msg {
+  max-width: 56ch;
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--sandstone);
+  overflow-wrap: anywhere;
+}
+
+/* Host-key branch: left-aligned. */
+.opening__hk {
+  width: 100%;
+  max-width: 560px;
+  text-align: left;
+}
+.opening__hk .opening__actions {
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+/* Connect log on the opening screen: fixed height. */
+.opening__console {
+  width: 100%;
+  max-width: 720px;
+  margin-top: 4px;
+  text-align: left;
+}
+.opening__console .console {
+  height: 220px;
+  max-height: none;
+}

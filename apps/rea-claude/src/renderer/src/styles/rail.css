@@ -1,0 +1,146 @@
+/*
+ * Workspace shell — design-system.md §5.2 (.shell → .rail + .pane, brand
+ * wordmark, account footer) and the .brand block it holds. The rail is 232px,
+ * its header clears the macOS traffic lights with 38px top padding and is a
+ * drag region; the pane bar is a 32px drag strip. The pane is the scroll
+ * container and centres an 880px column.
+ */
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Rail ─────────────────────────────────────────────────── */
+.rail {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 232px;
+  width: 232px;
+  min-height: 0;
+  background: var(--card);
+  border-right: 1px solid var(--juniper-200);
+}
+.rail__top {
+  padding: 38px 20px 12px;
+  -webkit-app-region: drag;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.brand__logo {
+  display: block;
+  width: auto;
+  height: 26px;
+}
+.rail__top .brand__logo {
+  height: 18px;
+}
+.brand__name {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+}
+
+.rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+}
+.rail__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--alabaster);
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background 0.12s ease;
+}
+.rail__item:hover {
+  background: var(--card-hover);
+}
+.rail__item--active {
+  background: var(--selected);
+}
+.rail__spacer {
+  flex: 1;
+}
+
+.rail__acct {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 14px 16px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--alabaster);
+  border-top: 1px solid var(--juniper-200);
+}
+.rail__acct-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.rail__login {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rail__ver {
+  font-size: 9px;
+  color: var(--sandstone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Pane ─────────────────────────────────────────────────── */
+.pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  background: var(--paper);
+}
+.pane__bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 0 0 var(--titlebar-h);
+  height: var(--titlebar-h);
+  padding: 0 20px;
+  -webkit-app-region: drag;
+}
+.pane__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.pane__inner {
+  max-width: 880px;
+  margin-inline: auto;
+  padding: 6px 32px 48px;
+}
+.pane__h1 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}

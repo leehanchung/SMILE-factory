@@ -1,0 +1,121 @@
+/*
+ * Buttons — design-system.md §4.1 (.btn + variants), §4.2 (link-style
+ * buttons), §4.3 (icon buttons). Transitions per §6.
+ * (.labrow__open lives in labs.css, .gate__btn in signin.css,
+ *  .labbar__navbtn in chrome.css, .smodal__close in settings.css,
+ *  .icon-btn in forms.css, .opening__logs in labview.css.)
+ */
+
+/* §4.1 Quiet bordered button. Hover darkens the border only (no ember tint). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 13px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--alabaster);
+  background: var(--paper);
+  border: 1px solid var(--juniper-200);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition:
+    background 0.12s var(--ease-out),
+    border-color 0.12s var(--ease-out),
+    color 0.12s var(--ease-out),
+    transform 0.09s var(--ease-out);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--juniper-500);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* The single solid fill: committing actions. */
+.btn--primary {
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ember);
+  border-color: var(--ember);
+}
+.btn--primary:hover:not(:disabled) {
+  color: var(--paper);
+  background: var(--ember-700);
+  border-color: var(--ember-700);
+}
+
+/* Quiet escape hatch (Cancel / Back). */
+.btn--ghost {
+  color: var(--sandstone);
+  background: transparent;
+  border-color: transparent;
+}
+.btn--ghost:hover {
+  color: var(--alabaster);
+  background: var(--card);
+  border-color: transparent;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* §4.2 Inline link button: ember + underline. */
+.linkbtn {
+  padding: 0;
+  font: inherit;
+  color: var(--ember);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.linkbtn:hover {
+  color: var(--ember-700);
+}
+.linkbtn:disabled {
+  color: var(--sandstone);
+  text-decoration: none;
+  cursor: default;
+}
+
+/* §4.2 Navigation-flavoured action: no underline until hover. */
+.linkaction {
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ember);
+  background: none;
+  border: none;
+  text-decoration: none;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.linkaction:hover {
+  color: var(--ember-700);
+  text-decoration: underline;
+}
+
+/* §4.2 Back link with a 16px chevron-left. */
+.backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--sandstone);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.12s var(--ease-out);
+}
+.backlink:hover {
+  color: var(--alabaster);
+}

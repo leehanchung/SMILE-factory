@@ -15,12 +15,14 @@ This directory is intentionally (almost) empty. The integration surface is:
    ```bash
    docker run --rm --gpus all --ipc=host --shm-size=16g \
      --ulimit memlock=-1 --ulimit stack=67108864 \
-     -v "$(pwd)":/workspace -w /workspace \
+     -v "$(git rev-parse --show-toplevel)":/repo -w /repo/training/rl_deepresearch \
      -it slimerl/slime:latest bash
    ```
+   (Mount the **repo root**, not just this recipe dir — the shared `libs/dr_agent`
+   lives outside the recipe and must be reachable inside the container.)
 3. **Inside the container**, install our shared lib + this recipe, then launch:
    ```bash
-   pip install -e /workspace/../../libs/dr_agent --no-deps
+   pip install -e /repo/libs/dr_agent --no-deps
    bash launch/run.sh
    ```
 

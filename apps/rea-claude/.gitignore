@@ -1,0 +1,9 @@
+node_modules/
+out/
+dist/
+*.log
+*.tsbuildinfo
+
+# The repo-root .gitignore ignores every lib/ (Python build output);
+# this one is source.
+!src/renderer/src/lib/
