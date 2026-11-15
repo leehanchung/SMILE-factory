@@ -1,0 +1,222 @@
+[
+  {
+    "source_file": "rea-summary.json",
+    "source_sha256": "5266d722f43e7b9f0eb8a222b10fb5f4651bc9da0ef5e2633e975724213ff113",
+    "records": [
+      {
+        "evidence_id": "ev_673e8adf8c4594e03c381790adb3ea654af32abb36d1e80113e09589b9b646b0",
+        "operation": "analyze_javascript_application",
+        "status": "provider_timeout",
+        "artifact_sha256": "568c230add76b26ba62acfd25021824fe01a914e558b05ad0d8bc1352d5071da",
+        "source_selection": {
+          "requested_paths": [
+            "package.json",
+            "out/main/index.js",
+            "out/preload/index.js",
+            "out/preload/lab.js",
+            "out/renderer/index.html",
+            "out/renderer/assets/index-2TXBFSxH.js"
+          ],
+          "unselected_files": 5751
+        },
+        "statistics": {
+          "relevant_files": 5757,
+          "nested_asar_containers": 0,
+          "text_bytes_read": 870224,
+          "invalid_utf8_files": 0,
+          "parsed_javascript_files": 3,
+          "skipped_javascript_files": 1,
+          "visited_ast_nodes": 41923,
+          "findings": 200,
+          "modules": 0,
+          "parse_failures": 0
+        },
+        "electron_summary": {
+          "browser_windows": 4,
+          "explicit_web_preferences": 9,
+          "preload_entrypoints": 3,
+          "context_bridge_apis": 2,
+          "exposed_api_members": 0,
+          "ipc": {
+            "operations": 133,
+            "literal_channels": 77,
+            "dynamic_channel_operations": 1,
+            "renderer_transmissions": 55,
+            "renderer_listeners": 24,
+            "main_handlers": 54,
+            "paired_renderer_transmissions": 55,
+            "ambiguous_renderer_transmissions": 0,
+            "unpaired_literal_renderer_transmissions": 0
+          },
+          "sender_validation_observations": 0,
+          "utility_processes": 0,
+          "resolved_utility_entrypoints": 0,
+          "native_addon_bindings": 0,
+          "resolved_native_addon_bindings": 0
+        },
+        "application_coverage": {
+          "status": "partial",
+          "truncated": false,
+          "omitted_count": null,
+          "limits": [
+            {
+              "name": "javascript_analysis_worker_timeout_ms",
+              "value": 300000,
+              "unit": "milliseconds"
+            }
+          ]
+        },
+        "semantic_coverage": {
+          "status": "partial",
+          "truncated": true,
+          "omitted_nodes": null,
+          "omitted_relations": null,
+          "limits": [
+            {
+              "name": "javascript_analysis_worker_timeout_ms",
+              "value": 300000,
+              "unit": "milliseconds"
+            },
+            {
+              "name": "max_semantic_nodes",
+              "value": 100000,
+              "unit": "items"
+            },
+            {
+              "name": "max_semantic_nodes_per_file",
+              "value": 20000,
+              "unit": "items"
+            },
+            {
+              "name": "semantic_graph_file_node_ceiling",
+              "value": 20000,
+              "unit": "items"
+            },
+            {
+              "name": "semantic_graph_node_ceiling",
+              "value": 100000,
+              "unit": "items"
+            }
+          ]
+        },
+        "semantic_unknown_count": 77468,
+        "limitations": [
+          "Caller-selected source analysis leaves 5751 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+          "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+          "Dynamic IPC channel expressions remain unresolved and are never paired by textual similarity.",
+          "Electron API identity follows proven lexical module aliases and structurally verified module-namespace interop. Other reassignments, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+          "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+          "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+          "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+          "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+          "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+          "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code.",
+          "out/renderer/assets/index-2TXBFSxH.js: Analysis operation timed out after 300000ms: analyze_javascript_application"
+        ]
+      }
+    ]
+  },
+  {
+    "source_file": "rea-core.json",
+    "source_sha256": "7394cd43b15958f5c78e8a7d042a18a6a632f58bb113252f23ba77802109369f",
+    "records": [
+      {
+        "evidence_id": "ev_f71aae132f88a9225fd833b9e4bd0806249f13866d9684a79698549d01f46979",
+        "operation": "analyze_javascript_application",
+        "status": "returned",
+        "artifact_sha256": "a7639a0b504693bb3be3bead93440ad5aa8608e0537699753203454804936f1a",
+        "source_selection": {
+          "requested_paths": [
+            "package.json",
+            "out/main/index.js",
+            "out/preload/index.js",
+            "out/preload/lab.js"
+          ],
+          "unselected_files": 2
+        },
+        "statistics": {
+          "findings": 199,
+          "invalid_utf8_files": 0,
+          "modules": 0,
+          "nested_asar_containers": 0,
+          "parse_failures": 0,
+          "parsed_javascript_files": 3,
+          "relevant_files": 6,
+          "skipped_javascript_files": 0,
+          "text_bytes_read": 156156,
+          "visited_ast_nodes": 41923
+        },
+        "electron_summary": {
+          "browser_windows": 4,
+          "context_bridge_apis": 2,
+          "explicit_web_preferences": 9,
+          "exposed_api_members": 0,
+          "ipc": {
+            "ambiguous_renderer_transmissions": 0,
+            "dynamic_channel_operations": 1,
+            "literal_channels": 77,
+            "main_handlers": 54,
+            "operations": 133,
+            "paired_renderer_transmissions": 55,
+            "renderer_listeners": 24,
+            "renderer_transmissions": 55,
+            "unpaired_literal_renderer_transmissions": 0
+          },
+          "native_addon_bindings": 0,
+          "preload_entrypoints": 3,
+          "resolved_native_addon_bindings": 0,
+          "resolved_utility_entrypoints": 0,
+          "sender_validation_observations": 0,
+          "utility_processes": 0
+        },
+        "application_coverage": {
+          "limits": [],
+          "omitted_count": null,
+          "status": "partial",
+          "truncated": false
+        },
+        "semantic_coverage": {
+          "limits": [
+            {
+              "name": "max_semantic_nodes",
+              "unit": "items",
+              "value": 100000
+            },
+            {
+              "name": "max_semantic_nodes_per_file",
+              "unit": "items",
+              "value": 20000
+            },
+            {
+              "name": "semantic_graph_file_node_ceiling",
+              "unit": "items",
+              "value": 20000
+            },
+            {
+              "name": "semantic_graph_node_ceiling",
+              "unit": "items",
+              "value": 100000
+            }
+          ],
+          "omitted_nodes": null,
+          "omitted_relations": null,
+          "status": "partial",
+          "truncated": true
+        },
+        "semantic_unknown_count": 9392,
+        "limitations": [
+          "Caller-selected source analysis leaves 2 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+          "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+          "Dynamic IPC channel expressions remain unresolved and are never paired by textual similarity.",
+          "Electron API identity follows proven lexical module aliases and structurally verified module-namespace interop. Other reassignments, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+          "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+          "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+          "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+          "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+          "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+          "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+        ]
+      }
+    ]
+  }
+]

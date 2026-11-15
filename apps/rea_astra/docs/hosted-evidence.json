@@ -1,0 +1,32 @@
+{
+  "target": "Silico hosted SPA",
+  "acquired_at_utc": "2026-11-10",
+  "source_artifact_count": 193,
+  "artifacts": {
+    "entry.html": {
+      "sha256": "e2c295c34ed9d9bfd63bda0317efa523b71920021fbc052be59f35ade5826c6b",
+      "bytes": 10483
+    },
+    "assets/index-DjNr8Oca.js": {
+      "sha256": "28e0100e8579039a34456e8aa2cbb27284a3863d1fb72a8c4a3d860ccebeb4b4",
+      "bytes": 6128655
+    },
+    "assets/index-COWSwU4d.css": {
+      "sha256": "c46fd2b03f4e789b4a47c69197b55f7a0561ce7d516ac13c608031d5e72f1ca2",
+      "bytes": 221790
+    }
+  },
+  "method": "scripts/acquire_hosted.py follows literal same-origin static references; no hosted research API or credential extraction",
+  "original_server_implementation": "not recovered; backend is independent implementation from client contracts",
+  "local_presentation_patches": "Audited in ignored hosted-preview/build-manifest.json",
+  "observed_flows": [
+    "planner approval and independent worker",
+    "CSV upload and automatic experiment",
+    "worker continuation",
+    "public GitHub source read",
+    "report preview, Code, Reports and local publication",
+    "independent fork and new-session continuation",
+    "report editor real execution and automatic iframe refresh"
+  ],
+  "verification": "evidence/end-to-end/regression-verification.json"
+}
