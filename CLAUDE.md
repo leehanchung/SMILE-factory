@@ -18,7 +18,7 @@ data-gen), `services/` (runtime application services, e.g. the search/tool HTTP
 server), `infra/` (shared infra/deployment, e.g. the managed-agents platform),
 `libs/` (shared cross-project packages, e.g. `dr_agent`), plus `docs/` (all
 reference + plan docs, including cross-cutting PRDs under `docs/prd/`) and
-`eval/` (the deep-research evaluation harness). Note `services/` (runtime
+`eval/` (the deep-research evaluation harness), and `tools/` (developer tooling, e.g. `tools/hstack`, the agent-skills plugin published to github.com/leehanchung/hstack by `.github/workflows/hstack-publish.yml`; edit it here, not in that repo). Note `services/` (runtime
 services) is distinct from `infra/` (deployment/infrastructure). Most tasks are
 scoped to a single project — work from that project's directory, not the repo
 root:

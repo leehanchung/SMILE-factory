@@ -1,0 +1,109 @@
+name: hstack-publish
+
+# tools/hstack is the source of truth for the hstack agent-skills plugin.
+# This workflow mirrors it to github.com/leehanchung/hstack, where Claude
+# Code, Codex and Cursor install it from.
+#
+# - PRs: validate the manifests (names/versions agree, skills well-formed).
+# - main: copy tools/hstack over the mirror's tree and set the patch version
+#   on all four manifests, so installed copies see every publish as an
+#   update. MAJOR/MINOR bumps made in the monorepo carry through.
+#
+# The sync copies files instead of using `git subtree split`, because main
+# squash-merges and that would break subtree history. Anything committed
+# to the mirror directly is overwritten.
+#
+# Requires secret HSTACK_DEPLOY_KEY: the private half of a deploy key with
+# write access on leehanchung/hstack.
+
+on:
+  pull_request:
+    paths:
+      - 'tools/hstack/**'
+      - '.github/workflows/hstack-publish.yml'
+      - '.github/scripts/hstack_manifests.py'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/hstack/**'
+      - '.github/workflows/hstack-publish.yml'
+      - '.github/scripts/hstack_manifests.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hstack-publish-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  hstack-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate manifests and skills
+        run: python3 .github/scripts/hstack_manifests.py check tools/hstack
+
+  hstack-publish:
+    needs: hstack-validate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+
+      - uses: actions/checkout@v4
+        with:
+          repository: leehanchung/hstack
+          ref: main
+          path: mirror
+          ssh-key: ${{ secrets.HSTACK_DEPLOY_KEY }}
+
+      - name: Sync tools/hstack -> mirror
+        id: sync
+        env:
+          SCRIPT: src/.github/scripts/hstack_manifests.py
+        run: |
+          set -euo pipefail
+          prev=$(python3 "$SCRIPT" version mirror)
+          next=$(python3 "$SCRIPT" next src/tools/hstack mirror)
+
+          rsync -a --delete --exclude=.git src/tools/hstack/ mirror/
+
+          # Stamp the old version first so a version-only difference
+          # doesn't count as a change.
+          python3 "$SCRIPT" stamp mirror "$prev"
+          if [[ -z "$(git -C mirror status --porcelain)" && "${next%.*}" == "${prev%.*}" ]]; then
+            echo "Mirror already matches tools/hstack ($prev); nothing to publish."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python3 "$SCRIPT" stamp mirror "$next"
+          python3 "$SCRIPT" check mirror
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.sync.outputs.changed == 'true'
+        working-directory: mirror
+        env:
+          VERSION: ${{ steps.sync.outputs.version }}
+          SHA: ${{ github.sha }}
+          SUBJECT: ${{ github.event.head_commit.message }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -F - <<EOF
+          chore: publish hstack v${VERSION}
+
+          Synced from leehanchung/SMILE-factory@${SHA:0:12}:
+          ${SUBJECT%%$'\n'*}
+          EOF
+          git tag "v${VERSION}"
+          git push origin HEAD:main "v${VERSION}"
+          echo "Published hstack v${VERSION}" >> "$GITHUB_STEP_SUMMARY"
