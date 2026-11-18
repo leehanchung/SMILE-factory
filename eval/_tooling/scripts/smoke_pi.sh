@@ -10,7 +10,20 @@ export PATH="$HOME/.nvm/versions/node/v22.23.0/bin:$PATH"   # pi needs Node >= 2
 
 # pi reads ~/.pi/agent/models.json. Install our vLLM provider config there.
 mkdir -p "$HOME/.pi/agent"
-cp "$HERE/../pi/models.json" "$HOME/.pi/agent/models.json"
+# If the engine was started with ENGINE_API_KEY (required when HOST isn't
+# loopback), swap it in for the placeholder key; otherwise copy as-is.
+if [[ -n "${ENGINE_API_KEY:-}" ]]; then
+  python3 - "$HERE/../pi/models.json" "$HOME/.pi/agent/models.json" <<'PY'
+import json, os, sys
+cfg = json.load(open(sys.argv[1]))
+cfg["providers"]["sglang"]["apiKey"] = os.environ["ENGINE_API_KEY"]
+fd = os.open(sys.argv[2], os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+with os.fdopen(fd, "w") as f:
+    json.dump(cfg, f, indent=2)
+PY
+else
+  cp "$HERE/../pi/models.json" "$HOME/.pi/agent/models.json"
+fi
 
 echo "node: $(node --version)"
 echo "pi:   $("$PI" --version 2>/dev/null)"

@@ -31,7 +31,7 @@ kept as a drop-in alternative; see `serve-vllm`.)
 | Piece | Choice | Notes |
 |-------|--------|-------|
 | Model | `Qwen/Qwen3.5-2B-Base` | `Qwen3_5ForConditionalGeneration`, Gated-DeltaNet + MoE |
-| Engine | **SGLang** 0.5.9 (`:30000`) | matches slime's RL rollout engine; vLLM 0.23 (`:8000`) alt |
+| Engine | **SGLang** 0.5.23 (`:30000`) | matches slime's RL rollout engine; vLLM 0.34.0 (`:8000`) alt |
 | Harness | **pi** (`pi-acp`) | a BenchFlow built-in ACP agent; talks OpenAI tool-calling |
 | Runtime | **BenchFlow** | runs the agent in a sandbox, drives the verifier, aggregates rewards |
 | Tasks | one dir per question | `task.md` + `verifier/` (gold answer kept out of `/app`) |
@@ -66,18 +66,26 @@ Add a benchmark = add a generator path in `scripts/gen_tasks.py`, then
 
 Already done on this machine (recorded here for reproducibility):
 
-1. **SGLang venv** (Python 3.12, SGLang 0.5.9):
-   `uv venv --python 3.12 ~/venvs/sglang-qwen && uv pip install "sglang[all]"`.
+1. **SGLang venv** (Python 3.12, SGLang 0.5.23):
+   `uv venv --python 3.12 ~/venvs/sglang-qwen && uv pip install "sglang[all]==0.5.23"`.
+   (Previously 0.5.9, which `pip-audit` flags with several PYSEC advisories fixed
+   in later releases; no compatibility reason pinned it. Re-check the Triton /
+   CuDNN-workaround flags below after upgrading an existing venv.)
    Serve with Triton attention + PyTorch sampling (`scripts/serve_sglang.sh`) to
    avoid flashinfer's nvcc JIT — the system CUDA is 11.7, too old for the RTX 4090
    (sm_89). Use `--tool-call-parser qwen3_coder` (the model's tool-call format).
-   (Optional vLLM alt: `uv pip install vllm ninja` in `~/venvs/vllm-qwen`.)
-2. **pi** (needs **Node ≥ 22**): `npm i -g @earendil-works/pi-coding-agent`;
+   (Optional vLLM alt: `uv pip install "vllm==0.34.0" "ninja==1.13.2"` in `~/venvs/vllm-qwen`.)
+2. **pi** (needs **Node ≥ 22.19**): `npm i -g @earendil-works/pi-coding-agent@1.5.2`;
    Node via `nvm install 22` (the system Node 21 is too old — pi's `undici` needs
    `markAsUncloneable`, added in Node 22).
 3. **BenchFlow** — install the **AI** project from git (the PyPI `benchflow`
    name is a different/older project):
-   `uv tool install "git+https://github.com/benchflow-ai/benchflow"`
+   `uv tool install "git+https://github.com/benchflow-ai/benchflow@5a29c66b07e169437f041cc8c7501a15b03f3793"`
+   (pinned to a commit — the default branch moves; bump the SHA deliberately).
+
+All versions above are exact pins (current as of 2026-11-17; the Python pins
+audit clean with `pip-audit`). Bump them deliberately, not by re-running an
+unpinned install.
 
 ## Run
 
@@ -118,6 +126,21 @@ host/local mode. This machine has no running Docker daemon (Docker Desktop is a
 dangling WSL symlink and there is no passwordless sudo to install a native one),
 so `make eval` is gated on **starting Docker Desktop** (with WSL integration
 enabled). Once `docker info` works, it runs unchanged.
+
+### Engine binding & API key
+
+`serve_sglang.sh` / `serve_qwen.sh` bind **`127.0.0.1`** by default (`HOST`
+overrides). That is enough for the normal flow: BenchFlow's LiteLLM proxy runs on
+the host and reaches the engine over loopback; containers only talk to the proxy.
+
+If something off-host or inside a container must reach the **engine directly**
+(e.g. `host.docker.internal:30000`), start it with `HOST=0.0.0.0` **and**
+`ENGINE_API_KEY=<random secret>` — the scripts refuse a non-loopback `HOST`
+without a key, since an unauthenticated OpenAI endpoint is open GPU compute.
+Export the same `ENGINE_API_KEY` when running `make eval` / `make smoke` /
+`make check-engine`: the Makefile passes it as the agent's `OPENAI_API_KEY`
+(placeholder `dummy-key` when unset) and `smoke_pi.sh` writes it into
+`~/.pi/agent/models.json`.
 
 Model routing: `model: vllm/qwen35-2b-base` + `agent_env.BENCHFLOW_PROVIDER_BASE_URL`.
 The run-configs point the host-side LiteLLM proxy at `http://localhost:30000/v1`

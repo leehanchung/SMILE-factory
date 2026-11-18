@@ -27,6 +27,13 @@ N ?= 50
 # ENGINE_PORT: local engine — SGLang 30000, vLLM 8000
 ENGINE_PORT ?= 30000
 ENGINE_URL ?= http://localhost:$(ENGINE_PORT)/v1
+# ENGINE_API_KEY: bearer key the engine requires (serve scripts pass it as
+# --api-key). Optional for the default loopback-only engine; REQUIRED when the
+# engine binds a non-loopback HOST (e.g. HOST=0.0.0.0 so task containers can reach
+# it via host.docker.internal). Exported so recipes read it from the environment
+# instead of echoing it on the command line; unset -> placeholder "dummy-key".
+ENGINE_API_KEY ?=
+export ENGINE_API_KEY
 # Token budget for the self-hosted model. CRITICAL: without an explicit maxTokens,
 # benchflow's pi-acp registers the model with maxTokens = its own _DEFAULT_MAX_TOKENS
 # (16384) and pi then asks SGLang for a completion that large — prompt+completion
@@ -41,11 +48,11 @@ MODEL_ID := $(patsubst vllm/%,%,$(MODEL))
 ENGINE_MODELS := [{"id":"$(MODEL_ID)","name":"$(MODEL_ID)","contextWindow":$(ENGINE_CONTEXT),"maxTokens":$(ENGINE_MAXTOK),"reasoning":false,"input":["text"]}]
 
 # Self-hosted models (BenchFlow's `vllm/` provider = any local OpenAI endpoint)
-# need the engine URL injected + a placeholder key + a model entry that caps
+# need the engine URL injected + the engine key (ENGINE_API_KEY, else a placeholder) + a model entry that caps
 # maxTokens (above), and a reachable engine. First-party agents/models
 # (claude/codex/…) bring their own auth + metadata, so skip all of it.
 ifneq ($(findstring vllm/,$(MODEL)),)
-  ENGINE_ENV := --agent-env BENCHFLOW_PROVIDER_BASE_URL=$(ENGINE_URL) --agent-env OPENAI_API_KEY=dummy-key --agent-env 'BENCHFLOW_PROVIDER_MODELS=$(ENGINE_MODELS)'
+  ENGINE_ENV := --agent-env BENCHFLOW_PROVIDER_BASE_URL=$(ENGINE_URL) --agent-env OPENAI_API_KEY="$${ENGINE_API_KEY:-dummy-key}" --agent-env 'BENCHFLOW_PROVIDER_MODELS=$(ENGINE_MODELS)'
   ENGINE_DEP := check-engine
 else
   ENGINE_ENV :=
@@ -81,7 +88,7 @@ serve-vllm:
 	bash scripts/serve_qwen.sh
 
 gen:
-	uv run --with datasets python scripts/gen_tasks.py --benchmark $(BENCHMARK) --n $(N)
+	uv run --with 'datasets>=5.2,<6' python scripts/gen_tasks.py --benchmark $(BENCHMARK) --n $(N)
 
 gen-all:
 	$(MAKE) gen BENCHMARK=simpleqa N=$(N)
@@ -91,7 +98,8 @@ smoke: check-engine
 	bash scripts/smoke_pi.sh
 
 check-engine:
-	@curl -sf -m 10 http://127.0.0.1:$(ENGINE_PORT)/v1/models >/dev/null \
+	@hdr=(); [[ -n "$${ENGINE_API_KEY:-}" ]] && hdr=(-H "Authorization: Bearer $$ENGINE_API_KEY"); \
+	curl -sf -m 10 $${hdr[@]+"$${hdr[@]}"} http://127.0.0.1:$(ENGINE_PORT)/v1/models >/dev/null \
 	  && echo "engine up on :$(ENGINE_PORT)" \
 	  || (echo "engine NOT reachable on :$(ENGINE_PORT) — run 'make serve' first" && exit 1)
 

@@ -14,6 +14,21 @@ SERVED_NAME="${SERVED_NAME:-qwen35-2b-base}"
 PORT="${PORT:-8000}"
 GPU="${CUDA_VISIBLE_DEVICES:-0}"
 
+HOST="${HOST:-127.0.0.1}"
+ENGINE_API_KEY="${ENGINE_API_KEY:-}"
+
+# Bind to loopback by default. Exposing the engine beyond this host (e.g.
+# HOST=0.0.0.0 so BenchFlow task containers can reach it via
+# host.docker.internal) REQUIRES an API key — an unauthenticated OpenAI endpoint
+# on the network is free GPU compute for anyone who can reach the port.
+API_KEY_ARGS=()
+if [[ -n "$ENGINE_API_KEY" ]]; then
+  API_KEY_ARGS=(--api-key "$ENGINE_API_KEY")
+elif [[ "$HOST" != "127.0.0.1" && "$HOST" != "localhost" && "$HOST" != "::1" ]]; then
+  echo "error: HOST=$HOST is not loopback; set ENGINE_API_KEY to require auth" >&2
+  exit 1
+fi
+
 export PATH="$VENV/bin:$PATH"
 export VLLM_USE_FLASHINFER_SAMPLER=0
 export CUDA_VISIBLE_DEVICES="$GPU"
@@ -24,7 +39,8 @@ export CUDA_VISIBLE_DEVICES="$GPU"
 # tool-call format. (TOOL_PARSER overridable: hermes | qwen3xml | qwen3coder.)
 exec "$VENV/bin/vllm" serve "$MODEL" \
   --served-model-name "$SERVED_NAME" \
-  --host 0.0.0.0 --port "$PORT" \
+  --host "$HOST" --port "$PORT" \
+  ${API_KEY_ARGS[@]+"${API_KEY_ARGS[@]}"} \
   --max-model-len "${MAX_MODEL_LEN:-16384}" \
   --gpu-memory-utilization "${GPU_MEM_UTIL:-0.85}" \
   --enable-auto-tool-choice \

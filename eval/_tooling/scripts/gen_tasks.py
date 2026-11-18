@@ -14,14 +14,15 @@ The agent (pi) is told to write ONLY its final answer to /app/answer.txt; the
 verifier reads that file and emits a reward in [0,1] to /logs/verifier/reward.txt.
 
 Usage:
-    uv run --with datasets python gen_tasks.py --benchmark simpleqa --n 50
-    uv run --with datasets python gen_tasks.py --benchmark hotpotqa --n 50
+    uv run --with "datasets>=5.2,<6" python gen_tasks.py --benchmark simpleqa --n 50
+    uv run --with "datasets>=5.2,<6" python gen_tasks.py --benchmark hotpotqa --n 50
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 import shutil
@@ -39,13 +40,29 @@ SIMPLEQA_CSV_URL = (
     "https://openaipublic.blob.core.windows.net/simple-evals/simple_qa_test_set.csv"
 )
 SIMPLEQA_CSV_LOCAL = EVAL_ROOT / "benchmarks" / "simpleqa" / "simple_qa_test_set.csv"
+# SHA-256 of the upstream CSV (2,012,910 bytes, Last-Modified 2024-10-30). Both the
+# download and a local copy are verified against it; a mismatch aborts generation
+# rather than silently building tasks from tampered/changed gold answers. If OpenAI
+# intentionally republishes the file, re-hash it and update this constant.
+SIMPLEQA_CSV_SHA256 = "feee3f7e7db3617e94e8fcf1977b756ec420ef8568f4e0fcbbe0e92e9d5fc032"
+
+# HotpotQA: pin the HF dataset to an exact commit so regenerated tasks are
+# reproducible and can't change underneath us (hotpotqa/hotpot_qa @ 2025-08-11).
+HOTPOTQA_REPO = "hotpotqa/hotpot_qa"
+HOTPOTQA_REVISION = "1908d6afbbead072334abe2965f91bd2709910ab"
+
+# Base image for every generated task container, pinned to the multi-arch index
+# digest of ubuntu:24.04 (Docker Hub, 2026-11-16). Bump tag+digest together.
+BASE_IMAGE = (
+    "ubuntu:24.04@sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8"
+)
 
 # ---------------------------------------------------------------------------
 # Static task assets (identical across every task of a benchmark).
 # ---------------------------------------------------------------------------
 
-DOCKERFILE = """\
-FROM ubuntu:24.04
+DOCKERFILE = f"""\
+FROM {BASE_IMAGE}
 RUN apt-get update -qq \\
  && apt-get install -y -qq python3 ca-certificates \\
  && rm -rf /var/lib/apt/lists/*
@@ -240,10 +257,19 @@ def _write_task(task_dir: Path, *, benchmark: str, question: str, answer: str, n
 
 def gen_simpleqa(n: int) -> list[tuple[str, str]]:
     if SIMPLEQA_CSV_LOCAL.exists():
-        text = SIMPLEQA_CSV_LOCAL.read_text(encoding="utf-8")
+        data, source = SIMPLEQA_CSV_LOCAL.read_bytes(), str(SIMPLEQA_CSV_LOCAL)
     else:  # vendored copy missing — fetch the upstream snapshot
-        with urllib.request.urlopen(SIMPLEQA_CSV_URL) as resp:  # noqa: S310 (trusted URL)
-            text = resp.read().decode("utf-8")
+        with urllib.request.urlopen(SIMPLEQA_CSV_URL, timeout=60) as resp:  # noqa: S310 (fixed https URL)
+            data, source = resp.read(), SIMPLEQA_CSV_URL
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != SIMPLEQA_CSV_SHA256:
+        raise SystemExit(
+            f"SimpleQA CSV checksum mismatch for {source}:\n"
+            f"  expected sha256 {SIMPLEQA_CSV_SHA256}\n"
+            f"  got      sha256 {digest}\n"
+            "Refusing to generate tasks from an unverified dataset."
+        )
+    text = data.decode("utf-8")
     rows = list(csv.DictReader(io.StringIO(text)))
     out = []
     for row in rows[:n]:
@@ -254,7 +280,9 @@ def gen_simpleqa(n: int) -> list[tuple[str, str]]:
 def gen_hotpotqa(n: int) -> list[tuple[str, str]]:
     from datasets import load_dataset
 
-    ds = load_dataset("hotpotqa/hotpot_qa", "distractor", split="validation")
+    ds = load_dataset(
+        HOTPOTQA_REPO, "distractor", split="validation", revision=HOTPOTQA_REVISION
+    )
     out = []
     for row in ds.select(range(min(n, len(ds)))):
         out.append((row["question"].strip(), row["answer"].strip()))
