@@ -1,0 +1,7 @@
+---
+description: Create standalone educational infographics from paper excerpts, mathematical ideas, or conceptual relationships, with concrete examples, checked sources, numbered steps, and visual outcomes. For slide decks or PPTD/PPTX deliverables, use open-kimi-ppt.
+globs:
+alwaysApply: false
+---
+
+See `plugins/hstack/skills/concept-infographic/SKILL.md` for the full skill.

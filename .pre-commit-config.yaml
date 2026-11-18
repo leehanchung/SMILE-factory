@@ -8,14 +8,18 @@ repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
+    # tools/hstack mirrors github.com/leehanchung/hstack byte-for-byte (synced by
+    # .github/workflows/hstack-publish.yml), so fixers and linters skip it.
     -   id: trailing-whitespace
+        exclude: '^tools/hstack/'
     -   id: end-of-file-fixer
+        exclude: '^tools/hstack/'
     -   id: check-yaml
         args:
         -   --unsafe
     -   id: check-added-large-files
         # machine-generated lockfiles are legitimately large (ML dep trees)
-        exclude: '\.lock$'
+        exclude: '(\.lock$|^tools/hstack/)'
     -   id: check-xml
     -   id: check-toml
     -   id: check-json
@@ -26,10 +30,12 @@ repos:
     rev: v0.8.0
     hooks:
     -   id: shellcheck
+        exclude: '^tools/hstack/'
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.7.0
     hooks:
     -   id: pyupgrade
+        exclude: '^tools/hstack/'
         args:
         - --py3-plus
         - --keep-runtime-typing

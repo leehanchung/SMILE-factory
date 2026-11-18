@@ -1,0 +1,18 @@
+{
+  "name": "hstack",
+  "owner": {
+    "name": "Han Lee",
+    "email": "lee.hanchung@gmail.com"
+  },
+  "metadata": {
+    "description": "Personal agent skills for writing, coaching, and technical strategy"
+  },
+  "plugins": [
+    {
+      "name": "hstack",
+      "source": "./plugins/hstack",
+      "description": "Writing, coaching, and strategy skills for technical leaders",
+      "version": "1.0.0"
+    }
+  ]
+}

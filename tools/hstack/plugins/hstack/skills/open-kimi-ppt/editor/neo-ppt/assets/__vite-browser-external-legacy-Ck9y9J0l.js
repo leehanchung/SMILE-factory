@@ -1,0 +1,1 @@
+System.register(["./rolldown-runtime-legacy-C7CQ20b7.js"],function(e,t){var n;return{setters:[function(e){n=e.t}],execute:function(){e("default",n((e,t)=>{t.exports={}})())}}});

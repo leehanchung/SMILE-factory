@@ -1,0 +1,46 @@
+{
+  "name": "hstack",
+  "version": "1.0.0",
+  "description": "Personal writing, coaching, presentation, and technical strategy skills.",
+  "author": {
+    "name": "Han Lee",
+    "email": "lee.hanchung@gmail.com",
+    "url": "https://github.com/leehanchung"
+  },
+  "homepage": "https://github.com/leehanchung/hstack",
+  "repository": "https://github.com/leehanchung/hstack",
+  "license": "MIT",
+  "keywords": [
+    "writing",
+    "coaching",
+    "ml-papers",
+    "copy-editing",
+    "tech-strategy",
+    "executive-coaching",
+    "book-writing",
+    "presentations",
+    "pptx"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "HStack Skills",
+    "shortDescription": "Writing, coaching, and technical strategy skills",
+    "longDescription": "A curated collection of skills for ML paper writing, copy editing, executive coaching, Manning book authoring, tech analysis, Data/AI strategy, and presentation building.",
+    "developerName": "Han Lee",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/leehanchung/hstack",
+    "privacyPolicyURL": "https://github.com/leehanchung/hstack",
+    "termsOfServiceURL": "https://github.com/leehanchung/hstack",
+    "defaultPrompt": [
+      "Use HStack skills."
+    ],
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/hstack.svg",
+    "logo": "./assets/hstack.svg",
+    "screenshots": []
+  }
+}

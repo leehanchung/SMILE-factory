@@ -1,0 +1,174 @@
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body.neodeck-local {
+  display: grid;
+  grid-template-rows: 48px minmax(0, 1fr);
+}
+/* Agent export host: hide NeoDeck chrome, full-bleed official UI */
+html.nd-export-mode body.neodeck-local {
+  grid-template-rows: minmax(0, 1fr);
+}
+html.nd-export-mode .nd-topbar,
+html.nd-export-mode .nd-toast {
+  display: none !important;
+}
+html.nd-export-mode .editor-app[data-v-ddddc63d] {
+  height: 100% !important;
+}
+html.nd-export-mode .editor-app .editor-content[data-v-ddddc63d] {
+  height: 100% !important;
+}
+.nd-topbar {
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border-bottom: 1px solid #e6e9f0;
+  background: rgba(255,255,255,0.96);
+  box-sizing: border-box;
+}
+.nd-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 96px;
+}
+.nd-brand strong { font-size: 14px; color: #171923; }
+.nd-brand small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #5b4dff;
+}
+.nd-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.nd-btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #d8dee9;
+  background: #fff;
+  color: #3a4251;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nd-btn:hover { background: #f7f8fb; }
+.nd-btn-primary {
+  border-color: #6c5ce7;
+  background: #6c5ce7;
+  color: #fff;
+}
+.nd-btn-primary:hover { background: #5b4dff; border-color: #5b4dff; }
+.nd-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 120px;
+  max-width: 280px;
+}
+#nd-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #171923;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.nd-status {
+  font-size: 11px;
+  color: #7a8499;
+}
+#app {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.nd-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 10001;
+  max-width: min(520px, 90vw);
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #171923;
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.nd-toast[data-kind="error"] { background: #c0392b; }
+.nd-toast[data-kind="warning"] { background: #b7791f; }
+
+/* Offline: hide share / cloud / Google Drive chrome from the official UI */
+.share-dialog-trigger,
+[class*="share-dialog"],
+.export-tabs .tabs,
+.export-tabs [name="google-slides"],
+.export-dialog [class*="GoogleSlides"],
+.export-dialog .tab[name="google-slides"] {
+  display: none !important;
+}
+.export-tabs.without-tabs .tabs {
+  display: none !important;
+}
+
+.nd-hint {
+  font-size: 12px;
+  color: #7a8499;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ===== Fix official editor inside local topbar shell ===== */
+.nd-topbar {
+  z-index: 50;
+  position: relative;
+}
+#app {
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+/* Official app assumes full viewport; we host it under a 48px topbar */
+#app .editor-app {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+#app .editor-app .editor-content {
+  height: calc(100% - var(--topbar-height, 52px)) !important;
+}
+/* Snackbars / toasts above local chrome */
+#app .feedback-snackbar-wrap {
+  z-index: 20000 !important;
+  bottom: 24px !important;
+  top: auto !important;
+}
+#app .feedback-snackbar {
+  z-index: 20000 !important;
+}
+/* Message toasts that are fixed to viewport */
+body .kimi-message,
+body [class*="message-list"],
+body [class*="MessageList"],
+#app [class*="snackbar"] {
+  z-index: 20000 !important;
+}

@@ -1,0 +1,5 @@
+version: v2
+title: Open Kimi PPT Local Export Test
+size: [960, 540]
+pages:
+  - pages/01.page

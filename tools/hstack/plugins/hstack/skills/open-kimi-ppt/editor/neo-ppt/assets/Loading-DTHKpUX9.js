@@ -1,0 +1,1 @@
+import{K as e,ct as t}from"./vue-B11_pI9F.js";import{t as n}from"./_plugin-vue_export-helper-B67ILkmu.js";var r={},i={class:`loading`};function a(n,r){return t(),e(`div`,i)}var o=n(r,[[`render`,a],[`__scopeId`,`data-v-cb4a6e17`]]);export{o as t};

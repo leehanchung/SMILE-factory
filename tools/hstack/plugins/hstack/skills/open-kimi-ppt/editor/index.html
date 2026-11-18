@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="color-scheme" content="light only" />
+    <title>NeoDeck Local</title>
+    <link rel="icon" href="./neo-ppt/favicon-kimi.ico" />
+    <style>
+      /* Avoid dark FOUC before Vue theme init (official default is system → OS dark). */
+      html, body { background: #ffffff; color-scheme: light; }
+    </style>
+    <!-- Official neo-ppt assets (local mirror) -->
+    <script type="module" crossorigin src="./neo-ppt/assets/polyfills-CXLN5T9E.js"></script>
+    <script>
+      (function () {
+        // Official app defaults theme to "system" and may flip to dark on mount.
+        // Lock light mode before the Vue bundle runs.
+        try {
+          localStorage.setItem("CUSTOM_THEME", JSON.stringify("light"));
+        } catch (_) {}
+        window.INJECT_ENV = Object.assign({}, window.INJECT_ENV, { theme: "light" });
+        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.add("light");
+        // Completely offline: block cloud APIs early
+        const blocked = [
+          /\/apiv2\//,
+          /www\.kimi\.com/,
+          /kimi\.ai/,
+          /slides\.kimi\./,
+          /gator\.volces\.com/,
+          /volces\.com/,
+          /byteimg\.com\/obj\/.*log/,
+          /\/list$/,
+          /accounts\.google\.com/,
+          /googleapis\.com/,
+          /docs\.google\.com/,
+        ];
+        const nativeFetch = window.fetch.bind(window);
+        window.fetch = function (input, init) {
+          const url = typeof input === "string" ? input : input && input.url;
+          if (url && blocked.some((re) => re.test(String(url)))) {
+            return Promise.resolve(
+              new Response(JSON.stringify({ signature: "offline-bypass", algorithm: "Ed25519", offline: true }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              }),
+            );
+          }
+          return nativeFetch(input, init);
+        };
+        const XO = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function (method, url) {
+          this.__ndUrl = url;
+          return XO.apply(this, arguments);
+        };
+        const XS = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function () {
+          if (this.__ndUrl && blocked.some((re) => re.test(String(this.__ndUrl)))) {
+            Object.defineProperty(this, "status", { value: 200 });
+            Object.defineProperty(this, "responseText", { value: '{"offline":true}' });
+            this.onload && this.onload();
+            return;
+          }
+          return XS.apply(this, arguments);
+        };
+      })();
+    </script>
+    <!-- Local bridge MUST load before official app (defines __NEODECK_CONNECT__) -->
+    <script type="module" src="./local-bridge.js"></script>
+    <script type="module" crossorigin src="./neo-ppt/assets/index-jtNAhQeK.js"></script>
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/rolldown-runtime-DWdDZTNf.js" />
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/vue-B11_pI9F.js" />
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/common-utils-G6HD4Ji1.js" />
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/_plugin-vue_export-helper-B67ILkmu.js" />
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/preload-helper-NECkhNH4.js" />
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/kimi-DRwOD7EI.js" />
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/icons-CgDhqj4h.js" />
+    <link rel="modulepreload" crossorigin href="./neo-ppt/assets/const-BjfH-jZe.js" />
+    <link rel="stylesheet" crossorigin href="./neo-ppt/assets/index-Bn1xM_xZ.css" />
+    <link rel="stylesheet" href="./local-shell.css" />
+  
+    <style id="neodeck-layout-fix">
+      /* editor-app height fix: avoid 100vh under local topbar */
+      .editor-app[data-v-ddddc63d] { height: 100% !important; width: 100% !important; }
+      .editor-app .editor-content[data-v-ddddc63d] { height: calc(100% - var(--topbar-height, 52px)) !important; }
+      .feedback-snackbar-wrap[data-v-ddddc63d] { z-index: 20000 !important; }
+    </style>
+</head>
+  <body class="neodeck-local">
+    <header class="nd-topbar" id="nd-topbar">
+      <div class="nd-brand"><strong>NeoDeck</strong><small>LOCAL</small></div>
+      <div class="nd-actions">
+        <button type="button" class="nd-btn nd-btn-primary" id="nd-open">打开 PPTD 文件夹</button>
+      </div>
+      <div class="nd-meta">
+        <span id="nd-title">未打开文稿</span>
+        <span id="nd-status" class="nd-status">初始化中</span>
+      </div>
+      <input type="file" id="nd-folder" webkitdirectory directory multiple hidden />
+    </header>
+    <div id="app"></div>
+    <div id="nd-toast" class="nd-toast" hidden></div>
+  </body>
+</html>

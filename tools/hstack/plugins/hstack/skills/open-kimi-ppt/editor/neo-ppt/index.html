@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <script type="module" crossorigin src="./assets/polyfills-CXLN5T9E.js"></script>
+
+    <meta charset="UTF-8" />
+    <link rel="icon" href="./favicon-kimi.ico" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="renderer" content="webkit" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="Kimi生成PPT" />
+    <meta name="keywords" content="kimi,ppt,powerpoint,office powerpoint,在线ppt,幻灯片,演示文稿,ppt在线制作,aippt" />
+    <title>NeoDeck Local Editor</title>
+    <script>
+      (function() {
+        var theme = 'light'
+        var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+
+        var stored = null
+        try { stored = localStorage.getItem('CUSTOM_THEME') } catch (e) {}
+        if (stored) {
+          try {
+            var parsed = JSON.parse(stored)
+            if (parsed === 'dark') theme = 'dark'
+            else if (parsed === 'light') theme = 'light'
+            else if (parsed === 'system') theme = isDark ? 'dark' : 'light'
+          } catch (e) {}
+        } else if (window.INJECT_ENV && window.INJECT_ENV.theme) {
+          theme = window.INJECT_ENV.theme === 'dark' ? 'dark' : 'light'
+        } else {
+          theme = isDark ? 'dark' : 'light'
+        }
+        document.documentElement.classList.add(theme)
+      })()
+    </script>
+    <script type="module" crossorigin src="./assets/index-jtNAhQeK.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-DWdDZTNf.js">
+    <link rel="modulepreload" crossorigin href="./assets/vue-B11_pI9F.js">
+    <link rel="modulepreload" crossorigin href="./assets/common-utils-G6HD4Ji1.js">
+    <link rel="modulepreload" crossorigin href="./assets/_plugin-vue_export-helper-B67ILkmu.js">
+    <link rel="modulepreload" crossorigin href="./assets/preload-helper-NECkhNH4.js">
+    <link rel="modulepreload" crossorigin href="./assets/kimi-DRwOD7EI.js">
+    <link rel="modulepreload" crossorigin href="./assets/icons-CgDhqj4h.js">
+    <link rel="modulepreload" crossorigin href="./assets/const-BjfH-jZe.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-Bn1xM_xZ.css">
+    <script type="module">import'data:text/javascript,if(!import.meta.resolve)throw Error("import.meta.resolve not supported")';import.meta.url;import("_").catch(()=>1);(async function*(){})().next();window.__vite_is_modern_browser=true</script>
+    <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+  </head>
+  <body>
+    <script>
+        document.oncontextmenu = (e) => e.preventDefault()
+    </script>
+    <script>
+      // 判断是否在 iframe 中打开
+      if (window.self !== window.top) {
+        // 如果在 iframe 中打开，发送 startLoad 事件
+        window.parent.postMessage({ type: 'START_LOAD' }, '*')
+      }
+    </script>
+    <div id="app"></div>
+    <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+    <script nomodule crossorigin id="vite-legacy-polyfill" src="./assets/polyfills-legacy-XFATF4We.js"></script>
+    <script nomodule crossorigin id="vite-legacy-entry" data-src="./assets/index-legacy-Ce-qKpT_.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+  </body>
+
+</html>
