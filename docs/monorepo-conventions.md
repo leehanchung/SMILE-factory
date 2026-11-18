@@ -100,17 +100,19 @@ per-project.
 
 ### The version-drift trap
 
-`.pre-commit-config.yaml` pins `rev: v0.17.5`. Each `apps/*` and
-`training/*` project's `pyproject.toml` pins `ruff>=0.17` in its dev
-extras. Today they agree. Tomorrow someone bumps one project to
-`ruff>=0.18` without touching `.pre-commit-config.yaml` and you'll see:
+`.pre-commit-config.yaml` pins `rev: v0.17.5`, and each `apps/*` and
+`training/*` project's `uv.lock` resolves ruff `0.17.5` (the
+`pyproject.toml` dev extras only set a floor, `ruff>=0.15` or
+`ruff>=0.17`). Today they agree. Tomorrow someone re-locks one project
+onto `0.18.x` without touching `.pre-commit-config.yaml` and you'll see:
 
 - Local `uv run ruff` (from the project's venv) uses `0.18.x`
 - Local `pre-commit run` uses `0.17.5` (from the pre-commit pin)
 - Same file, different opinions, mysterious CI flakes
 
-**Rule:** when bumping the ruff pin in any app's `pyproject.toml`,
-bump `.pre-commit-config.yaml` in the same commit. Same for any other
+**Rule:** when a project's `uv.lock` (or its `pyproject.toml` floor)
+moves to a new ruff version, bump `.pre-commit-config.yaml` to match,
+and the other projects' locks with it. Same for any other
 tool that's pinned in both places.
 
 ## GH Actions CI in this monorepo

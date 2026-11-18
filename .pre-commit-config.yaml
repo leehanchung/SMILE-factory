@@ -43,8 +43,8 @@ repos:
         - --keep-runtime-typing
 # Modern ruff scoped to apps/ and training/. Each sub-project's
 # pyproject.toml supplies its own ruff config via per-file-style
-# discovery. Version should match the one pinned in each sub-project's
-# pyproject.toml dev extras.
+# discovery. Version should match the ruff each sub-project's uv.lock
+# resolves (see docs/monorepo-conventions.md).
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.17.5
     hooks:
