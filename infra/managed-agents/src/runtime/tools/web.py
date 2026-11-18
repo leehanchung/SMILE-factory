@@ -40,6 +40,10 @@ class BlockedURLError(ValueError):
     """Raised when a URL targets a disallowed scheme or address."""
 
 
+class FetchTimeoutError(httpx.TimeoutException):
+    """The whole fetch (DNS, every address and hop, body) exceeded its timeout."""
+
+
 class UnsupportedEncodingError(BlockedURLError):
     """The server used a Content-Encoding we cannot decode with a size bound."""
 
@@ -91,6 +95,10 @@ class _DeflateDecoder:
     @property
     def unconsumed_tail(self) -> bytes:
         return self._decoder.unconsumed_tail
+
+    @property
+    def eof(self) -> bool:
+        return self._decoder.eof
 
 
 def _decode_at_most(decoder: Any, chunk: bytes, budget: int) -> bytes:
@@ -208,8 +216,35 @@ async def safe_fetch(
     Each hop gets its own client (unless one is injected via ``client``):
     requests go to a pinned IP, so two hosts on the same IP would otherwise
     share a pooled TLS connection and skip the second host's SNI/cert check.
+    ``timeout`` bounds the whole fetch -- DNS, every pinned address, every
+    redirect hop and the body read -- not each step separately.
     Returns (final_response, body_bytes, truncated).
     """
+    try:
+        return await asyncio.wait_for(
+            _safe_fetch(
+                url,
+                timeout,
+                max_bytes=max_bytes,
+                max_redirects=max_redirects,
+                client=client,
+                client_factory=client_factory,
+            ),
+            timeout,
+        )
+    except TimeoutError as e:
+        raise FetchTimeoutError(f"Fetching {url} took longer than {timeout}s") from e
+
+
+async def _safe_fetch(
+    url: str,
+    timeout: float,
+    *,
+    max_bytes: int,
+    max_redirects: int,
+    client: httpx.AsyncClient | None,
+    client_factory: Callable[[], httpx.AsyncClient] | None,
+) -> tuple[httpx.Response, bytes, bool]:
     loop = asyncio.get_running_loop()
     deadline = loop.time() + timeout
     make_client = client_factory or (lambda: _pinned_client(timeout))
@@ -250,9 +285,11 @@ async def safe_fetch(
                 decoder = _bounded_decoder(response.headers.get("content-encoding", ""))
                 body = bytearray()
                 truncated = False
+                raw_read = 0
                 # aiter_raw + our own bounded decoder: aiter_bytes would let
                 # httpx decompress a whole chunk before we could cap it.
                 async for raw in response.aiter_raw():
+                    raw_read += len(raw)
                     chunk = (
                         raw
                         if decoder is None
@@ -263,6 +300,16 @@ async def safe_fetch(
                         del body[max_bytes:]
                         truncated = True
                         break
+                    if decoder is not None:
+                        if decoder.eof:
+                            # End of the compressed stream: anything after it
+                            # is junk that zlib would only pile into unused_data.
+                            break
+                        if raw_read > max_bytes:
+                            # Compressed input past the cap without producing
+                            # as much output: bound the raw bytes too.
+                            truncated = True
+                            break
                 return response, bytes(body), truncated
             finally:
                 await response.aclose()

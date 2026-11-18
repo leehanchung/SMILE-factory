@@ -380,7 +380,8 @@ async def test_stalled_dns_is_bounded_by_fetch_timeout(monkeypatch):
     monkeypatch.setattr(web, "resolve_host", stalled)
     loop = asyncio.get_running_loop()
     start = loop.time()
-    with pytest.raises(BlockedURLError, match="Timed out resolving"):
+    # Either the per-resolution bound or the whole-fetch deadline fires first.
+    with pytest.raises((BlockedURLError, web.FetchTimeoutError)):
         await safe_fetch("https://slow.example/", 0.2)
     assert loop.time() - start < 5
 
@@ -420,3 +421,100 @@ async def test_each_redirect_hop_gets_its_own_client(monkeypatch):
     _, body, _ = await safe_fetch("https://a.example/", 10, client_factory=factory)
     assert body == b"ok"
     assert hosts_per_client == [["a.example"], ["b.example"]]
+
+
+class _Endless(_Chunks):
+    """A body that never ends; counts how many raw bytes were pulled."""
+
+    def __init__(self, head: bytes, filler: bytes = b"\0" * 65536) -> None:
+        self.head, self.filler, self.pulled = head, filler, 0
+
+    async def __aiter__(self):
+        self.pulled += len(self.head)
+        yield self.head
+        while True:
+            self.pulled += len(self.filler)
+            yield self.filler
+
+
+async def test_gzip_with_endless_suffix_stops_at_eof(monkeypatch):
+    import gzip
+
+    monkeypatch.setattr(web, "resolve_host", _dns({"tail.example": ["93.184.216.34"]}))
+    stream = _Endless(gzip.compress(b"<p>hi</p>"))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, headers={"content-encoding": "gzip"}, stream=stream)
+
+    async with _client(handler) as client:
+        _, body, truncated = await safe_fetch("https://tail.example/", 10, client=client)
+    assert body == b"<p>hi</p>" and not truncated
+    assert stream.pulled < 2 * 65536
+
+
+async def test_compressed_input_bounded_without_eof(monkeypatch):
+    """A gzip stream that never ends nor expands past the cap still stops reading."""
+    import zlib
+
+    monkeypatch.setattr(web, "resolve_host", _dns({"slow.example": ["93.184.216.34"]}))
+    c = zlib.compressobj(wbits=16 + zlib.MAX_WBITS)
+    head = c.compress(b"x") + c.flush(zlib.Z_SYNC_FLUSH)
+    # Empty stored blocks: valid, endless, decode to nothing.
+    empty_block = b"\x00\x00\x00\xff\xff"
+    stream = _Endless(head, filler=empty_block * 4096)
+    cap = 64 * 1024
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, headers={"content-encoding": "gzip"}, stream=stream)
+
+    async with _client(handler) as client:
+        _, body, truncated = await safe_fetch(
+            "https://slow.example/", 10, client=client, max_bytes=cap
+        )
+    assert body == b"x" and truncated
+    assert stream.pulled <= cap + len(empty_block * 4096) + len(head)
+
+
+def test_deflate_decoder_reports_eof():
+    import zlib
+
+    for wbits in (zlib.MAX_WBITS, -zlib.MAX_WBITS):
+        c = zlib.compressobj(wbits=wbits)
+        data = c.compress(b"abc") + c.flush()
+        d = web._DeflateDecoder()
+        assert d.decompress(data, 100) == b"abc"
+        assert d.eof
+
+
+async def test_total_timeout_covers_every_address(monkeypatch):
+    """Blackholed addresses share one deadline instead of each getting the full timeout."""
+    import asyncio
+
+    monkeypatch.setattr(
+        web,
+        "resolve_host",
+        _dns({"hole.example": ["93.184.216.34", "93.184.216.35", "93.184.216.36"]}),
+    )
+
+    async def blackhole(request: httpx.Request) -> httpx.Response:
+        await asyncio.sleep(60)
+        return httpx.Response(200)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(blackhole))
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    try:
+        with pytest.raises(web.FetchTimeoutError):
+            await safe_fetch("https://hole.example/", 0.3, client=client)
+    finally:
+        await client.aclose()
+    assert loop.time() - start < 2
+
+
+async def test_tool_reports_fetch_timeout(monkeypatch):
+    async def slow(url, timeout, **kw):
+        raise web.FetchTimeoutError("too slow")
+
+    monkeypatch.setattr(web, "safe_fetch", slow)
+    result = await WebFetchTool().execute({"url": "https://x.example/"})
+    assert result.exit_code == 1 and "too slow" in (result.error or "")

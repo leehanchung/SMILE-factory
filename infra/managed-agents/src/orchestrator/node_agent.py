@@ -250,17 +250,56 @@ def _validate_rootfs_path(rootfs_path: str) -> str:
     return str(resolved)
 
 
+def _split_image_ref(ref: str) -> tuple[str | None, str, str]:
+    """Split an OCI reference into (authority, repository, tag/digest suffix).
+
+    The first path component is the registry authority (host[:port]) when it
+    contains ``.`` or ``:`` or is ``localhost``, as in the OCI/Docker
+    reference grammar; a tag ``:`` or digest ``@`` only counts after the last
+    ``/`` of the repository, so a registry port is never mistaken for a tag.
+    """
+    authority: str | None = None
+    rest = ref
+    first, slash, remainder = ref.partition("/")
+    if slash and ("." in first or ":" in first or first == "localhost"):
+        authority, rest = first.lower(), remainder
+    elif not slash and ("." in first or first == "localhost") and "@" not in first:
+        # A bare "registry.example.com[:port]" (no path) names a registry.
+        _host, colon, port = first.partition(":")
+        if not colon or port.isdigit():
+            return first.lower(), "", ""
+    repo, at, digest = rest.partition("@")
+    head, last_slash, tail = repo.rpartition("/")
+    name, colon, tag = tail.partition(":")
+    repository = f"{head}{last_slash}{name}"
+    suffix = (f":{tag}" if colon else "") + (f"@{digest}" if at else "")
+    return authority, repository, suffix
+
+
 def _image_under_prefix(image: str, prefix: str) -> bool:
     """True when `image` is `prefix` itself or lives under it at a reference boundary.
 
-    A prefix ending in ``/`` names a namespace (``registry.io/team/`` allows
-    ``registry.io/team/app:1``). A bare prefix names a repository or namespace,
-    so it also allows its tags/digests and sub-paths, but never a sibling whose
-    name merely starts the same (``registry.io/team-attacker/x``).
+    Registry authorities (including the port) must match exactly. Then:
+    a prefix ending in ``/`` names a namespace (``registry.io/team/`` allows
+    ``registry.io/team/app:1``); one ending in ``:`` or ``@`` names a single
+    repository with any tag/digest; a bare prefix names a registry, repository
+    or namespace and allows its tags/digests and sub-paths, but never a
+    sibling whose name merely starts the same (``registry.io/team-attacker/x``)
+    or another port on the same host (``registry.io:5000/x``).
     """
-    if prefix.endswith(("/", ":", "@")):
-        return image.startswith(prefix)
-    return image == prefix or image.startswith((prefix + "/", prefix + ":", prefix + "@"))
+    img_auth, img_repo, _ = _split_image_ref(image)
+    if prefix.endswith((":", "@")):
+        p_auth, p_repo, _ = _split_image_ref(prefix[:-1])
+        return img_auth == p_auth and img_repo == p_repo
+    namespace = prefix.endswith("/")
+    p_auth, p_repo, p_suffix = _split_image_ref(prefix.rstrip("/"))
+    if p_suffix or img_auth != p_auth:
+        return False
+    if not p_repo:  # registry-only prefix: anything hosted on it
+        return p_auth is not None and bool(img_repo)
+    if namespace:
+        return img_repo.startswith(p_repo + "/")
+    return img_repo == p_repo or img_repo.startswith(p_repo + "/")
 
 
 def _validate_image(image: str) -> str:

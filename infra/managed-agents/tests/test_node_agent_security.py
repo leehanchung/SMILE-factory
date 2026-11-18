@@ -148,6 +148,17 @@ def test_image_override_requires_allowlist(monkeypatch):
         ("registry.example.com/team", "registry.example.com/teamx:1", False),
         ("registry.example.com/team/", "registry.example.com/team/app:1", True),
         ("registry.example.com/team/", "registry.example.com/team-attacker/x", False),
+        # registry authority (host[:port]) must match exactly
+        ("registry.example.com", "registry.example.com/x:1", True),
+        ("registry.example.com", "registry.example.com:5000/attacker:latest", False),
+        ("registry.example.com", "registry.example.com.evil.io/x:1", False),
+        ("registry.example.com:5000/team", "registry.example.com:5000/team/app@sha256:abc", True),
+        ("registry.example.com:5000/team", "registry.example.com/team/app:1", False),
+        ("registry.example.com:5000/team", "registry.example.com:5001/team/app:1", False),
+        ("registry.example.com/team/app:", "registry.example.com/team/app:v2", True),
+        ("registry.example.com/team/app:", "registry.example.com/team/app2:v2", False),
+        ("localhost:5000/team", "localhost:5000/team/app:1", True),
+        ("localhost:5000/team", "localhost:5001/team/app:1", False),
     ],
 )
 def test_image_allowlist_matches_at_reference_boundaries(monkeypatch, prefix, image, allowed):
