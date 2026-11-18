@@ -38,9 +38,11 @@ cd training/lora_instruct/
   the same value. A non-loopback `HOST` also needs `ALLOW_PUBLIC_BIND=1` and an
   authenticating proxy or network policy in front: vLLM's key does not cover
   every route (e.g. `/invocations`).
-- Resuming from a pickle-based `adapter_model.bin` requires
-  `LORA_ALLOW_BIN_CHECKPOINT=1`: the torch 2.14 that vLLM pins is affected by
-  GHSA-v32g-mr63-3j83 even with `weights_only=True`. Prefer safetensors.
+- Resuming from a checkpoint that holds pickle files (a legacy
+  `adapter_model.bin`, or Trainer state such as `optimizer.pt` /
+  `rng_state.pth`) requires `LORA_TRUST_CHECKPOINT=1`: the torch 2.14 that vLLM
+  pins is affected by GHSA-v32g-mr63-3j83 even with `weights_only=True`. Only
+  set it for checkpoints you produced.
 - Default dataset is `yahma/alpaca-cleaned`; default prompt template is
   `alpaca` (see `templates/alpaca.json`).
 - Multi-GPU is **DDP via `torchrun --nproc_per_node=<N>`** (don't export

@@ -89,23 +89,38 @@ class TokenizerHelper:
         return tokenized_full_prompt
 
 
-LEGACY_CHECKPOINT_ENV = "LORA_ALLOW_BIN_CHECKPOINT"
+TRUST_CHECKPOINT_ENV = "LORA_TRUST_CHECKPOINT"
+
+# Files torch.load / Trainer unpickle on resume: adapter_model.bin plus Trainer
+# state such as optimizer.pt, scheduler.pt and rng_state*.pth.
+PICKLE_SUFFIXES = (".bin", ".pt", ".pth", ".pkl", ".pickle", ".ckpt")
 
 
-def _require_legacy_checkpoint_opt_in(path: str) -> None:
-    """Only load a pickle-based ``adapter_model.bin`` when explicitly allowed.
+def _pickle_files(checkpoint_dir: str) -> list[str]:
+    try:
+        names = os.listdir(checkpoint_dir)
+    except OSError:
+        return []
+    return sorted(n for n in names if n.endswith(PICKLE_SUFFIXES))
+
+
+def _require_trusted_checkpoint(checkpoint_dir: str) -> None:
+    """Only resume from a checkpoint holding pickle files when explicitly allowed.
 
     vLLM 0.34 pins torch 2.14.0, where ``torch.load(weights_only=True)`` can
     still read arbitrary local files from a crafted checkpoint
-    (GHSA-v32g-mr63-3j83, fixed in torch 2.15.0). Resume from
-    ``adapter_model.safetensors`` instead, or opt in for checkpoints you
-    produced yourself.
+    (GHSA-v32g-mr63-3j83, fixed in torch 2.15.0). That covers a legacy
+    ``adapter_model.bin`` and the Trainer state (``optimizer.pt``,
+    ``rng_state.pth``, ...) restored alongside a safetensors adapter, so the
+    whole checkpoint must be trusted. Opt in for checkpoints you produced.
     """
-    if os.environ.get(LEGACY_CHECKPOINT_ENV) != "1":
+    pickles = _pickle_files(checkpoint_dir)
+    if pickles and os.environ.get(TRUST_CHECKPOINT_ENV) != "1":
         raise SystemExit(
-            f"Refusing to load legacy checkpoint {path}: torch.load is unsafe on "
-            f"torch<2.15 (GHSA-v32g-mr63-3j83). Convert it to safetensors, or set "
-            f"{LEGACY_CHECKPOINT_ENV}=1 if you trust its source."
+            f"Refusing to resume from {checkpoint_dir}: it contains pickle files "
+            f"({', '.join(pickles)}) that torch<2.15 cannot load safely "
+            f"(GHSA-v32g-mr63-3j83). Set {TRUST_CHECKPOINT_ENV}=1 if you trust "
+            f"its source, or start from a safetensors-only adapter."
         )
 
 
@@ -252,6 +267,7 @@ def train(
         data = load_dataset(data_path)
 
     if resume_from_checkpoint:
+        _require_trusted_checkpoint(resume_from_checkpoint)
         checkpoint_name = os.path.join(
             resume_from_checkpoint, "adapter_model.safetensors"
         )
@@ -265,7 +281,6 @@ def train(
             if checkpoint_name.endswith(".safetensors"):
                 adapters_weights = load_file(checkpoint_name)
             else:
-                _require_legacy_checkpoint_opt_in(checkpoint_name)
                 adapters_weights = torch.load(checkpoint_name, weights_only=True)
             set_peft_model_state_dict(model, adapters_weights)
         else:
