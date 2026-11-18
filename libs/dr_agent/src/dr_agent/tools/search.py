@@ -17,9 +17,7 @@ class SearchTool(Tool):
     description = "Search the corpus / web for a query; returns ranked snippets."
 
     async def call(self, client: httpx.AsyncClient, *, query: str, top_k: int = 10) -> str:
-        resp = await client.post(
-            f"{self.server_url}/search", json={"query": query, "top_k": top_k}
-        )
+        resp = await client.post(f"{self.server_url}/search", json={"query": query, "top_k": top_k})
         resp.raise_for_status()
         # TODO: format results into an observation string.
         return str(resp.json().get("results", []))
