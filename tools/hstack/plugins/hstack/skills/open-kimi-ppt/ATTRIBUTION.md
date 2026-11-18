@@ -80,9 +80,42 @@ Supply-chain hardening:
     `npm install -g agent-browser@latest`. `editor/README.md` points at
     `scripts/serve.mjs` instead of `npx serve` / the unpublished package.
 
+14. **Vulnerable JS libraries in the prebuilt editor replaced.** `editor/neo-ppt/` is
+    a minified Vite/rolldown build of Kimi's closed-source neo-ppt frontend; upstream
+    ships only the build output (no `src/`, `vite.config`, lockfile or `Cargo.toml`
+    at the vendored commit), so it cannot be rebuilt. Dexie and KaTeX were emitted as
+    their own chunks whose only export is the library's default object under the
+    binding `t`, so those chunks were regenerated from the official npm dist files,
+    keeping filenames and the export shape (no other chunk was edited):
+
+    | Chunk | Was | Now | Advisory fixed |
+    |---|---|---|---|
+    | `dexie-HNSdyusO.js`, `dexie-legacy-MWmb6YS4.js` | Dexie 3.0.3 | 3.2.7 (`dist/dexie.mjs` / `dist/dexie.js`) | GHSA-3xgx-r9j4-qw9w / CVE-2022-21189 (prototype pollution) |
+    | `katex-BotMgawn.js`, `katex-legacy-COlBCYAe.js`, `katex-Cg8Rrj4S.css` | KaTeX 0.16.45 | 0.18.11 (`dist/katex.mjs` / `dist/katex.js` / `dist/katex.min.css`) | GHSA-238p-pmpm-9mq7 |
+
+    The ESM chunks are the dist module with its `export {...}` line rewritten to
+    `export { <default> as t }`; the `-legacy` chunks wrap the UMD build in
+    `System.register` (the KaTeX one also injects the CSS, as vite-plugin-legacy did).
+    KaTeX font files are byte-identical between 0.16.45 and 0.18.11, so the CSS points
+    at the existing hashed font assets (Size3 woff2 stays an inline data URI). The app
+    only calls `renderToString` (`output: html` / `mathml`) and checks for
+    `katex-error`; its own CSS targets `.katex`, `.katex>math` and `.mfrac`, none of
+    which KaTeX 0.18's class prefixing renamed. The app subclasses Dexie and uses
+    `version().stores()`, unchanged in 3.2.x; its existing IndexedDB opens as before.
+    `tests/selftest.sh` fails if the chunks regress to the old versions.
+
+    **Not fixed — the Rust/WASM modules** (`pptd_wasm_bg-DPPWdROu.wasm`: zip 4.6.1,
+    quick-xml 0.38.4, unsafe-libyaml; `index_bg-Blvrv-U2.wasm`: resvg stack with
+    bytes 1.6.0, rustybuzz/ttf-parser). No Rust source exists upstream and the
+    crates are statically linked, so they cannot be bumped. Exposure is limited:
+    the PPTX writer exports only `exportPPTDToPPTXBytes` (it writes archives from the
+    user's own deck; the zip advisories, including GHSA-m665-v7pm-7grj, are in the
+    archive reader/extraction paths), and the resvg module renders SVG from that same
+    deck inside the browser/Node WASM sandbox.
+
 Everything else — the `SKILL.md` body, `references/`, the rest of `scripts/`,
 `tests/test_*.py` (apart from the agent-browser install test), and `editor/`
-(apart from its README) — is upstream as-is.
+(apart from its README and the chunks listed in item 14) — is upstream as-is.
 
 ## Upstream license
 

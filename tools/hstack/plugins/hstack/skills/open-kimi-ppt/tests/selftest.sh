@@ -25,6 +25,14 @@ echo "[1] bundled assets"
 [[ -f "$SKILL_DIR/editor/neo-ppt/assets/pptd_wasm_bg-DPPWdROu.wasm" ]] || fail "patched WASM missing"
 [[ -f "$SKILL_DIR/references/pptd.md" ]] || fail "references/pptd.md missing"
 pass "editor mirror, WASM, and references are present"
+# Dexie/KaTeX chunks were rebuilt from patched npm releases (see ATTRIBUTION.md);
+# fail if a re-vendor brings back the versions with known advisories.
+ASSETS="$SKILL_DIR/editor/neo-ppt/assets"
+grep -q 'Dexie.js 3.2.7' "$ASSETS/dexie-HNSdyusO.js" && grep -q 'Dexie.js 3.2.7' "$ASSETS/dexie-legacy-MWmb6YS4.js" \
+  || fail "Dexie chunk is not the patched 3.2.7 build (CVE-2022-21189)"
+grep -q 'KaTeX 0.18.11' "$ASSETS/katex-BotMgawn.js" && grep -q 'KaTeX 0.18.11' "$ASSETS/katex-legacy-COlBCYAe.js" \
+  || fail "KaTeX chunk is not the patched 0.18.11 build (GHSA-238p-pmpm-9mq7)"
+pass "Dexie 3.2.7 and KaTeX 0.18.11 chunks"
 
 echo "[2] node-only PPTX export (no Python, no browser)"
 node --version >/dev/null 2>&1 || fail "Node.js is required"
