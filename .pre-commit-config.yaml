@@ -6,7 +6,7 @@ default_install_hook_types: [pre-commit, commit-msg]
 default_stages: [pre-commit, manual]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
     # tools/hstack mirrors github.com/leehanchung/hstack byte-for-byte (synced by
     # .github/workflows/hstack-publish.yml), so fixers and linters skip it.
@@ -15,6 +15,8 @@ repos:
     -   id: end-of-file-fixer
         exclude: '^tools/hstack/'
     -   id: check-yaml
+        # Helm templates are Go-templated, not valid YAML until rendered.
+        exclude: '/helm/.*/templates/'
         args:
         -   --unsafe
     -   id: check-added-large-files
@@ -27,12 +29,12 @@ repos:
     -   id: detect-aws-credentials
         args: [--allow-missing-credentials]
 -   repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.8.0
+    rev: v0.11.0
     hooks:
     -   id: shellcheck
         exclude: '^tools/hstack/'
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.7.0
+    rev: v3.22.0
     hooks:
     -   id: pyupgrade
         exclude: '^tools/hstack/'
@@ -44,7 +46,7 @@ repos:
 # discovery. Version should match the one pinned in each sub-project's
 # pyproject.toml dev extras.
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.10
+    rev: v0.17.5
     hooks:
     -   id: ruff
         files: ^(apps|training)/.*\.py$
@@ -55,7 +57,7 @@ repos:
 # in sync with .github/workflows/pr-title.yml and CLAUDE.md. Merge,
 # fixup! and squash! commits are allowed (no --strict).
 -   repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
     -   id: conventional-pre-commit
         stages: [commit-msg]
