@@ -5,9 +5,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.api.auth import check_auth_configured, require_api_key
-from src.api.deps import close_deps, init_deps
+from src.api.deps import check_deps, close_deps, init_deps
 from src.api.routes import agents, environments, events, sessions
 
 logger = logging.getLogger(__name__)
@@ -95,7 +96,14 @@ def create_app() -> FastAPI:
 
     @app.get("/health/ready", tags=["health"])
     async def readiness_check():
-        """Kubernetes readiness probe."""
+        """Kubernetes readiness probe: ready only when PostgreSQL and Redis answer."""
+        failures = await check_deps()
+        if failures:
+            # Error class names only; connection strings and messages stay in logs.
+            logger.warning("Readiness check failed: %s", failures)
+            return JSONResponse(
+                status_code=503, content={"status": "unavailable", "failed": failures}
+            )
         return {"status": "ok"}
 
     @app.get("/v1/health", tags=["health"])

@@ -34,8 +34,11 @@ RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}" && \
     poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi --only main --no-root
 
-# Copy application code
+# Copy application code. Dependencies are installed with --no-root, so the
+# project itself is not on sys.path; PYTHONPATH lets `python3 -m src...`
+# resolve from /workspace.
 COPY src/ ./src/
+ENV PYTHONPATH=/app
 
 # Non-root user
 RUN groupadd -g 1000 agent && useradd -u 1000 -g agent -m -d /home/agent agent

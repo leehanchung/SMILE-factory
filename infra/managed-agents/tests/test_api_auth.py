@@ -3,14 +3,20 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api import auth
+from src.api import auth, main
 from src.api.main import create_app
+
+
+async def _no_failures():
+    return {}
 
 
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.delenv(auth.INSECURE_DEV_ENV, raising=False)
     monkeypatch.setenv(auth.API_KEYS_ENV, "key-one, key-two")
+    # Readiness probes PostgreSQL/Redis; report them healthy so only auth is tested.
+    monkeypatch.setattr(main, "check_deps", _no_failures)
     # No lifespan: route-level auth is under test, not DB/Redis startup.
     return TestClient(create_app())
 
