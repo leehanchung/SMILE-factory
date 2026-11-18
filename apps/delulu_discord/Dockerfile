@@ -5,8 +5,10 @@ FROM python:3.14-slim
 
 WORKDIR /app
 
-# Install uv for fast dependency resolution
-RUN pip install --no-cache-dir uv
+# uv for installing from the lockfile. Copied from the official image,
+# pinned by version AND digest so the build is reproducible and can't
+# pick up a tampered/unreviewed release. Bump both together.
+COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /uvx /bin/
 
 # Copy project files
 COPY pyproject.toml uv.lock .python-version ./
