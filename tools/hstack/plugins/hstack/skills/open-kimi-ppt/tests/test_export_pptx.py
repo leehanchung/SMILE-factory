@@ -311,8 +311,15 @@ class OversizedTagGuardTests(unittest.TestCase):
         self.assertIsNone(MODULE.find_oversized_tag(f"<span {at_cap}>x</span>"))
 
     def test_non_ascii_and_underscore_tag_names_are_scanned(self):
-        for name in ("_x", ":x", "é", "名", "\U00010400"):
+        for name in ("_x", ":x", "é", "名", "\U00010400", "1x", "-x", ".x"):
             self.assertIsNotNone(MODULE.find_oversized_tag(f"<{name} {self.ATTRS}>x</{name}>"), name)
+
+    def test_space_after_lt_still_counts_when_closed(self):
+        self.assertIsNotNone(MODULE.find_oversized_tag(f"a < b {self.ATTRS}> c"))
+
+    def test_comments_and_closing_tags_are_not_start_tags(self):
+        for prefix in ("!--", "/", "?pi"):
+            self.assertIsNone(MODULE.find_oversized_tag(f"<{prefix} {self.ATTRS}>"), prefix)
 
     def test_cyclic_values_terminate(self):
         loop: list = []

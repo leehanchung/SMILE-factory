@@ -628,22 +628,15 @@ def _skip_quoted(text: str, i: int) -> int:
     return len(text) if close == -1 else close + 1
 
 
-# XML NameStartChar (XML 1.0 5th ed. production [4]); quick-xml accepts any of
-# these as the first character of a start-tag name.
-_NAME_START = re.compile(
-    "[:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF"
-    "\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD"
-    "\U00010000-\U000EFFFF]"
-)
-
-
 def _oversized_tag_in(text: str, limit: int) -> Optional[Tuple[int, str]]:
     n = len(text)
     i = text.find("<")
     while i != -1 and i < n:
         start = i
         i += 1
-        if i >= n or not _NAME_START.match(text[i]):
+        # quick-xml treats every `<` not followed by `/`, `!` or `?` as a start
+        # tag (even `<1x` or `< b`), so do the same rather than XML name rules.
+        if i >= n or text[i] in "/!?":
             i = text.find("<", i)
             continue
         while i < n and text[i] not in _TAG_SPACE and text[i] not in ">/":
@@ -670,8 +663,10 @@ def _oversized_tag_in(text: str, limit: int) -> Optional[Tuple[int, str]]:
                     else:
                         while i < n and text[i] not in _TAG_SPACE and text[i] != ">":
                             i += 1
-            if attrs > limit:
-                return attrs, text[start + 1 : start + 81]
+        # Only a tag closed by `>` reaches quick-xml's attribute parser; an
+        # unterminated `<` (stray text, open quote) is a parse error there.
+        if i < n and attrs > limit:
+            return attrs, text[start + 1 : start + 81]
         i = text.find("<", i + 1) if i < n else -1
     return None
 

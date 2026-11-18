@@ -596,11 +596,6 @@ export const MAX_ATTRS_PER_TAG = 256;
 
 const isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r' || c === '\f';
 
-// XML NameStartChar (XML 1.0 5th ed. production [4]); quick-xml accepts any of
-// these as the first character of a start-tag name. `u` so astral chars match.
-const NAME_START =
-  /^[:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]/u;
-
 // Count attributes on every start tag in `s`, skipping quoted values so a
 // `>` inside `title=">"` does not end the tag early (quick-xml honours quotes
 // too). One forward pass: each index is visited a bounded number of times.
@@ -611,8 +606,9 @@ function oversizedTagIn(s, max) {
   while (i !== -1 && i < n) {
     const start = i;
     i += 1;
-    // Only `<NameStartChar` opens a tag; `a < b` in text is not one.
-    if (!NAME_START.test(s.slice(i, i + 2))) {
+    // quick-xml treats every `<` not followed by `/`, `!` or `?` as a start
+    // tag (even `<1x` or `< b`), so do the same rather than XML name rules.
+    if (i >= n || s[i] === '/' || s[i] === '!' || s[i] === '?') {
       i = s.indexOf('<', i);
       continue;
     }
@@ -641,8 +637,10 @@ function oversizedTagIn(s, max) {
           }
         }
       }
-      if (attrs > max) return { attrs, preview: s.slice(start + 1, start + 81) };
     }
+    // Only a tag closed by `>` reaches quick-xml's attribute parser; an
+    // unterminated `<` (stray text, open quote) is a parse error there.
+    if (i < n && attrs > max) return { attrs, preview: s.slice(start + 1, start + 81) };
     i = i < n ? s.indexOf('<', i + 1) : -1;
   }
   return null;
