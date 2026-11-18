@@ -14,8 +14,8 @@ The agent (pi) is told to write ONLY its final answer to /app/answer.txt; the
 verifier reads that file and emits a reward in [0,1] to /logs/verifier/reward.txt.
 
 Usage:
-    uv run --with "datasets>=5.2,<6" python gen_tasks.py --benchmark simpleqa --n 50
-    uv run --with "datasets>=5.2,<6" python gen_tasks.py --benchmark hotpotqa --n 50
+    uv run --with "datasets==5.2.0" python gen_tasks.py --benchmark simpleqa --n 50
+    uv run --with "datasets==5.2.0" python gen_tasks.py --benchmark hotpotqa --n 50
 """
 
 from __future__ import annotations
