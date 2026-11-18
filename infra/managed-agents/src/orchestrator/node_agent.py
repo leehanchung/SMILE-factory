@@ -128,6 +128,14 @@ WORKSPACES_ROOT = os.getenv("WORKSPACES_ROOT", "/var/lib/managed-agents/workspac
 LOGS_ROOT = os.getenv("LOGS_ROOT", "/var/lib/managed-agents/logs")
 SOCKETS_ROOT = os.getenv("SOCKETS_ROOT", "/var/lib/managed-agents/sockets")
 ROOTFS_ROOT = os.getenv("ROOTFS_ROOT", "/var/lib/managed-agents/rootfs")
+
+# Upper bounds for per-session resource requests (resource_overrides /
+# resource_request). Without them an authenticated caller could request
+# arbitrarily large VMs or never-ending timeouts and starve the worker.
+MAX_SESSION_VCPUS = int(os.getenv("MAX_SESSION_VCPUS", "16"))
+MAX_SESSION_MEMORY_MB = int(os.getenv("MAX_SESSION_MEMORY_MB", "65536"))
+MAX_SESSION_DISK_MB = int(os.getenv("MAX_SESSION_DISK_MB", "262144"))
+MAX_SESSION_TIMEOUT_SECONDS = int(os.getenv("MAX_SESSION_TIMEOUT_SECONDS", "86400"))
 KERNEL_PATH = os.getenv(
     "FC_KERNEL_PATH", "/var/lib/managed-agents/kernel/vmlinux"
 )
@@ -362,6 +370,18 @@ def _clone_harness(base: HarnessDefinition, **overrides) -> HarnessDefinition:
     return HarnessDefinition(**data)
 
 
+def _bounded_int(overrides: dict, key: str, default: int, maximum: int) -> int:
+    """Read an integer resource override, enforcing 1 <= value <= maximum."""
+    if key not in overrides:
+        return default
+    value = overrides[key]
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"resource override {key!r} must be an integer")
+    if not 1 <= value <= maximum:
+        raise ValueError(f"resource override {key!r}={value} outside allowed range 1..{maximum}")
+    return value
+
+
 def _harness_to_sandbox_config(
     harness: HarnessDefinition,
     session_env: dict[str, str],
@@ -387,15 +407,25 @@ def _harness_to_sandbox_config(
     merged_env = dict(harness.base_env)
     merged_env.update(session_env)
 
-    # Apply resource overrides
-    vcpus = resource_overrides.get("vcpus", harness.default_vcpus)
-    memory_mb = resource_overrides.get("memory_mb", harness.default_memory_mb)
-    disk_mb = resource_overrides.get("disk_mb", harness.default_disk_mb)
-    timeout = resource_overrides.get("timeout_seconds", harness.default_timeout_seconds)
+    # Apply resource overrides (bounded: see MAX_SESSION_*)
+    vcpus = _bounded_int(resource_overrides, "vcpus", harness.default_vcpus, MAX_SESSION_VCPUS)
+    memory_mb = _bounded_int(
+        resource_overrides, "memory_mb", harness.default_memory_mb, MAX_SESSION_MEMORY_MB
+    )
+    disk_mb = _bounded_int(resource_overrides, "disk_mb", harness.default_disk_mb, MAX_SESSION_DISK_MB)
+    timeout = _bounded_int(
+        resource_overrides,
+        "timeout_seconds",
+        harness.default_timeout_seconds,
+        MAX_SESSION_TIMEOUT_SECONDS,
+    )
 
     # Backward compat: cpu_millicores → vcpus
     if "cpu_millicores" in resource_overrides:
-        vcpus = max(1, resource_overrides["cpu_millicores"] // 1000)
+        millicores = _bounded_int(
+            resource_overrides, "cpu_millicores", 1000, MAX_SESSION_VCPUS * 1000
+        )
+        vcpus = max(1, millicores // 1000)
 
     return SandboxConfig(
         vcpu_count=vcpus,
@@ -508,7 +538,7 @@ async def create_session(req: CreateSessionRequest):
     # Build sandbox config from harness + env + overrides
     try:
         config = _harness_to_sandbox_config(harness, session_env, overrides)
-    except FileNotFoundError as e:
+    except (FileNotFoundError, ValueError) as e:
         raise HTTPException(400, str(e)) from e
 
     # Boot the microVM

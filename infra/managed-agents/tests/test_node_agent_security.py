@@ -161,3 +161,17 @@ async def test_hybrid_orchestrator_sends_bearer_token():
     finally:
         orch._health_task.cancel()
         await orch._http.aclose()
+
+
+# --- resource override bounds ------------------------------------------------
+
+
+def test_resource_override_within_bounds():
+    assert node_agent._bounded_int({"vcpus": 4}, "vcpus", 2, 16) == 4
+    assert node_agent._bounded_int({}, "vcpus", 2, 16) == 2
+
+
+@pytest.mark.parametrize("value", [0, -1, 17, 10**9, "4", 2.5, True, None])
+def test_resource_override_out_of_bounds_rejected(value):
+    with pytest.raises(ValueError):
+        node_agent._bounded_int({"vcpus": value}, "vcpus", 2, 16)
