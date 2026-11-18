@@ -594,22 +594,63 @@ async function loadWasmExporter(wasmPath) {
 // handing the deck to the WASM writer.
 export const MAX_ATTRS_PER_TAG = 256;
 
+const isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r' || c === '\f';
+
+// Count attributes on every start tag in `s`, skipping quoted values so a
+// `>` inside `title=">"` does not end the tag early (quick-xml honours quotes
+// too). One forward pass: each index is visited a bounded number of times.
+// An unterminated quote runs to the end of the string, which only over-counts.
+function oversizedTagIn(s, max) {
+  const n = s.length;
+  let i = s.indexOf('<');
+  while (i !== -1 && i < n) {
+    const start = i;
+    i += 1;
+    // Only `<letter` opens a tag; `a < b` in text is not one.
+    if (!/[A-Za-z]/.test(s[i] || '')) {
+      i = s.indexOf('<', i);
+      continue;
+    }
+    while (i < n && !isSpace(s[i]) && s[i] !== '>' && s[i] !== '/') i += 1; // tag name
+    let attrs = 0;
+    while (i < n && s[i] !== '>') {
+      const c = s[i];
+      if (isSpace(c) || c === '/') {
+        i += 1;
+      } else if (c === '"' || c === "'") {
+        const close = s.indexOf(c, i + 1);
+        i = close === -1 ? n : close + 1;
+      } else {
+        attrs += 1;
+        while (i < n && !isSpace(s[i]) && s[i] !== '=' && s[i] !== '>' && s[i] !== '/') i += 1;
+        while (i < n && isSpace(s[i])) i += 1;
+        if (s[i] === '=') {
+          i += 1;
+          while (i < n && isSpace(s[i])) i += 1;
+          const q = s[i];
+          if (q === '"' || q === "'") {
+            const close = s.indexOf(q, i + 1);
+            i = close === -1 ? n : close + 1;
+          } else {
+            while (i < n && !isSpace(s[i]) && s[i] !== '>') i += 1;
+          }
+        }
+      }
+      if (attrs > max) return { attrs, preview: s.slice(start + 1, start + 81) };
+    }
+    i = i < n ? s.indexOf('<', i + 1) : -1;
+  }
+  return null;
+}
+
 export function findOversizedTag(value, max = MAX_ATTRS_PER_TAG) {
   const stack = [value];
   while (stack.length) {
     const v = stack.pop();
     if (typeof v === 'string') {
       if (!v.includes('<')) continue;
-      // Linear scan: split on '<', take each tag body up to the first '>'.
-      for (const part of v.split('<').slice(1)) {
-        const end = part.indexOf('>');
-        const body = end === -1 ? part : part.slice(0, end);
-        let attrs = 0;
-        for (const token of body.split(/\s+/).slice(1)) {
-          if (token && token !== '/') attrs += 1;
-        }
-        if (attrs > max) return { attrs, preview: body.slice(0, 80) };
-      }
+      const hit = oversizedTagIn(v, max);
+      if (hit) return hit;
     } else if (v && typeof v === 'object') {
       for (const child of Object.values(v)) stack.push(child);
     }

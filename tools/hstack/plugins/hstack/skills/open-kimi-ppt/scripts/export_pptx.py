@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import base64
 import importlib
+import importlib.metadata
 import json
 import mimetypes
 import os
@@ -214,6 +215,47 @@ def _fallback_env_site_packages() -> Optional[Path]:
     return Path(result.stdout.strip()) if result.stdout.strip() else None
 
 
+def _requirement_floor(package: str) -> Tuple[str, Optional[Tuple[int, ...]]]:
+    """Split "pillow>=13.0" into ("pillow", (13, 0)); no ">=" means no floor."""
+    name, sep, floor = package.partition(">=")
+    if not sep:
+        return package.strip(), None
+    return name.strip(), _version_tuple(floor.split(",")[0])
+
+
+def _version_tuple(version: str) -> Tuple[int, ...]:
+    """Leading numeric release segments: "6.0.2rc1" -> (6, 0, 2)."""
+    parts: List[int] = []
+    for piece in version.strip().split("."):
+        match = re.match(r"\d+", piece)
+        if not match:
+            break
+        parts.append(int(match.group()))
+        if match.end() != len(piece):
+            break
+    return tuple(parts)
+
+
+def _meets_floor(dist: str, floor: Optional[Tuple[int, ...]]) -> bool:
+    """True when the installed `dist` satisfies `floor` (or there is no floor)."""
+    if floor is None:
+        return True
+    try:
+        installed = _version_tuple(importlib.metadata.version(dist))
+    except importlib.metadata.PackageNotFoundError:
+        return False  # importable but unversioned: reinstall to be sure
+    width = max(len(installed), len(floor))
+    return installed + (0,) * (width - len(installed)) >= floor + (0,) * (width - len(floor))
+
+
+def _import_fresh(import_name: str) -> Any:
+    """Import `import_name`, dropping any copy loaded before an upgrade."""
+    for name in [m for m in sys.modules if m == import_name or m.startswith(import_name + ".")]:
+        del sys.modules[name]
+    importlib.invalidate_caches()
+    return importlib.import_module(import_name)
+
+
 def ensure_module(import_name: str, package: str, purpose: str) -> Any:
     """Import `import_name`, installing `package` on demand.
 
@@ -223,12 +265,28 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
     we never pass --break-system-packages). Every strategy is followed by an
     import-path refresh so the running process picks the package up.
     """
+    dist, floor = _requirement_floor(package)
     try:
-        return importlib.import_module(import_name)
+        module = importlib.import_module(import_name)
     except ImportError:
-        pass
+        log(f"{package} is required for {purpose}; installing it now")
+    else:
+        # An older copy may still carry the advisories the floor excludes.
+        if _meets_floor(dist, floor):
+            return module
+        log(f"installed {dist} is older than {package} (needed for {purpose}); upgrading it")
 
-    log(f"{package} is required for {purpose}; installing it now")
+    def _load(label: str) -> Optional[Any]:
+        try:
+            module = _import_fresh(import_name)
+        except ImportError:
+            failures.append(f"[{label}] installed, but {import_name} is still not importable")
+            return None
+        if not _meets_floor(dist, floor):
+            failures.append(f"[{label}] installed, but an older {dist} still shadows {package}")
+            return None
+        return module
+
     attempts: List[Tuple[str, List[str]]] = []
     uv = shutil.which("uv")
     if uv:
@@ -242,10 +300,9 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
             failures.append(f"[{label}] {process.stdout[-800:]}")
             continue
         _refresh_import_paths()
-        try:
-            return importlib.import_module(import_name)
-        except ImportError:
-            failures.append(f"[{label}] installed, but {import_name} is still not importable")
+        module = _load(label)
+        if module is not None:
+            return module
 
     purelib = _fallback_env_site_packages()
     if purelib is not None:
@@ -253,13 +310,13 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
             [str(_fallback_env_python()), "-m", "pip", "install", package], timeout=300
         )
         if process.returncode == 0:
-            if str(purelib) not in sys.path:
-                sys.path.append(str(purelib))
-            importlib.invalidate_caches()
-            try:
-                return importlib.import_module(import_name)
-            except ImportError:
-                failures.append(f"[venv] installed into {purelib}, but import still failed")
+            # Ahead of the other site dirs, so it wins over an outdated copy.
+            if str(purelib) in sys.path:
+                sys.path.remove(str(purelib))
+            sys.path.insert(0, str(purelib))
+            module = _load("venv")
+            if module is not None:
+                return module
         else:
             failures.append(f"[venv] {process.stdout[-800:]}")
 
@@ -537,6 +594,85 @@ def build_image_map(root: Path) -> Dict[str, str]:
     return image_map
 
 
+# The vendored pptd WASM links quick-xml 0.38.4, whose duplicate-attribute check
+# is quadratic in the attributes on one tag (RUSTSEC-2026-0194). The browser
+# export and image QA hand the deck to that WASM inside the editor, so refuse
+# pathological rich-text tags here. Port of findOversizedTag() in
+# local-export/export-pptd.mjs; keep the two in sync (tests/selftest.sh).
+MAX_ATTRS_PER_TAG = 256
+_TAG_SPACE = " \t\n\r\f"
+
+
+def _skip_quoted(text: str, i: int) -> int:
+    close = text.find(text[i], i + 1)
+    return len(text) if close == -1 else close + 1
+
+
+def _oversized_tag_in(text: str, limit: int) -> Optional[Tuple[int, str]]:
+    n = len(text)
+    i = text.find("<")
+    while i != -1 and i < n:
+        start = i
+        i += 1
+        if i >= n or not ("a" <= text[i].lower() <= "z"):
+            i = text.find("<", i)
+            continue
+        while i < n and text[i] not in _TAG_SPACE and text[i] not in ">/":
+            i += 1
+        attrs = 0
+        while i < n and text[i] != ">":
+            c = text[i]
+            if c in _TAG_SPACE or c == "/":
+                i += 1
+            elif c in "\"'":
+                i = _skip_quoted(text, i)
+            else:
+                attrs += 1
+                while i < n and text[i] not in _TAG_SPACE and text[i] not in "=>/":
+                    i += 1
+                while i < n and text[i] in _TAG_SPACE:
+                    i += 1
+                if i < n and text[i] == "=":
+                    i += 1
+                    while i < n and text[i] in _TAG_SPACE:
+                        i += 1
+                    if i < n and text[i] in "\"'":
+                        i = _skip_quoted(text, i)
+                    else:
+                        while i < n and text[i] not in _TAG_SPACE and text[i] != ">":
+                            i += 1
+            if attrs > limit:
+                return attrs, text[start + 1 : start + 81]
+        i = text.find("<", i + 1) if i < n else -1
+    return None
+
+
+def find_oversized_tag(value: Any, limit: int = MAX_ATTRS_PER_TAG) -> Optional[Tuple[int, str]]:
+    """First (attribute count, preview) of a tag with more than `limit` attributes."""
+    stack = [value]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, str):
+            if "<" in item:
+                hit = _oversized_tag_in(item, limit)
+                if hit:
+                    return hit
+        elif isinstance(item, dict):
+            stack.extend(item.values())
+        elif isinstance(item, (list, tuple)):
+            stack.extend(item)
+    return None
+
+
+def reject_oversized_tags(value: Any, where: str) -> None:
+    hit = find_oversized_tag(value)
+    if hit:
+        raise ExportError(
+            f"{where}: rich-text tag has {hit[0]} attributes (limit {MAX_ATTRS_PER_TAG}); "
+            f"refusing to export (quick-xml RUSTSEC-2026-0194): <{hit[1]}"
+        )
+
+
 def build_payload(manifest: Path) -> Dict[str, Any]:
     manifest_text, manifest_data = read_yaml_mapping(manifest)
     if manifest_data.get("version") != "v2":
@@ -545,6 +681,7 @@ def build_payload(manifest: Path) -> Dict[str, Any]:
     if not isinstance(page_paths, list) or not page_paths:
         raise ExportError("PPTD manifest must contain a non-empty pages list")
 
+    reject_oversized_tags(manifest_data, manifest.name)
     root = manifest.parent.resolve()
     pages: List[Dict[str, str]] = []
     for entry in page_paths:
@@ -554,6 +691,7 @@ def build_payload(manifest: Path) -> Dict[str, Any]:
         page_text, page_data = read_yaml_mapping(page_path)
         if not isinstance(page_data.get("elements"), list):
             raise ExportError(f"page elements must be an array: {entry}")
+        reject_oversized_tags(page_data, str(entry))
         pages.append({"path": str(entry), "content": page_text})
 
     title = str(manifest_data.get("title") or manifest.stem)

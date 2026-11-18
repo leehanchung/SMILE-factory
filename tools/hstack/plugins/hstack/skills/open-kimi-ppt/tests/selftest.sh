@@ -48,6 +48,13 @@ const m = await import('$SKILL_DIR/scripts/local-export/export-pptd.mjs');
 const attrs = Array.from({ length: m.MAX_ATTRS_PER_TAG + 1 }, (_, i) => 'a' + i + '=1').join(' ');
 if (m.findOversizedTag({ html: '<p class=x>ok</p>' })) process.exit(1);
 if (!m.findOversizedTag({ s: [{ html: '<span ' + attrs + '>x</span>' }] })) process.exit(2);
+// a quoted '>' must not end the tag scan early
+if (!m.findOversizedTag({ html: '<span title=\">\" ' + attrs + '>x</span>' })) process.exit(3);
+if (!m.findOversizedTag({ html: \"<span title='a>b' \" + attrs + '>x</span>' })) process.exit(4);
+// text '<' is not a tag; a tag at the cap passes
+if (m.findOversizedTag({ html: 'a < b ' + attrs })) process.exit(5);
+const atCap = Array.from({ length: m.MAX_ATTRS_PER_TAG }, (_, i) => 'a' + i + '=\"x y>\"').join(' ');
+if (m.findOversizedTag({ html: '<span ' + atCap + '>x</span>' })) process.exit(6);
 " || fail "oversized-attribute guard broken"
 pass "rich-text attribute cap enforced"
 

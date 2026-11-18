@@ -247,5 +247,72 @@ class ExportPptxTests(unittest.TestCase):
             self.assertNotIn("AGENT_BROWSER_CDP", without_port.env)
 
 
+class EnsureModuleFloorTests(unittest.TestCase):
+    def test_requirement_floor_parsing(self):
+        self.assertEqual(MODULE._requirement_floor("pyyaml>=6.0.2"), ("pyyaml", (6, 0, 2)))
+        self.assertEqual(MODULE._requirement_floor("pillow"), ("pillow", None))
+        self.assertEqual(MODULE._version_tuple("6.0.2rc1"), (6, 0, 2))
+
+    def test_meets_floor_compares_padded_versions(self):
+        with patch.object(MODULE.importlib.metadata, "version", return_value="6.0"):
+            self.assertFalse(MODULE._meets_floor("pyyaml", (6, 0, 2)))
+            self.assertTrue(MODULE._meets_floor("pyyaml", (6, 0)))
+        with patch.object(MODULE.importlib.metadata, "version", return_value="6.0.3"):
+            self.assertTrue(MODULE._meets_floor("pyyaml", (6, 0, 2)))
+
+    def test_meets_floor_rejects_unversioned_install(self):
+        missing = MODULE.importlib.metadata.PackageNotFoundError("x")
+        with patch.object(MODULE.importlib.metadata, "version", side_effect=missing):
+            self.assertFalse(MODULE._meets_floor("pyyaml", (6, 0, 2)))
+
+    @patch.object(MODULE, "_refresh_import_paths")
+    @patch.object(MODULE.shutil, "which", return_value=None)
+    def test_outdated_importable_module_is_upgraded(self, _which, _refresh):
+        versions = iter(["1.0", "2.0"])
+        ok = MODULE.subprocess.CompletedProcess([], 0, "")
+        with patch.object(MODULE.importlib.metadata, "version", side_effect=lambda _d: next(versions)), \
+                patch.object(MODULE, "run_command", return_value=ok) as run_command:
+            module = MODULE.ensure_module("json", "fakedist>=2.0", "testing")
+        self.assertEqual(module.__name__, "json")
+        command = run_command.call_args[0][0]
+        self.assertIn("fakedist>=2.0", command)
+
+    @patch.object(MODULE.importlib.metadata, "version", return_value="9.9")
+    @patch.object(MODULE, "run_command")
+    def test_current_module_is_not_reinstalled(self, run_command, _version):
+        MODULE.ensure_module("json", "fakedist>=2.0", "testing")
+        run_command.assert_not_called()
+
+
+class OversizedTagGuardTests(unittest.TestCase):
+    ATTRS = " ".join(f"a{i}=1" for i in range(MODULE.MAX_ATTRS_PER_TAG + 1))
+
+    def test_plain_html_passes(self):
+        self.assertIsNone(MODULE.find_oversized_tag({"html": "<p class=x>ok</p>"}))
+
+    def test_too_many_attributes_found_in_nested_values(self):
+        hit = MODULE.find_oversized_tag({"s": [{"html": f"<span {self.ATTRS}>x</span>"}]})
+        self.assertEqual(hit[0], MODULE.MAX_ATTRS_PER_TAG + 1)
+
+    def test_quoted_gt_does_not_end_the_tag(self):
+        self.assertIsNotNone(MODULE.find_oversized_tag(f'<span title=">" {self.ATTRS}>x</span>'))
+        self.assertIsNotNone(MODULE.find_oversized_tag(f"<span title='a>b' {self.ATTRS}>x</span>"))
+
+    def test_text_lt_and_tag_at_cap_pass(self):
+        self.assertIsNone(MODULE.find_oversized_tag(f"a < b {self.ATTRS}"))
+        at_cap = " ".join(f'a{i}="x y>"' for i in range(MODULE.MAX_ATTRS_PER_TAG))
+        self.assertIsNone(MODULE.find_oversized_tag(f"<span {at_cap}>x</span>"))
+
+    def test_build_payload_refuses_oversized_page(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "deck.pptd").write_text("version: v2\ntitle: t\npages:\n  - p1.page\n")
+            (root / "p1.page").write_text(
+                "elements:\n  - html: '<span " + self.ATTRS + ">x</span>'\n"
+            )
+            with self.assertRaisesRegex(MODULE.ExportError, "RUSTSEC-2026-0194"):
+                MODULE.build_payload(root / "deck.pptd")
+
+
 if __name__ == "__main__":
     unittest.main()
