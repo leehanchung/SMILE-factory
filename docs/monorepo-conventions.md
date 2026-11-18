@@ -80,7 +80,7 @@ and they all have to agree for the pipeline to be coherent.
 4. If any files match, it invokes the hook binary with those files
    as arguments.
 
-Our config has a single ruff setup (`v0.15.10`, `ruff` + `ruff-format`)
+Our config has a single ruff setup (`v0.17.5`, `ruff` + `ruff-format`)
 scoped by path to the active Python projects:
 
 - `files: ^(apps|training)/.*\.py$` — runs on everything under `apps/`
@@ -100,13 +100,13 @@ per-project.
 
 ### The version-drift trap
 
-`.pre-commit-config.yaml` pins `rev: v0.15.10`. Each `apps/*` and
-`training/*` project's `pyproject.toml` pins `ruff>=0.15` in its dev
+`.pre-commit-config.yaml` pins `rev: v0.17.5`. Each `apps/*` and
+`training/*` project's `pyproject.toml` pins `ruff>=0.17` in its dev
 extras. Today they agree. Tomorrow someone bumps one project to
-`ruff>=0.16` without touching `.pre-commit-config.yaml` and you'll see:
+`ruff>=0.18` without touching `.pre-commit-config.yaml` and you'll see:
 
-- Local `uv run ruff` (from the project's venv) uses `0.16.x`
-- Local `pre-commit run` uses `0.15.10` (from the pre-commit pin)
+- Local `uv run ruff` (from the project's venv) uses `0.18.x`
+- Local `pre-commit run` uses `0.17.5` (from the pre-commit pin)
 - Same file, different opinions, mysterious CI flakes
 
 **Rule:** when bumping the ruff pin in any app's `pyproject.toml`,
