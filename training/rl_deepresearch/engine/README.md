@@ -1,22 +1,22 @@
 # engine/ — slime is NOT vendored here
 
 slime (THUDM/slime) is the RL engine and is consumed as a **Docker image**
-(`slimerl/slime:latest`), not a git submodule or a vendored fork. The image
+(`slimerl/slime`, pinned by digest — see `SLIME_IMAGE` in `../Makefile`), not a git submodule or a vendored fork. The image
 already bakes in the patched Megatron-LM and SGLang that slime requires, so a
 bare-metal install is not worth attempting.
 
 This directory is intentionally (almost) empty. The integration surface is:
 
-1. **Pull the image** (pin a digest for reproducibility):
+1. **Pull the image** (pinned by digest for reproducibility; `make image` does this):
    ```bash
-   docker pull slimerl/slime:latest
+   docker pull slimerl/slime:nightly-dev-20261106a-cu130@sha256:652b94c17f968b42e133c7b0d56efb74aed596bc901614f12efba84b648598fa
    ```
 2. **Run the container** with this recipe mounted and GPUs attached:
    ```bash
    docker run --rm --gpus all --ipc=host --shm-size=16g \
      --ulimit memlock=-1 --ulimit stack=67108864 \
      -v "$(git rev-parse --show-toplevel)":/repo -w /repo/training/rl_deepresearch \
-     -it slimerl/slime:latest bash
+     -it slimerl/slime:nightly-dev-20261106a-cu130@sha256:652b94c17f968b42e133c7b0d56efb74aed596bc901614f12efba84b648598fa bash
    ```
    (Mount the **repo root**, not just this recipe dir — the shared `libs/dr_agent`
    lives outside the recipe and must be reachable inside the container.)
@@ -30,6 +30,6 @@ Our only code is in `../plugins/` (the rollout + reward functions), wired into
 slime purely by CLI flag — `--custom-generate-function-path` and
 `--custom-rm-path`. We never patch slime core.
 
-If we ever need to pin a digest or bake plugins into an image, add a thin
-`Dockerfile` here (`FROM slimerl/slime@sha256:...` + `COPY`), but prefer the
+If we ever need to bake plugins into an image, add a thin
+`Dockerfile` here (`FROM` the pinned `SLIME_IMAGE` + `COPY`), but prefer the
 bind-mount workflow above for development.

@@ -5,9 +5,9 @@
 # HERE (versioned, diffable) — never inline them into run.sh.
 
 engine:
-  # Pin a specific digest in real runs for reproducibility, e.g.
-  #   slimerl/slime@sha256:...
-  image: "slimerl/slime:latest"
+  # Pinned by digest for reproducibility (keep in sync with SLIME_IMAGE in the
+  # Makefile; bump tag + digest together).
+  image: "slimerl/slime:nightly-dev-20261106a-cu130@sha256:652b94c17f968b42e133c7b0d56efb74aed596bc901614f12efba84b648598fa"
   # Where this recipe's plugins/ is mounted inside the container.
   plugins_mountpoint: "/workspace/plugins"
 

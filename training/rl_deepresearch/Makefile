@@ -1,6 +1,9 @@
 .PHONY: help sync sync-dev check lint fmt test image run
 
-SLIME_IMAGE ?= slimerl/slime:latest
+# Pinned by digest (was the floating `latest` tag, which resolved to
+# nightly-dev-20261106a-cu130 on 2026-11-17). Bump tag + digest together; override with
+# `make run SLIME_IMAGE=...` to try another build.
+SLIME_IMAGE ?= slimerl/slime:nightly-dev-20261106a-cu130@sha256:652b94c17f968b42e133c7b0d56efb74aed596bc901614f12efba84b648598fa
 
 help:
 	@echo "Targets:"
