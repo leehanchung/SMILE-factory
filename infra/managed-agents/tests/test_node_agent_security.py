@@ -137,6 +137,29 @@ def test_image_override_requires_allowlist(monkeypatch):
         _resolve_harness(HarnessPayload(name="claude-code", image="evil.io/x:latest"))
 
 
+@pytest.mark.parametrize(
+    ("prefix", "image", "allowed"),
+    [
+        ("registry.example.com/team", "registry.example.com/team/app:1", True),
+        ("registry.example.com/team", "registry.example.com/team:tag", True),
+        ("registry.example.com/team", "registry.example.com/team@sha256:abc", True),
+        ("registry.example.com/team", "registry.example.com/team", True),
+        ("registry.example.com/team", "registry.example.com/team-attacker/payload", False),
+        ("registry.example.com/team", "registry.example.com/teamx:1", False),
+        ("registry.example.com/team/", "registry.example.com/team/app:1", True),
+        ("registry.example.com/team/", "registry.example.com/team-attacker/x", False),
+    ],
+)
+def test_image_allowlist_matches_at_reference_boundaries(monkeypatch, prefix, image, allowed):
+    monkeypatch.setenv("NODE_AGENT_ALLOWED_IMAGE_PREFIXES", prefix)
+    payload = HarnessPayload(name="claude-code", image=image)
+    if allowed:
+        assert _resolve_harness(payload).image == image
+    else:
+        with pytest.raises(ValueError, match="image overrides are not allowed"):
+            _resolve_harness(payload)
+
+
 def test_argv_limits():
     with pytest.raises(ValueError):
         _resolve_harness(HarnessPayload(name="claude-code", command=["a\x00b"]))

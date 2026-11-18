@@ -300,6 +300,64 @@ async def test_gzip_bomb_never_decodes_past_cap(monkeypatch):
     assert largest and max(largest) <= cap + 1
 
 
+def _raw_deflate(data: bytes) -> bytes:
+    import zlib
+
+    c = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+    return c.compress(data) + c.flush()
+
+
+@pytest.mark.parametrize("wrapped", [True, False], ids=["zlib-wrapped", "raw"])
+async def test_deflate_body_decoded(monkeypatch, wrapped):
+    import zlib
+
+    monkeypatch.setattr(web, "resolve_host", _dns({"good.example": ["93.184.216.34"]}))
+    payload = b"<p>hello</p>" * 50
+    body_bytes = zlib.compress(payload) if wrapped else _raw_deflate(payload)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _raw(200, body_bytes, {"content-encoding": "deflate"})
+
+    async with _client(handler) as client:
+        _, body, truncated = await safe_fetch("https://good.example/", 10, client=client)
+    assert body == payload and not truncated
+
+
+def test_deflate_decoder_handles_one_byte_chunks():
+    import zlib
+
+    payload = b"abc" * 100
+    for stream in (zlib.compress(payload), _raw_deflate(payload)):
+        decoder = web._DeflateDecoder()
+        out = b"".join(web._decode_at_most(decoder, bytes([b]), 10_000) for b in stream)
+        assert out == payload
+
+
+async def test_raw_deflate_bomb_never_decodes_past_cap(monkeypatch):
+    monkeypatch.setattr(web, "resolve_host", _dns({"bomb.example": ["93.184.216.34"]}))
+    bomb = _raw_deflate(b"\0" * (64 * 1024 * 1024))
+    cap = 1000
+    largest = []
+    real_decode = web._decode_at_most
+
+    def spy(decoder, chunk, budget):
+        out = real_decode(decoder, chunk, budget)
+        largest.append(len(out))
+        return out
+
+    monkeypatch.setattr(web, "_decode_at_most", spy)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _raw(200, bomb, {"content-encoding": "deflate"})
+
+    async with _client(handler) as client:
+        _, body, truncated = await safe_fetch(
+            "https://bomb.example/", 10, client=client, max_bytes=cap
+        )
+    assert len(body) == cap and truncated
+    assert largest and max(largest) <= cap + 1
+
+
 @pytest.mark.parametrize("encoding", ["br", "zstd", "gzip, br"])
 async def test_unboundable_encodings_refused(monkeypatch, encoding):
     monkeypatch.setattr(web, "resolve_host", _dns({"good.example": ["93.184.216.34"]}))

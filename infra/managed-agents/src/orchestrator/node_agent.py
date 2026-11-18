@@ -248,6 +248,19 @@ def _validate_rootfs_path(rootfs_path: str) -> str:
     return str(resolved)
 
 
+def _image_under_prefix(image: str, prefix: str) -> bool:
+    """True when `image` is `prefix` itself or lives under it at a reference boundary.
+
+    A prefix ending in ``/`` names a namespace (``registry.io/team/`` allows
+    ``registry.io/team/app:1``). A bare prefix names a repository or namespace,
+    so it also allows its tags/digests and sub-paths, but never a sibling whose
+    name merely starts the same (``registry.io/team-attacker/x``).
+    """
+    if prefix.endswith(("/", ":", "@")):
+        return image.startswith(prefix)
+    return image == prefix or image.startswith((prefix + "/", prefix + ":", prefix + "@"))
+
+
 def _validate_image(image: str) -> str:
     """Image overrides are only accepted from configured registry prefixes."""
     prefixes = [
@@ -255,7 +268,7 @@ def _validate_image(image: str) -> str:
         for p in os.getenv("NODE_AGENT_ALLOWED_IMAGE_PREFIXES", "").split(",")
         if p.strip()
     ]
-    if not any(image.startswith(p) for p in prefixes):
+    if not any(_image_under_prefix(image, p) for p in prefixes):
         raise ValueError(
             "image overrides are not allowed (configure NODE_AGENT_ALLOWED_IMAGE_PREFIXES)"
         )

@@ -57,8 +57,39 @@ def _bounded_decoder(content_encoding: str) -> Any:
     if encoding in ("gzip", "x-gzip"):
         return zlib.decompressobj(16 + zlib.MAX_WBITS)
     if encoding == "deflate":
-        return zlib.decompressobj(zlib.MAX_WBITS)
+        return _DeflateDecoder()
     raise UnsupportedEncodingError(f"Unsupported Content-Encoding '{content_encoding}'")
+
+
+class _DeflateDecoder:
+    """HTTP ``deflate``: zlib-wrapped per RFC 9110, but servers often send raw DEFLATE.
+
+    Starts as a zlib-wrapped decoder; if the 2-byte zlib header turns out to be
+    invalid, it restarts on the same bytes as a raw decoder. Same
+    ``decompress(data, max_length)`` / ``unconsumed_tail`` surface as zlib's
+    decompressobj, so the ``max_length`` bound still applies.
+    """
+
+    _HEADER = 2  # bytes needed before zlib can reject a bad wrapper
+
+    def __init__(self) -> None:
+        self._decoder = zlib.decompressobj(zlib.MAX_WBITS)
+        self._probe = bytearray()  # input seen while the wrapper is unconfirmed
+
+    def decompress(self, data: bytes, max_length: int) -> bytes:
+        if len(self._probe) >= self._HEADER:
+            return self._decoder.decompress(data, max_length)
+        self._probe += data
+        try:
+            return self._decoder.decompress(data, max_length)
+        except zlib.error:
+            self._decoder = zlib.decompressobj(-zlib.MAX_WBITS)
+            replay, self._probe = bytes(self._probe), bytearray(b"\0" * self._HEADER)
+            return self._decoder.decompress(replay, max_length)
+
+    @property
+    def unconsumed_tail(self) -> bytes:
+        return self._decoder.unconsumed_tail
 
 
 def _decode_at_most(decoder: Any, chunk: bytes, budget: int) -> bytes:
