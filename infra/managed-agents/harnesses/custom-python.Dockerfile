@@ -6,7 +6,7 @@
 # Build:
 #   docker build -f harnesses/custom-python.Dockerfile -t managed-agents-runtime:latest .
 
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1
@@ -18,18 +18,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq vim less \
     && rm -rf /var/lib/apt/lists/*
 
-# Node.js (for tool execution)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Node.js 24 LTS (for tool execution) -- copied from the official image
+# instead of piping the NodeSource setup script into bash.
+COPY --from=node:24-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 WORKDIR /app
 
 # Install Python dependencies
 COPY pyproject.toml poetry.lock* ./
-RUN pip install --no-cache-dir poetry && \
+ARG POETRY_VERSION=2.4.0
+RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}" && \
     poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --only main
+    poetry install --no-interaction --no-ansi --only main --no-root
 
 # Copy application code
 COPY src/ ./src/

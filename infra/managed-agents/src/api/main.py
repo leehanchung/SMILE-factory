@@ -17,10 +17,9 @@ async def lifespan(app: FastAPI):
     """Manage app lifecycle: startup and shutdown."""
     # Startup
     logger.info("Initializing dependencies...")
-    await init_deps(
-        database_url="postgresql+asyncpg://user:password@localhost:5432/lora_agents",
-        redis_url="redis://localhost:6379",
-    )
+    # Connection settings come from DATABASE_URL / REDIS_URL (see deps.init_deps);
+    # previously a hardcoded DSN with placeholder credentials overrode them.
+    await init_deps()
     logger.info("Dependencies initialized")
 
     yield
@@ -48,7 +47,9 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],  # TODO: Restrict to specific origins in production
-        allow_credentials=True,
+        # Wildcard origins + credentials makes Starlette reflect any Origin with
+        # Access-Control-Allow-Credentials, letting any site make credentialed calls.
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*", "anthropic-beta"],
     )

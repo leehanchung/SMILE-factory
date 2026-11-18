@@ -6,7 +6,7 @@
 # Build:
 #   docker build -f harnesses/claude-code.Dockerfile -t managed-agents-claude-code:latest .
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -14,23 +14,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl wget git ca-certificates gnupg \
     build-essential pkg-config \
-    python3.11 python3-pip python3-venv \
+    python3 python3-pip python3-venv \
     jq vim less zip unzip \
-    bash zsh netcat dnsutils \
+    bash zsh netcat-openbsd dnsutils \
     && rm -rf /var/lib/apt/lists/*
 
-# Node.js 20 LTS
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
-
-# Bun (Discord MCP server runtime)
-ENV BUN_INSTALL="/usr/local/bun"
-RUN curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local/bun bash
-ENV PATH="/usr/local/bun/bin:$PATH"
+# Node.js 24 LTS + Bun -- copied from the official images instead of piping
+# install scripts (NodeSource, bun.sh) into bash.
+COPY --from=node:24-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+COPY --from=oven/bun:1.4.4-slim /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s bun /usr/local/bin/bunx
 
 # Claude Code CLI
-RUN npm install -g @anthropic-ai/claude-code
+ARG CLAUDE_CODE_VERSION=2.1.327
+RUN npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 
 # Pre-install Discord plugin
 RUN mkdir -p /opt/claude-plugins && \
@@ -39,11 +39,14 @@ RUN mkdir -p /opt/claude-plugins && \
     cd claude-plugins-official/external_plugins/discord && \
     bun install --frozen-lockfile
 
-# Common Python packages
-RUN python3 -m pip install --no-cache-dir \
+# Common Python packages (venv: Ubuntu 24.04 system Python is externally managed)
+RUN python3 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir \
     httpx requests beautifulsoup4 pyyaml numpy pandas
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Non-root user
+# Non-root user (Ubuntu 24.04 ships a default "ubuntu" user at uid/gid 1000)
+RUN userdel -r ubuntu 2>/dev/null || true
 RUN groupadd -g 1000 agent && useradd -u 1000 -g agent -m -d /home/agent agent
 
 # Directories
