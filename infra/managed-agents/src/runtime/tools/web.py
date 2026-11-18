@@ -67,12 +67,13 @@ async def resolve_host(host: str, port: int) -> list[str]:
     return [info[4][0] for info in infos]
 
 
-async def validate_url(url: str) -> tuple[httpx.URL, str]:
-    """Check scheme + resolved addresses; return (url, pinned_ip).
+async def validate_url(url: str) -> tuple[httpx.URL, list[str]]:
+    """Check scheme + resolved addresses; return (url, pinned_ips).
 
-    Every address the host resolves to must be public; the first is returned so
-    the caller can connect to exactly the address that was checked (prevents
-    DNS-rebinding between check and connect).
+    Every address the host resolves to must be public. All of them are
+    returned, in resolver order, so the caller connects only to addresses that
+    were checked (prevents DNS-rebinding between check and connect) while still
+    falling back past an unreachable one (e.g. IPv6 on an IPv4-only host).
     """
     try:
         parsed = httpx.URL(url)
@@ -101,7 +102,7 @@ async def validate_url(url: str) -> tuple[httpx.URL, str]:
     for ip in addresses:
         if is_blocked_ip(ip):
             raise BlockedURLError(f"Host '{host}' resolves to a blocked address ({ip})")
-    return parsed, str(addresses[0])
+    return parsed, list(dict.fromkeys(str(ip) for ip in addresses))
 
 
 async def safe_fetch(
@@ -125,15 +126,22 @@ async def safe_fetch(
     try:
         current = url
         for _hop in range(max_redirects + 1):
-            parsed, pinned_ip = await validate_url(current)
-            # Connect to the validated IP; keep Host header + TLS SNI/cert check on the name.
-            request_url = parsed.copy_with(host=pinned_ip)
+            parsed, pinned_ips = await validate_url(current)
+            # Connect to a validated IP; keep Host header + TLS SNI/cert check on the name.
             headers = {"Host": parsed.netloc.decode("ascii")}
             extensions = {"sni_hostname": parsed.host} if parsed.scheme == "https" else {}
-            request = client.build_request(
-                "GET", request_url, headers=headers, extensions=extensions
-            )
-            response = await client.send(request, stream=True)
+            response = None
+            for pinned_ip in pinned_ips:
+                request = client.build_request(
+                    "GET", parsed.copy_with(host=pinned_ip), headers=headers, extensions=extensions
+                )
+                try:
+                    response = await client.send(request, stream=True)
+                    break
+                except (httpx.ConnectError, httpx.ConnectTimeout):
+                    if pinned_ip == pinned_ips[-1]:
+                        raise
+            assert response is not None
             try:
                 if response.is_redirect:
                     location = response.headers.get("location", "")

@@ -76,9 +76,9 @@ async def test_hostname_resolving_to_private_rejected(monkeypatch):
 
 async def test_public_hostname_pins_ip(monkeypatch):
     monkeypatch.setattr(web, "resolve_host", _dns({"good.example": ["93.184.216.34"]}))
-    parsed, ip = await web.validate_url("https://good.example/path")
+    parsed, ips = await web.validate_url("https://good.example/path")
     assert parsed.host == "good.example"
-    assert ip == "93.184.216.34"
+    assert ips == ["93.184.216.34"]
 
 
 def _client(handler) -> httpx.AsyncClient:
@@ -176,3 +176,52 @@ async def test_tool_reports_blocked_url(monkeypatch):
     result = await WebFetchTool().execute({"url": "http://127.0.0.1:8080/"})
     assert result.exit_code == 1
     assert "not allowed" in (result.error or "")
+
+
+async def test_fetch_falls_back_to_next_validated_address(monkeypatch):
+    monkeypatch.setattr(
+        web,
+        "resolve_host",
+        _dns({"dual.example": ["2606:4700:4700::1111", "93.184.216.34"]}),
+    )
+    tried = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        tried.append(request.url.host)
+        if request.url.host == "2606:4700:4700::1111":
+            raise httpx.ConnectError("network unreachable", request=request)
+        return httpx.Response(200, text="v4")
+
+    async with _client(handler) as client:
+        _, body, _ = await safe_fetch("https://dual.example/", 10, client=client)
+    assert body == b"v4"
+    assert tried == ["2606:4700:4700::1111", "93.184.216.34"]
+
+
+async def test_fetch_raises_when_every_address_unreachable(monkeypatch):
+    monkeypatch.setattr(
+        web, "resolve_host", _dns({"down.example": ["93.184.216.34", "1.1.1.1"]})
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("refused", request=request)
+
+    async with _client(handler) as client:
+        with pytest.raises(httpx.ConnectError):
+            await safe_fetch("https://down.example/", 10, client=client)
+
+
+async def test_fetch_mixed_answer_set_with_private_ip_rejected(monkeypatch):
+    monkeypatch.setattr(
+        web, "resolve_host", _dns({"mixed.example": ["93.184.216.34", "10.0.0.1"]})
+    )
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.host)
+        return httpx.Response(200)
+
+    async with _client(handler) as client:
+        with pytest.raises(BlockedURLError):
+            await safe_fetch("https://mixed.example/", 10, client=client)
+    assert calls == []

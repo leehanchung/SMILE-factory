@@ -40,12 +40,13 @@ network stack. ~125ms boot, ~5MB memory overhead.
 ## Quick Start
 
 ```bash
-# 1. Local dev (postgres + redis)
-cd docker && docker compose up -d
-
-# Shared secrets (both services fail closed without them; see "Authentication")
+# 0. Shared secrets first: the services (including the compose `api`
+#    service) fail closed without them; see "Authentication"
 export MANAGED_AGENTS_API_KEYS="$(openssl rand -hex 32)"
 export NODE_AGENT_TOKEN="$(openssl rand -hex 32)"
+
+# 1. Local dev (postgres + redis)
+cd docker && docker compose up -d
 
 # 2. Start the API (sends NODE_AGENT_TOKEN to the workers)
 cd .. && ORCHESTRATOR_BACKEND=hybrid \

@@ -370,15 +370,19 @@ def _clone_harness(base: HarnessDefinition, **overrides) -> HarnessDefinition:
     return HarnessDefinition(**data)
 
 
-def _bounded_int(overrides: dict, key: str, default: int, maximum: int) -> int:
-    """Read an integer resource override, enforcing 1 <= value <= maximum."""
+def _bounded_int(
+    overrides: dict, key: str, default: int, maximum: int, minimum: int = 1
+) -> int:
+    """Read an integer resource override, enforcing minimum <= value <= maximum."""
     if key not in overrides:
         return default
     value = overrides[key]
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"resource override {key!r} must be an integer")
-    if not 1 <= value <= maximum:
-        raise ValueError(f"resource override {key!r}={value} outside allowed range 1..{maximum}")
+    if not minimum <= value <= maximum:
+        raise ValueError(
+            f"resource override {key!r}={value} outside allowed range {minimum}..{maximum}"
+        )
     return value
 
 
@@ -413,11 +417,13 @@ def _harness_to_sandbox_config(
         resource_overrides, "memory_mb", harness.default_memory_mb, MAX_SESSION_MEMORY_MB
     )
     disk_mb = _bounded_int(resource_overrides, "disk_mb", harness.default_disk_mb, MAX_SESSION_DISK_MB)
+    # 0 is the documented "no timeout" sentinel (examples/sessions.yaml).
     timeout = _bounded_int(
         resource_overrides,
         "timeout_seconds",
         harness.default_timeout_seconds,
         MAX_SESSION_TIMEOUT_SECONDS,
+        minimum=0,
     )
 
     # Backward compat: cpu_millicores → vcpus

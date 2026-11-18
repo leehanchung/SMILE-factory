@@ -175,3 +175,18 @@ def test_resource_override_within_bounds():
 def test_resource_override_out_of_bounds_rejected(value):
     with pytest.raises(ValueError):
         node_agent._bounded_int({"vcpus": value}, "vcpus", 2, 16)
+
+
+def test_timeout_override_allows_zero_sentinel():
+    assert (
+        node_agent._bounded_int({"timeout_seconds": 0}, "timeout_seconds", 3600, 86400, minimum=0)
+        == 0
+    )
+
+
+@pytest.mark.parametrize("value", [-1, 86401])
+def test_timeout_override_out_of_bounds_rejected(value):
+    with pytest.raises(ValueError):
+        node_agent._bounded_int(
+            {"timeout_seconds": value}, "timeout_seconds", 3600, 86400, minimum=0
+        )
