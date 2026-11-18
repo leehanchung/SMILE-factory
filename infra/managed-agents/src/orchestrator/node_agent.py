@@ -13,6 +13,7 @@ Runs as either:
 """
 
 import asyncio
+import hmac
 import json
 import logging
 import os
@@ -22,7 +23,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import psutil
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -64,7 +65,8 @@ class ResourceRequestPayload(BaseModel):
 
 
 class CreateSessionRequest(BaseModel):
-    session_id: str
+    # Used to build per-session paths on the host -- never allow separators/"..".
+    session_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,128}$")
     harness: HarnessPayload
     env: dict[str, str] = Field(default_factory=dict)
     resource_overrides: dict = Field(default_factory=dict)
@@ -142,6 +144,124 @@ if labels_str:
 # Custom harness definitions (loaded from JSON file or env)
 CUSTOM_HARNESSES_PATH = os.getenv("CUSTOM_HARNESSES_PATH", "")
 
+
+# ---------------------------------------------------------------------------
+# Security: authentication + override policy
+# ---------------------------------------------------------------------------
+
+# Isolation strength, weakest -> strongest. A request may never pick a runtime
+# weaker than the harness's own default.
+_RUNTIME_STRENGTH: dict[SandboxRuntime, int] = {
+    SandboxRuntime.RUNC: 0,
+    SandboxRuntime.GVISOR: 1,
+    SandboxRuntime.FIRECRACKER: 2,
+}
+_DEFAULT_ALLOWED_RUNTIMES = "firecracker,gvisor"
+_MAX_ARGV_ITEMS = 64
+_MAX_ARG_LEN = 4096
+
+
+def _insecure_dev_mode() -> bool:
+    return os.getenv("NODE_AGENT_INSECURE_DEV", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _configured_token() -> str:
+    return os.getenv("NODE_AGENT_TOKEN", "").strip()
+
+
+def check_auth_configured() -> None:
+    """Fail closed: refuse to start without a token unless explicitly opted out."""
+    if _configured_token():
+        return
+    if _insecure_dev_mode():
+        logger.warning(
+            "NODE_AGENT_TOKEN is unset and NODE_AGENT_INSECURE_DEV=1: the node agent "
+            "API is UNAUTHENTICATED. Never run like this outside local development."
+        )
+        return
+    raise RuntimeError(
+        "NODE_AGENT_TOKEN is not set. Set it to a shared secret (the orchestrator sends it "
+        "as 'Authorization: Bearer <token>'), or set NODE_AGENT_INSECURE_DEV=1 for local dev."
+    )
+
+
+async def require_node_agent_token(authorization: str | None = Header(default=None)) -> None:
+    """Bearer-token check for every node-agent endpoint except /healthz."""
+    expected = _configured_token()
+    if not expected:
+        if _insecure_dev_mode():
+            return
+        raise HTTPException(503, "Node agent authentication is not configured")
+    scheme, _, presented = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not hmac.compare_digest(
+        presented.strip().encode(), expected.encode()
+    ):
+        raise HTTPException(401, "Invalid or missing bearer token", headers={"WWW-Authenticate": "Bearer"})
+
+
+def _allowed_runtimes() -> set[SandboxRuntime]:
+    raw = os.getenv("NODE_AGENT_ALLOWED_RUNTIMES", _DEFAULT_ALLOWED_RUNTIMES)
+    allowed: set[SandboxRuntime] = set()
+    for item in raw.split(","):
+        item = item.strip().lower()
+        if not item:
+            continue
+        try:
+            allowed.add(SandboxRuntime(item))
+        except ValueError:
+            logger.warning(f"Ignoring unknown runtime in NODE_AGENT_ALLOWED_RUNTIMES: {item!r}")
+    return allowed
+
+
+def _validate_runtime(requested: str, baseline: SandboxRuntime | None) -> SandboxRuntime:
+    """Allowlist the runtime and refuse isolation downgrades."""
+    try:
+        runtime = SandboxRuntime(requested)
+    except ValueError as e:
+        raise ValueError(f"Unknown runtime '{requested}'") from e
+    if runtime not in _allowed_runtimes():
+        raise ValueError(f"Runtime '{runtime.value}' is not allowed on this worker")
+    if baseline is not None and _RUNTIME_STRENGTH[runtime] < _RUNTIME_STRENGTH[baseline]:
+        raise ValueError(
+            f"Runtime '{runtime.value}' would downgrade isolation from '{baseline.value}'"
+        )
+    return runtime
+
+
+def _validate_rootfs_path(rootfs_path: str) -> str:
+    """Only allow rootfs images inside ROOTFS_ROOT (after resolving symlinks / '..')."""
+    root = Path(ROOTFS_ROOT).resolve()
+    candidate = Path(rootfs_path)
+    if not candidate.is_absolute():
+        candidate = root / candidate
+    resolved = candidate.resolve()
+    if not resolved.is_relative_to(root):
+        raise ValueError(f"rootfs_path must be inside {root}")
+    return str(resolved)
+
+
+def _validate_image(image: str) -> str:
+    """Image overrides are only accepted from configured registry prefixes."""
+    prefixes = [
+        p.strip()
+        for p in os.getenv("NODE_AGENT_ALLOWED_IMAGE_PREFIXES", "").split(",")
+        if p.strip()
+    ]
+    if not any(image.startswith(p) for p in prefixes):
+        raise ValueError(
+            "image overrides are not allowed (configure NODE_AGENT_ALLOWED_IMAGE_PREFIXES)"
+        )
+    return image
+
+
+def _validate_argv(name: str, argv: list[str]) -> list[str]:
+    if len(argv) > _MAX_ARGV_ITEMS:
+        raise ValueError(f"{name} has too many items (max {_MAX_ARGV_ITEMS})")
+    for arg in argv:
+        if len(arg) > _MAX_ARG_LEN or "\x00" in arg:
+            raise ValueError(f"{name} contains an invalid argument")
+    return argv
+
 sandbox: FirecrackerSandbox = None  # type: ignore[assignment]
 _session_tags: dict[str, list[str]] = {}
 _session_harness: dict[str, str] = {}  # session_id → harness name
@@ -175,38 +295,52 @@ def _detect_available_rootfs() -> list[str]:
 
 
 def _resolve_harness(payload: HarnessPayload) -> HarnessDefinition:
-    """Resolve a harness payload to a full HarnessDefinition."""
+    """Resolve a harness payload to a full HarnessDefinition.
+
+    Overrides from the payload are validated: rootfs must live under ROOTFS_ROOT,
+    images must match NODE_AGENT_ALLOWED_IMAGE_PREFIXES, the runtime must be
+    allowlisted and may not be weaker than the registered harness's runtime.
+    Raises ValueError on any policy violation.
+    """
+    entrypoint = _validate_argv("entrypoint", payload.entrypoint)
+    command = _validate_argv("command", payload.command)
+    rootfs_path = _validate_rootfs_path(payload.rootfs_path) if payload.rootfs_path else ""
+    image = _validate_image(payload.image) if payload.image else ""
+
     # Try built-in / registered harnesses first
     if payload.name in _all_harnesses:
         harness = _all_harnesses[payload.name]
+        runtime = _validate_runtime(payload.runtime, baseline=harness.runtime)
         # Apply overrides from payload
-        overrides = {}
-        if payload.rootfs_path:
-            overrides["rootfs_path"] = payload.rootfs_path
-        if payload.image:
-            overrides["image"] = payload.image
-        if payload.entrypoint:
-            overrides["entrypoint"] = payload.entrypoint
-        if payload.command:
-            overrides["command"] = payload.command
-        if payload.runtime != "firecracker":
-            overrides["runtime"] = SandboxRuntime(payload.runtime)
+        overrides: dict = {}
+        if rootfs_path:
+            overrides["rootfs_path"] = rootfs_path
+        if image:
+            overrides["image"] = image
+        if entrypoint:
+            overrides["entrypoint"] = entrypoint
+        if command:
+            overrides["command"] = command
+        if runtime != harness.runtime:
+            overrides["runtime"] = runtime
         if overrides:
             harness = _clone_harness(harness, **overrides)
         return harness
 
     # Unknown harness — build from payload (must have rootfs or image)
-    if not payload.rootfs_path and not payload.image:
+    if not rootfs_path and not image:
         raise ValueError(
             f"Unknown harness '{payload.name}' and no rootfs_path or image provided"
         )
     return HarnessDefinition(
         name=payload.name,
-        rootfs_path=payload.rootfs_path,
-        image=payload.image,
-        entrypoint=payload.entrypoint,
-        command=payload.command,
-        runtime=SandboxRuntime(payload.runtime),
+        rootfs_path=rootfs_path,
+        image=image,
+        entrypoint=entrypoint,
+        command=command,
+        # Ad-hoc harnesses get no baseline, but still can't go below firecracker
+        # unless the operator allowlists a weaker runtime.
+        runtime=_validate_runtime(payload.runtime, baseline=None),
     )
 
 
@@ -239,7 +373,7 @@ def _harness_to_sandbox_config(
     rootfs_path = harness.rootfs_path
     if not rootfs_path or not Path(rootfs_path).exists():
         # Try convention: ROOTFS_ROOT/<harness-name>.ext4
-        candidate = Path(ROOTFS_ROOT) / f"{harness.name}.ext4"
+        candidate = Path(ROOTFS_ROOT) / f"{Path(harness.name).name}.ext4"
         if candidate.exists():
             rootfs_path = str(candidate)
         else:
@@ -285,6 +419,7 @@ def _harness_to_sandbox_config(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global sandbox
+    check_auth_configured()  # refuse to start without NODE_AGENT_TOKEN
     sandbox = FirecrackerSandbox(
         workspaces_root=WORKSPACES_ROOT,
         logs_root=LOGS_ROOT,
@@ -327,12 +462,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Every endpoint except /healthz requires the shared bearer token.
+router = APIRouter(dependencies=[Depends(require_node_agent_token)])
+
 
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
-@app.post("/sessions", response_model=SessionResponse, status_code=201)
+@app.get("/healthz", include_in_schema=False)
+async def healthz():
+    """Unauthenticated liveness probe (no worker details)."""
+    return {"status": "ok"}
+
+
+@router.post("/sessions", response_model=SessionResponse, status_code=201)
 async def create_session(req: CreateSessionRequest):
     """Start a new microVM session."""
     if sandbox.active_session_count() >= MAX_SESSIONS:
@@ -392,7 +536,7 @@ async def create_session(req: CreateSessionRequest):
     )
 
 
-@app.delete("/sessions/{session_id}", status_code=204)
+@router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(session_id: str):
     await sandbox.terminate_session(session_id)
     _session_tags.pop(session_id, None)
@@ -400,7 +544,7 @@ async def delete_session(session_id: str):
     _allocated_resources.pop(session_id, None)
 
 
-@app.get("/sessions/{session_id}", response_model=SessionResponse)
+@router.get("/sessions/{session_id}", response_model=SessionResponse)
 async def get_session(session_id: str):
     info = await sandbox.get_session_info(session_id)
     if info is None:
@@ -418,7 +562,7 @@ async def get_session(session_id: str):
     )
 
 
-@app.get("/sessions", response_model=list[SessionResponse])
+@router.get("/sessions", response_model=list[SessionResponse])
 async def list_sessions():
     result = []
     for sid, info in sandbox.active_sessions().items():
@@ -436,7 +580,7 @@ async def list_sessions():
     return result
 
 
-@app.get("/sessions/{session_id}/logs")
+@router.get("/sessions/{session_id}/logs")
 async def stream_session_logs(session_id: str):
     info = await sandbox.get_session_info(session_id)
     if info is None:
@@ -448,7 +592,7 @@ async def stream_session_logs(session_id: str):
     )
 
 
-@app.get("/harnesses")
+@router.get("/harnesses")
 async def list_harnesses():
     """List all available harnesses on this worker."""
     available_rootfs = set(_detect_available_rootfs())
@@ -466,7 +610,7 @@ async def list_harnesses():
     }
 
 
-@app.get("/health", response_model=NodeHealthResponse)
+@router.get("/health", response_model=NodeHealthResponse)
 async def health():
     mem = psutil.virtual_memory()
     cpu_count = psutil.cpu_count() or 1
@@ -509,6 +653,9 @@ async def health():
         max_sessions=MAX_SESSIONS,
         healthy=True,
     )
+
+
+app.include_router(router)
 
 
 # ---------------------------------------------------------------------------

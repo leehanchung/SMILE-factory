@@ -1,7 +1,8 @@
 # Node agent: runs on worker nodes, manages bubblewrap-sandboxed sessions.
 # Requires bubblewrap installed on the host or in the image.
 # Runs as root on purpose: it manages sandboxes / microVMs (namespaces, /dev/kvm).
-# Never expose :9090 beyond the cluster network -- the API is unauthenticated.
+# Requires NODE_AGENT_TOKEN (bearer auth; refuses to start without it). Still never
+# expose :9090 beyond the cluster network.
 
 FROM python:3.13-slim AS builder
 

@@ -3,10 +3,11 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, status
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.deps import init_deps, close_deps
+from src.api.auth import check_auth_configured, require_api_key
+from src.api.deps import close_deps, init_deps
 from src.api.routes import agents, environments, events, sessions
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Manage app lifecycle: startup and shutdown."""
     # Startup
+    check_auth_configured()  # fail closed: refuse to start without API keys
     logger.info("Initializing dependencies...")
     # Connection settings come from DATABASE_URL / REDIS_URL (see deps.init_deps);
     # previously a hardcoded DSN with placeholder credentials overrode them.
@@ -67,10 +69,12 @@ def create_app() -> FastAPI:
     # Routes
     # ========================================================================
 
-    app.include_router(agents.router)
-    app.include_router(environments.router)
-    app.include_router(sessions.router)
-    app.include_router(events.router)
+    # Every /v1 resource router requires an API key; health endpoints stay open.
+    protected = [Depends(require_api_key)]
+    app.include_router(agents.router, dependencies=protected)
+    app.include_router(environments.router, dependencies=protected)
+    app.include_router(sessions.router, dependencies=protected)
+    app.include_router(events.router, dependencies=protected)
 
     # ========================================================================
     # Health Check
@@ -83,6 +87,16 @@ def create_app() -> FastAPI:
             "status": "ok",
             "version": "0.1.0",
         }
+
+    @app.get("/health/live", tags=["health"])
+    async def liveness_check():
+        """Kubernetes liveness probe."""
+        return {"status": "ok"}
+
+    @app.get("/health/ready", tags=["health"])
+    async def readiness_check():
+        """Kubernetes readiness probe."""
+        return {"status": "ok"}
 
     @app.get("/v1/health", tags=["health"])
     async def v1_health_check():

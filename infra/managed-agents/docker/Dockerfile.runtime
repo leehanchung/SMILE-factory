@@ -35,6 +35,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd dnsutils \
     # Shell
     bash zsh \
+    # pgrep for HEALTHCHECK
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
@@ -60,10 +62,16 @@ RUN npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 # ---------------------------------------------------------------------------
 # Pre-install the Discord plugin so sessions don't need network for setup.
 # The plugin is an MCP server that runs alongside Claude Code.
-RUN mkdir -p /opt/claude-plugins && \
-    cd /opt/claude-plugins && \
-    git clone --depth 1 https://github.com/anthropics/claude-plugins-official.git && \
-    cd claude-plugins-official/external_plugins/discord && \
+# Pinned to a commit for reproducible, reviewable builds; bump deliberately.
+ARG CLAUDE_PLUGINS_REF=e6143c9807a001832badb63e89d58ffe25d542ec
+RUN mkdir -p /opt/claude-plugins/claude-plugins-official && \
+    cd /opt/claude-plugins/claude-plugins-official && \
+    git init -q && \
+    git remote add origin https://github.com/anthropics/claude-plugins-official.git && \
+    git fetch -q --depth 1 origin "${CLAUDE_PLUGINS_REF}" && \
+    git checkout -q --detach FETCH_HEAD && \
+    test "$(git rev-parse HEAD)" = "${CLAUDE_PLUGINS_REF}" && \
+    cd external_plugins/discord && \
     bun install --frozen-lockfile
 
 # ---------------------------------------------------------------------------
@@ -81,7 +89,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 # ---------------------------------------------------------------------------
 # Node.js global packages
 # ---------------------------------------------------------------------------
-RUN npm install -g typescript ts-node
+# Pinned: ts-node 10.x is compatible with TypeScript 5.x (not the 7.x native port).
+RUN npm install -g typescript@5.9.3 ts-node@10.9.2
 
 # ---------------------------------------------------------------------------
 # Go workspace
@@ -113,8 +122,10 @@ ENV CLAUDE_PLUGINS_DIR="/opt/claude-plugins/claude-plugins-official/external_plu
 
 USER agent
 
+# Healthy while the session process (Claude Code, or the legacy agent loop) is
+# alive. Exec form, so pgrep never matches a wrapping shell's command line.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:15000/health 2>/dev/null || true
+    CMD ["pgrep", "-f", "claude|src\\.runtime\\.agent_loop"]
 
 # Default: Claude Code with Discord channel
 # Override with: docker run ... python3 -m src.runtime.agent_loop (legacy mode)

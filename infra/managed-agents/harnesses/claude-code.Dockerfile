@@ -33,10 +33,16 @@ ARG CLAUDE_CODE_VERSION=2.1.327
 RUN npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 
 # Pre-install Discord plugin
-RUN mkdir -p /opt/claude-plugins && \
-    cd /opt/claude-plugins && \
-    git clone --depth 1 https://github.com/anthropics/claude-plugins-official.git && \
-    cd claude-plugins-official/external_plugins/discord && \
+# Pinned to a commit for reproducible, reviewable builds; bump deliberately.
+ARG CLAUDE_PLUGINS_REF=e6143c9807a001832badb63e89d58ffe25d542ec
+RUN mkdir -p /opt/claude-plugins/claude-plugins-official && \
+    cd /opt/claude-plugins/claude-plugins-official && \
+    git init -q && \
+    git remote add origin https://github.com/anthropics/claude-plugins-official.git && \
+    git fetch -q --depth 1 origin "${CLAUDE_PLUGINS_REF}" && \
+    git checkout -q --detach FETCH_HEAD && \
+    test "$(git rev-parse HEAD)" = "${CLAUDE_PLUGINS_REF}" && \
+    cd external_plugins/discord && \
     bun install --frozen-lockfile
 
 # Common Python packages (venv: Ubuntu 24.04 system Python is externally managed)

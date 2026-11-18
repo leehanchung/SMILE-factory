@@ -1,11 +1,12 @@
 """Web fetching and searching tools."""
 
 import asyncio
+import ipaddress
 import logging
 import os
-import re
-from typing import Any, Optional
-from urllib.parse import urlparse
+import socket
+from typing import Any
+from urllib.parse import urljoin
 
 import httpx
 from bs4 import BeautifulSoup
@@ -13,6 +14,149 @@ from bs4 import BeautifulSoup
 from . import Tool, ToolResult
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# SSRF guard
+# ---------------------------------------------------------------------------
+
+MAX_REDIRECTS = 5
+MAX_RESPONSE_BYTES = 5 * 1024 * 1024  # 5 MiB of raw body
+ALLOWED_SCHEMES = frozenset({"http", "https"})
+
+# Cloud metadata endpoints (also covered by the link-local / private checks,
+# listed explicitly so the intent survives any future refactor).
+_METADATA_IPS = frozenset(
+    {
+        ipaddress.ip_address("169.254.169.254"),
+        ipaddress.ip_address("fd00:ec2::254"),
+    }
+)
+
+
+class BlockedURLError(ValueError):
+    """Raised when a URL targets a disallowed scheme or address."""
+
+
+def is_blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """True for any address that is not safe to fetch from inside the sandbox."""
+    if isinstance(ip, ipaddress.IPv6Address):
+        # Unwrap IPv4-mapped / 6to4 / Teredo forms so ::ffff:127.0.0.1 etc. are caught.
+        if ip.ipv4_mapped is not None:
+            ip = ip.ipv4_mapped
+        elif ip.sixtofour is not None:
+            ip = ip.sixtofour
+        elif ip.teredo is not None:
+            ip = ip.teredo[1]
+    return (
+        ip in _METADATA_IPS
+        or ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+        or not ip.is_global
+    )
+
+
+async def resolve_host(host: str, port: int) -> list[str]:
+    """Resolve host to IP strings (split out so tests can mock DNS)."""
+    loop = asyncio.get_running_loop()
+    infos = await loop.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    return [info[4][0] for info in infos]
+
+
+async def validate_url(url: str) -> tuple[httpx.URL, str]:
+    """Check scheme + resolved addresses; return (url, pinned_ip).
+
+    Every address the host resolves to must be public; the first is returned so
+    the caller can connect to exactly the address that was checked (prevents
+    DNS-rebinding between check and connect).
+    """
+    try:
+        parsed = httpx.URL(url)
+    except Exception as e:
+        raise BlockedURLError(f"Invalid URL: {e}") from e
+    if parsed.scheme not in ALLOWED_SCHEMES:
+        raise BlockedURLError(f"Scheme '{parsed.scheme}' is not allowed")
+    host = parsed.host
+    if not host:
+        raise BlockedURLError("URL has no host")
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+
+    try:
+        addresses = [ipaddress.ip_address(host)]
+    except ValueError:
+        try:
+            resolved = await resolve_host(host, port)
+        except OSError as e:
+            raise BlockedURLError(f"Could not resolve host '{host}': {e}") from e
+        addresses = []
+        for addr in resolved:
+            # Strip IPv6 zone index (fe80::1%eth0) before parsing.
+            addresses.append(ipaddress.ip_address(addr.split("%", 1)[0]))
+    if not addresses:
+        raise BlockedURLError(f"Host '{host}' did not resolve")
+    for ip in addresses:
+        if is_blocked_ip(ip):
+            raise BlockedURLError(f"Host '{host}' resolves to a blocked address ({ip})")
+    return parsed, str(addresses[0])
+
+
+async def safe_fetch(
+    url: str,
+    timeout: float,
+    *,
+    max_bytes: int = MAX_RESPONSE_BYTES,
+    max_redirects: int = MAX_REDIRECTS,
+    client: httpx.AsyncClient | None = None,
+) -> tuple[httpx.Response, bytes, bool]:
+    """GET a URL with SSRF protection; redirects are re-validated hop by hop.
+
+    Returns (final_response, body_bytes, truncated).
+    """
+    owns_client = client is None
+    if client is None:
+        client = httpx.AsyncClient(
+            timeout=httpx.Timeout(timeout, connect=min(timeout, 10.0)),
+            follow_redirects=False,
+        )
+    try:
+        current = url
+        for _hop in range(max_redirects + 1):
+            parsed, pinned_ip = await validate_url(current)
+            # Connect to the validated IP; keep Host header + TLS SNI/cert check on the name.
+            request_url = parsed.copy_with(host=pinned_ip)
+            headers = {"Host": parsed.netloc.decode("ascii")}
+            extensions = {"sni_hostname": parsed.host} if parsed.scheme == "https" else {}
+            request = client.build_request(
+                "GET", request_url, headers=headers, extensions=extensions
+            )
+            response = await client.send(request, stream=True)
+            try:
+                if response.is_redirect:
+                    location = response.headers.get("location", "")
+                    if not location:
+                        raise BlockedURLError("Redirect without Location header")
+                    current = urljoin(str(parsed), location)
+                    continue
+                response.raise_for_status()
+                body = bytearray()
+                truncated = False
+                async for chunk in response.aiter_bytes():
+                    body.extend(chunk)
+                    if len(body) > max_bytes:
+                        del body[max_bytes:]
+                        truncated = True
+                        break
+                return response, bytes(body), truncated
+            finally:
+                await response.aclose()
+        raise BlockedURLError(f"Too many redirects (max {max_redirects})")
+    finally:
+        if owns_client:
+            await client.aclose()
 
 
 class WebFetchTool(Tool):
@@ -41,38 +185,43 @@ class WebFetchTool(Tool):
         timeout = input.get("timeout", 30)
         timeout = min(60, max(5, int(timeout)))
 
-        if not url.startswith(("http://", "https://")):
+        if "://" not in url:
             url = "https://" + url
 
         logger.info(f"Fetching URL: {url}")
 
         try:
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-                response = await client.get(url)
-                response.raise_for_status()
+            response, body, truncated = await safe_fetch(url, timeout)
+            encoding = response.encoding or "utf-8"
+            html = body.decode(encoding, errors="replace")
 
-                # Parse HTML to text
-                soup = BeautifulSoup(response.text, "html.parser")
+            # Parse HTML to text
+            soup = BeautifulSoup(html, "html.parser")
 
-                # Remove script and style elements
-                for script in soup(["script", "style"]):
-                    script.decompose()
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
 
-                # Get text
-                text = soup.get_text()
+            # Get text
+            text = soup.get_text()
 
-                # Clean up whitespace
-                lines = (line.strip() for line in text.splitlines())
-                text = "\n".join(line for line in lines if line)
+            # Clean up whitespace
+            lines = (line.strip() for line in text.splitlines())
+            text = "\n".join(line for line in lines if line)
 
-                # Limit output size
-                if len(text) > 50000:
-                    text = text[:50000] + "\n... (truncated)"
+            # Limit output size
+            if len(text) > 50000:
+                text = text[:50000] + "\n... (truncated)"
+            elif truncated:
+                text += "\n... (truncated: response exceeded size limit)"
 
-                logger.debug(f"Fetched {len(response.text)} bytes from {url}")
-                return ToolResult(output=text)
+            logger.debug(f"Fetched {len(body)} bytes from {url}")
+            return ToolResult(output=text)
 
-        except httpx.RequestError as e:
+        except BlockedURLError as e:
+            logger.warning(f"Blocked fetch of {url}: {e}")
+            return ToolResult(output="", error=f"URL not allowed: {e}", exit_code=1)
+        except httpx.HTTPError as e:
             logger.error(f"HTTP error fetching {url}: {e}")
             return ToolResult(output="", error=f"HTTP error: {e}", exit_code=1)
         except Exception as e:

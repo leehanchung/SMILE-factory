@@ -162,6 +162,14 @@ def build_access_config(config: ClaudeCodeSessionConfig) -> dict:
     return access
 
 
+def _write_secret_file(path: Path, content: str) -> None:
+    """Write a credentials file readable only by its owner (mode 0600, umask-independent)."""
+    fd = os.open(path, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
+    os.fchmod(fd, 0o600)  # O_CREAT's mode doesn't apply if the file already existed
+    with os.fdopen(fd, "w") as f:
+        f.write(content)
+
+
 def prepare_session_filesystem(
     config: ClaudeCodeSessionConfig,
     workspace_root: Path,
@@ -190,7 +198,7 @@ def prepare_session_filesystem(
 
     # Write Discord .env
     env_file = discord_state / ".env"
-    env_file.write_text(f"DISCORD_BOT_TOKEN={config.discord_bot_token}\n")
+    _write_secret_file(env_file, f"DISCORD_BOT_TOKEN={config.discord_bot_token}\n")
 
     # Write access.json
     access = build_access_config(config)
