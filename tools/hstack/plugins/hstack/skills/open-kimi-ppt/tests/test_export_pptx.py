@@ -260,6 +260,13 @@ class EnsureModuleFloorTests(unittest.TestCase):
         with patch.object(MODULE.importlib.metadata, "version", return_value="6.0.3"):
             self.assertTrue(MODULE._meets_floor("pyyaml", (6, 0, 2)))
 
+    def test_prerelease_of_floor_does_not_meet_it(self):
+        for version in ("6.0.2rc1", "6.0.2a1", "6.0.2.dev0", "6.0.2b2", "6.0.2-rc.1"):
+            self.assertFalse(MODULE._version_at_least(version, (6, 0, 2)), version)
+        for version in ("6.0.2", "6.0.2.post1", "6.0.3rc1", "7.0.0a1", "6.0.2+local"):
+            self.assertTrue(MODULE._version_at_least(version, (6, 0, 2)), version)
+        self.assertFalse(MODULE._version_at_least("6.0.1", (6, 0, 2)))
+
     def test_meets_floor_rejects_unversioned_install(self):
         missing = MODULE.importlib.metadata.PackageNotFoundError("x")
         with patch.object(MODULE.importlib.metadata, "version", side_effect=missing):
@@ -302,6 +309,19 @@ class OversizedTagGuardTests(unittest.TestCase):
         self.assertIsNone(MODULE.find_oversized_tag(f"a < b {self.ATTRS}"))
         at_cap = " ".join(f'a{i}="x y>"' for i in range(MODULE.MAX_ATTRS_PER_TAG))
         self.assertIsNone(MODULE.find_oversized_tag(f"<span {at_cap}>x</span>"))
+
+    def test_non_ascii_and_underscore_tag_names_are_scanned(self):
+        for name in ("_x", ":x", "é", "名", "\U00010400"):
+            self.assertIsNotNone(MODULE.find_oversized_tag(f"<{name} {self.ATTRS}>x</{name}>"), name)
+
+    def test_cyclic_values_terminate(self):
+        loop: list = []
+        loop.append(loop)
+        cyclic = {"a": loop}
+        cyclic["self"] = cyclic
+        self.assertIsNone(MODULE.find_oversized_tag(cyclic))
+        loop.append(f"<span {self.ATTRS}>x</span>")
+        self.assertIsNotNone(MODULE.find_oversized_tag(cyclic))
 
     def test_build_payload_refuses_oversized_page(self):
         with tempfile.TemporaryDirectory() as tmp:

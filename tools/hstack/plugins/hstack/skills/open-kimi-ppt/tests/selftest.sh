@@ -55,6 +55,15 @@ if (!m.findOversizedTag({ html: \"<span title='a>b' \" + attrs + '>x</span>' }))
 if (m.findOversizedTag({ html: 'a < b ' + attrs })) process.exit(5);
 const atCap = Array.from({ length: m.MAX_ATTRS_PER_TAG }, (_, i) => 'a' + i + '=\"x y>\"').join(' ');
 if (m.findOversizedTag({ html: '<span ' + atCap + '>x</span>' })) process.exit(6);
+// any XML NameStartChar opens a tag, not just ASCII letters
+for (const name of ['_x', ':x', '\u00e9', '\u540d', '\u{10400}']) {
+  if (!m.findOversizedTag({ html: '<' + name + ' ' + attrs + '>x</' + name + '>' })) process.exit(7);
+}
+// self-referential values (YAML anchors) terminate
+const loop = []; loop.push(loop); const cyc = { loop }; cyc.self = cyc;
+if (m.findOversizedTag(cyc)) process.exit(8);
+loop.push('<span ' + attrs + '>x</span>');
+if (!m.findOversizedTag(cyc)) process.exit(9);
 " || fail "oversized-attribute guard broken"
 pass "rich-text attribute cap enforced"
 

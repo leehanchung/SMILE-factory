@@ -236,16 +236,36 @@ def _version_tuple(version: str) -> Tuple[int, ...]:
     return tuple(parts)
 
 
+# PEP 440 pre/dev markers: a release carrying one sorts *before* its bare
+# release number ("6.0.2rc1" < "6.0.2"); post releases sort after it.
+_PRERELEASE = re.compile(r"(?:a|b|c|rc|alpha|beta|pre|preview|dev)(?:\d|$|[.\-_+])", re.I)
+
+
+def _is_prerelease(version: str) -> bool:
+    local_dropped = version.strip().lower().split("+", 1)[0]
+    return bool(_PRERELEASE.search(re.sub(r"^v?[\d.]+", "", local_dropped)))
+
+
+def _version_at_least(version: str, floor: Tuple[int, ...]) -> bool:
+    """PEP 440 `version >= floor` for a final-release `floor`."""
+    release = _version_tuple(version.lstrip("vV"))
+    width = max(len(release), len(floor))
+    padded = release + (0,) * (width - len(release))
+    floor_padded = floor + (0,) * (width - len(floor))
+    if padded != floor_padded:
+        return padded > floor_padded
+    return not _is_prerelease(version)
+
+
 def _meets_floor(dist: str, floor: Optional[Tuple[int, ...]]) -> bool:
     """True when the installed `dist` satisfies `floor` (or there is no floor)."""
     if floor is None:
         return True
     try:
-        installed = _version_tuple(importlib.metadata.version(dist))
+        installed = importlib.metadata.version(dist)
     except importlib.metadata.PackageNotFoundError:
         return False  # importable but unversioned: reinstall to be sure
-    width = max(len(installed), len(floor))
-    return installed + (0,) * (width - len(installed)) >= floor + (0,) * (width - len(floor))
+    return _version_at_least(installed, floor)
 
 
 def _import_fresh(import_name: str) -> Any:
@@ -608,13 +628,22 @@ def _skip_quoted(text: str, i: int) -> int:
     return len(text) if close == -1 else close + 1
 
 
+# XML NameStartChar (XML 1.0 5th ed. production [4]); quick-xml accepts any of
+# these as the first character of a start-tag name.
+_NAME_START = re.compile(
+    "[:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF"
+    "\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD"
+    "\U00010000-\U000EFFFF]"
+)
+
+
 def _oversized_tag_in(text: str, limit: int) -> Optional[Tuple[int, str]]:
     n = len(text)
     i = text.find("<")
     while i != -1 and i < n:
         start = i
         i += 1
-        if i >= n or not ("a" <= text[i].lower() <= "z"):
+        if i >= n or not _NAME_START.match(text[i]):
             i = text.find("<", i)
             continue
         while i < n and text[i] not in _TAG_SPACE and text[i] not in ">/":
@@ -650,8 +679,13 @@ def _oversized_tag_in(text: str, limit: int) -> Optional[Tuple[int, str]]:
 def find_oversized_tag(value: Any, limit: int = MAX_ATTRS_PER_TAG) -> Optional[Tuple[int, str]]:
     """First (attribute count, preview) of a tag with more than `limit` attributes."""
     stack = [value]
+    seen: set = set()  # YAML anchors can make containers self-referential
     while stack:
         item = stack.pop()
+        if isinstance(item, (dict, list, tuple)):
+            if id(item) in seen:
+                continue
+            seen.add(id(item))
         if isinstance(item, str):
             if "<" in item:
                 hit = _oversized_tag_in(item, limit)
