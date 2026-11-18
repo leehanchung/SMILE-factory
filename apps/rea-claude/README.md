@@ -23,7 +23,7 @@ your own cluster reached over SSH, or on a local dev stack. The desktop app:
 
 ## Running
 
-Requires Node 22+ and npm. macOS is the primary target; Linux and Windows code paths exist.
+Requires Node 22+ and npm. macOS is the primary target and needs macOS 13 Ventura or later (Electron 44+ dropped macOS 12); Linux and Windows code paths exist.
 
 ```bash
 make -C apps/rea-claude install

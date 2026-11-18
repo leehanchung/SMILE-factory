@@ -42,11 +42,15 @@ export function aggregateBadge(
   return { text: "", count: 0 };
 }
 
-export type BadgeAction = { kind: "dock"; text: string } | { kind: "count"; count: number } | { kind: "none" };
+export type BadgeAction = { kind: "dock"; text: string } | { kind: "attention"; count: number } | { kind: "none" };
 
-/** macOS: dock text (incl. "•"); Linux: numeric count only (unread-only shows nothing); Windows/other: nothing. */
+/**
+ * macOS: dock text (incl. "•"); Linux: attention count only, shown as a window
+ * urgency hint because Electron 44 made `app.setBadgeCount` a no-op there
+ * (architecture X21); unread-only shows nothing. Windows/other: nothing.
+ */
 export function badgeActionFor(platform: string, r: BadgeResult): BadgeAction {
   if (platform === "darwin") return { kind: "dock", text: r.text };
-  if (platform === "linux") return { kind: "count", count: r.count };
+  if (platform === "linux") return { kind: "attention", count: r.count };
   return { kind: "none" };
 }

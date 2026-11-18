@@ -125,6 +125,7 @@ export function createBridgeServiceImpl(ctx: MainContext, deps?: BridgeDeps): Br
   const counts = new Map<string, BadgeCounts>();
   const watched = new WeakSet<WebContents>();
   let chain: Promise<void> = Promise.resolve();
+  let lastAttention = 0;
 
   const prune = (): void => {
     for (const connId of [...counts.keys()]) if (!ctx.windows.windowForConn(connId)) counts.delete(connId);
@@ -133,7 +134,14 @@ export function createBridgeServiceImpl(ctx: MainContext, deps?: BridgeDeps): Br
     const s = (await ctx.settings.get()).notifications;
     const action = badgeActionFor(ctx.env.platform, aggregateBadge(counts.values(), s));
     if (action.kind === "dock") app.dock?.setBadge(action.text);
-    else if (action.kind === "count") app.setBadgeCount(action.count);
+    else if (action.kind === "attention") {
+      // Linux (X21): flash (urgency hint) every window when attention rises,
+      // clear it when attention drops to zero.
+      const prev = lastAttention;
+      lastAttention = action.count;
+      const flash = action.count > prev ? true : action.count === 0 && prev > 0 ? false : null;
+      if (flash !== null) for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.flashFrame(flash);
+    }
   };
   const recompute = (): void => {
     const run = (): Promise<void> =>

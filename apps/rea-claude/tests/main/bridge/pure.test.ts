@@ -225,8 +225,8 @@ describe("badge", () => {
     const dot = { text: "•", count: 0 };
     expect(badgeActionFor("darwin", att)).toEqual({ kind: "dock", text: "3" });
     expect(badgeActionFor("darwin", dot)).toEqual({ kind: "dock", text: "•" });
-    expect(badgeActionFor("linux", att)).toEqual({ kind: "count", count: 3 });
-    expect(badgeActionFor("linux", dot)).toEqual({ kind: "count", count: 0 });
+    expect(badgeActionFor("linux", att)).toEqual({ kind: "attention", count: 3 });
+    expect(badgeActionFor("linux", dot)).toEqual({ kind: "attention", count: 0 });
     expect(badgeActionFor("win32", att)).toEqual({ kind: "none" });
   });
 });

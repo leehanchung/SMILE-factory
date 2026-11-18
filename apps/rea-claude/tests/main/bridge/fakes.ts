@@ -163,6 +163,7 @@ export class FakeWin {
   focused = false;
   minimized = false;
   calls: string[] = [];
+  flashes: boolean[] = [];
   private readonly handlers = new Map<string, Fn[]>();
   isDestroyed() {
     return this.destroyed;
@@ -182,6 +183,9 @@ export class FakeWin {
   }
   focus() {
     this.calls.push("focus");
+  }
+  flashFrame(on: boolean) {
+    this.flashes.push(on);
   }
   on(ev: string, fn: Fn) {
     this.handlers.set(ev, [...(this.handlers.get(ev) ?? []), fn]);
