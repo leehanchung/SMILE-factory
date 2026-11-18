@@ -5,6 +5,7 @@ import ipaddress
 import logging
 import os
 import socket
+import zlib
 from typing import Any
 from urllib.parse import urljoin
 
@@ -36,6 +37,41 @@ _METADATA_IPS = frozenset(
 
 class BlockedURLError(ValueError):
     """Raised when a URL targets a disallowed scheme or address."""
+
+
+class UnsupportedEncodingError(BlockedURLError):
+    """The server used a Content-Encoding we cannot decode with a size bound."""
+
+
+def _bounded_decoder(content_encoding: str) -> Any:
+    """zlib decoder for the response's Content-Encoding (None = identity).
+
+    We ask for ``Accept-Encoding: identity``; a server that compresses anyway
+    gets gzip/deflate decoded incrementally with ``max_length`` so a
+    compression bomb never decodes past the byte cap. Anything else (br,
+    zstd, stacked encodings) is refused rather than decoded unbounded.
+    """
+    encoding = content_encoding.strip().lower()
+    if encoding in ("", "identity"):
+        return None
+    if encoding in ("gzip", "x-gzip"):
+        return zlib.decompressobj(16 + zlib.MAX_WBITS)
+    if encoding == "deflate":
+        return zlib.decompressobj(zlib.MAX_WBITS)
+    raise UnsupportedEncodingError(f"Unsupported Content-Encoding '{content_encoding}'")
+
+
+def _decode_at_most(decoder: Any, chunk: bytes, budget: int) -> bytes:
+    """Decode `chunk`, producing at most `budget + 1` bytes (enough to detect overflow)."""
+    out = bytearray()
+    data = chunk
+    while len(out) <= budget:
+        # max_length must stay > 0: zero means "unlimited" to zlib.
+        out += decoder.decompress(data, budget + 1 - len(out))
+        data = decoder.unconsumed_tail
+        if not data:
+            break
+    return bytes(out)
 
 
 def is_blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
@@ -128,7 +164,11 @@ async def safe_fetch(
         for _hop in range(max_redirects + 1):
             parsed, pinned_ips = await validate_url(current)
             # Connect to a validated IP; keep Host header + TLS SNI/cert check on the name.
-            headers = {"Host": parsed.netloc.decode("ascii")}
+            headers = {
+                "Host": parsed.netloc.decode("ascii"),
+                # Uncompressed only, so the byte cap below is a real bound.
+                "Accept-Encoding": "identity",
+            }
             extensions = {"sni_hostname": parsed.host} if parsed.scheme == "https" else {}
             response = None
             for pinned_ip in pinned_ips:
@@ -150,9 +190,17 @@ async def safe_fetch(
                     current = urljoin(str(parsed), location)
                     continue
                 response.raise_for_status()
+                decoder = _bounded_decoder(response.headers.get("content-encoding", ""))
                 body = bytearray()
                 truncated = False
-                async for chunk in response.aiter_bytes():
+                # aiter_raw + our own bounded decoder: aiter_bytes would let
+                # httpx decompress a whole chunk before we could cap it.
+                async for raw in response.aiter_raw():
+                    chunk = (
+                        raw
+                        if decoder is None
+                        else _decode_at_most(decoder, raw, max_bytes - len(body))
+                    )
                     body.extend(chunk)
                     if len(body) > max_bytes:
                         del body[max_bytes:]
@@ -278,9 +326,7 @@ class WebSearchTool(Tool):
         # Fallback to DuckDuckGo
         return await self._search_duckduckgo(query, limit)
 
-    async def _search_searxng(
-        self, query: str, limit: int, searxng_url: str
-    ) -> ToolResult:
+    async def _search_searxng(self, query: str, limit: int, searxng_url: str) -> ToolResult:
         """Search using SearXNG instance.
 
         Args:
@@ -361,13 +407,11 @@ class WebSearchTool(Tool):
 
                             # DuckDuckGo lite includes actual URLs
                             if url and (url.startswith("http://") or url.startswith("https://")):
-                                description = cells[1].get_text(strip=True) if len(cells) > 1 else ""
-
-                                results.append(
-                                    f"- {title}\n"
-                                    f"  URL: {url}\n"
-                                    f"  {description}"
+                                description = (
+                                    cells[1].get_text(strip=True) if len(cells) > 1 else ""
                                 )
+
+                                results.append(f"- {title}\n  URL: {url}\n  {description}")
 
                                 if len(results) >= limit:
                                     break

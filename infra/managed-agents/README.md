@@ -45,8 +45,9 @@ network stack. ~125ms boot, ~5MB memory overhead.
 export MANAGED_AGENTS_API_KEYS="$(openssl rand -hex 32)"
 export NODE_AGENT_TOKEN="$(openssl rand -hex 32)"
 
-# 1. Local dev (postgres + redis)
-cd docker && docker compose up -d
+# 1. Local dev dependencies only (postgres + redis); the compose `api`
+#    service would also bind :8000 and collide with step 2
+cd docker && docker compose up -d postgres redis
 
 # 2. Start the API (sends NODE_AGENT_TOKEN to the workers)
 cd .. && ORCHESTRATOR_BACKEND=hybrid \

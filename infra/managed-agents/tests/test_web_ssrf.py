@@ -66,9 +66,7 @@ async def test_ip_literal_rejected(monkeypatch):
 
 
 async def test_hostname_resolving_to_private_rejected(monkeypatch):
-    monkeypatch.setattr(
-        web, "resolve_host", _dns({"evil.example": ["93.184.216.34", "10.0.0.1"]})
-    )
+    monkeypatch.setattr(web, "resolve_host", _dns({"evil.example": ["93.184.216.34", "10.0.0.1"]}))
     # Any blocked address in the answer set rejects the host.
     with pytest.raises(BlockedURLError, match="blocked address"):
         await web.validate_url("https://evil.example/")
@@ -81,8 +79,32 @@ async def test_public_hostname_pins_ip(monkeypatch):
     assert ips == ["93.184.216.34"]
 
 
+class _Chunks(httpx.AsyncByteStream):
+    """Unbuffered body, like a real socket: safe_fetch reads it via aiter_raw."""
+
+    def __init__(self, data: bytes, size: int = 64 * 1024) -> None:
+        self._data, self._size = data, size
+
+    async def __aiter__(self):
+        for i in range(0, len(self._data), self._size):
+            yield self._data[i : i + self._size]
+
+
+def _raw(status: int, body: bytes, headers: dict | None = None) -> httpx.Response:
+    """A streamed response whose body bytes go out exactly as given (not decoded)."""
+    return httpx.Response(status, headers=headers, stream=_Chunks(body))
+
+
 def _client(handler) -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False)
+    def streaming(request: httpx.Request) -> httpx.Response:
+        resp = handler(request)
+        if isinstance(resp.stream, _Chunks):
+            return resp
+        # httpx buffers content= bodies up front; re-stream them so
+        # safe_fetch's aiter_raw path sees what a socket would give it.
+        return _raw(resp.status_code, resp.content, dict(resp.headers))
+
+    return httpx.AsyncClient(transport=httpx.MockTransport(streaming), follow_redirects=False)
 
 
 async def test_fetch_connects_to_pinned_ip_with_host_header(monkeypatch):
@@ -96,9 +118,7 @@ async def test_fetch_connects_to_pinned_ip_with_host_header(monkeypatch):
         return httpx.Response(200, text="<p>hi</p>")
 
     async with _client(handler) as client:
-        resp, body, truncated = await safe_fetch(
-            "https://good.example/x", 10, client=client
-        )
+        resp, body, truncated = await safe_fetch("https://good.example/x", 10, client=client)
     assert resp.status_code == 200 and body == b"<p>hi</p>" and not truncated
     assert seen == {"host": "93.184.216.34", "host_header": "good.example", "sni": "good.example"}
 
@@ -199,9 +219,7 @@ async def test_fetch_falls_back_to_next_validated_address(monkeypatch):
 
 
 async def test_fetch_raises_when_every_address_unreachable(monkeypatch):
-    monkeypatch.setattr(
-        web, "resolve_host", _dns({"down.example": ["93.184.216.34", "1.1.1.1"]})
-    )
+    monkeypatch.setattr(web, "resolve_host", _dns({"down.example": ["93.184.216.34", "1.1.1.1"]}))
 
     def handler(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("refused", request=request)
@@ -212,9 +230,7 @@ async def test_fetch_raises_when_every_address_unreachable(monkeypatch):
 
 
 async def test_fetch_mixed_answer_set_with_private_ip_rejected(monkeypatch):
-    monkeypatch.setattr(
-        web, "resolve_host", _dns({"mixed.example": ["93.184.216.34", "10.0.0.1"]})
-    )
+    monkeypatch.setattr(web, "resolve_host", _dns({"mixed.example": ["93.184.216.34", "10.0.0.1"]}))
     calls = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -225,3 +241,72 @@ async def test_fetch_mixed_answer_set_with_private_ip_rejected(monkeypatch):
         with pytest.raises(BlockedURLError):
             await safe_fetch("https://mixed.example/", 10, client=client)
     assert calls == []
+
+
+# --- compressed bodies --------------------------------------------------------
+
+
+async def test_fetch_requests_identity_encoding(monkeypatch):
+    monkeypatch.setattr(web, "resolve_host", _dns({"good.example": ["93.184.216.34"]}))
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["accept_encoding"] = request.headers.get("accept-encoding")
+        return httpx.Response(200, content=b"ok")
+
+    async with _client(handler) as client:
+        await safe_fetch("https://good.example/", 10, client=client)
+    assert seen["accept_encoding"] == "identity"
+
+
+async def test_gzip_body_decoded(monkeypatch):
+    import gzip
+
+    monkeypatch.setattr(web, "resolve_host", _dns({"good.example": ["93.184.216.34"]}))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _raw(200, gzip.compress(b"<p>hello</p>"), {"content-encoding": "gzip"})
+
+    async with _client(handler) as client:
+        _, body, truncated = await safe_fetch("https://good.example/", 10, client=client)
+    assert body == b"<p>hello</p>" and not truncated
+
+
+async def test_gzip_bomb_never_decodes_past_cap(monkeypatch):
+    """A 64 MiB gzip bomb is cut at the cap without decoding it all at once."""
+    import gzip
+
+    monkeypatch.setattr(web, "resolve_host", _dns({"bomb.example": ["93.184.216.34"]}))
+    bomb = gzip.compress(b"\0" * (64 * 1024 * 1024))
+    cap = 1000
+    largest = []
+    real_decode = web._decode_at_most
+
+    def spy(decoder, chunk, budget):
+        out = real_decode(decoder, chunk, budget)
+        largest.append(len(out))
+        return out
+
+    monkeypatch.setattr(web, "_decode_at_most", spy)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _raw(200, bomb, {"content-encoding": "gzip"})
+
+    async with _client(handler) as client:
+        _, body, truncated = await safe_fetch(
+            "https://bomb.example/", 10, client=client, max_bytes=cap
+        )
+    assert len(body) == cap and truncated
+    assert largest and max(largest) <= cap + 1
+
+
+@pytest.mark.parametrize("encoding", ["br", "zstd", "gzip, br"])
+async def test_unboundable_encodings_refused(monkeypatch, encoding):
+    monkeypatch.setattr(web, "resolve_host", _dns({"good.example": ["93.184.216.34"]}))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _raw(200, b"xx", {"content-encoding": encoding})
+
+    async with _client(handler) as client:
+        with pytest.raises(web.UnsupportedEncodingError):
+            await safe_fetch("https://good.example/", 10, client=client)

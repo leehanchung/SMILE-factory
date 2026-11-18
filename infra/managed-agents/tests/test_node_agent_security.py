@@ -109,9 +109,7 @@ def test_unknown_runtime_rejected():
 def test_rootfs_inside_root_allowed(_env):
     h = _resolve_harness(HarnessPayload(name="claude-code", rootfs_path="custom.ext4"))
     assert h.rootfs_path == str((_env / "custom.ext4").resolve())
-    h = _resolve_harness(
-        HarnessPayload(name="adhoc", rootfs_path=str(_env / "sub" / "a.ext4"))
-    )
+    h = _resolve_harness(HarnessPayload(name="adhoc", rootfs_path=str(_env / "sub" / "a.ext4")))
     assert h.rootfs_path == str((_env / "sub" / "a.ext4").resolve())
 
 
@@ -161,6 +159,14 @@ async def test_hybrid_orchestrator_sends_bearer_token():
     finally:
         orch._health_task.cancel()
         await orch._http.aclose()
+
+
+def test_create_orchestrator_forwards_node_agent_token(monkeypatch):
+    monkeypatch.delenv("NODE_AGENT_TOKEN", raising=False)
+    from src.orchestrator import create_orchestrator
+
+    orch = create_orchestrator(backend="hybrid", worker_addresses=[], node_agent_token="tok-456")
+    assert orch._node_agent_token == "tok-456"
 
 
 # --- resource override bounds ------------------------------------------------
