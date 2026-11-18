@@ -105,6 +105,18 @@ def _require_manage_guild(interaction: discord.Interaction) -> bool:
     return True
 
 
+def _is_guild_admin(interaction: discord.Interaction) -> bool:
+    """Non-raising form of :func:`_require_manage_guild`.
+
+    discord.py does not run ``app_commands.check`` predicates for
+    autocomplete callbacks, so admin autocompletes call this directly.
+    """
+    try:
+        return _require_manage_guild(interaction)
+    except AdminCheckFailure:
+        return False
+
+
 def admin_only():
     """Decorator gating an app command on ``Manage Server`` (see module docstring)."""
     return app_commands.check(_require_manage_guild)
@@ -367,7 +379,9 @@ def register_slash_commands(
         interaction: discord.Interaction,
         current: str,
     ) -> list[app_commands.Choice[str]]:
-        if interaction.guild_id is None:
+        # Autocomplete bypasses admin_only(), so gate it here or any
+        # member could enumerate the allowlist by typing the command.
+        if not _is_guild_admin(interaction):
             return []
         return _build_autocomplete_choices(
             await repo_allowlist.get(interaction.guild_id),

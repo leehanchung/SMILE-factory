@@ -17,6 +17,7 @@ from discord import app_commands
 
 from delulu_discord.commands import (
     AdminCheckFailure,
+    _is_guild_admin,
     _require_manage_guild,
     handle_app_command_error,
     register_slash_commands,
@@ -73,6 +74,15 @@ def test_rejects_user_without_guild_permissions():
         _require_manage_guild(_interaction(manage_guild=None))
 
 
+@pytest.mark.parametrize(
+    ("guild_id", "manage_guild", "expected"),
+    [(123, True, True), (123, False, False), (None, True, False), (123, None, False)],
+)
+def test_is_guild_admin_does_not_raise(guild_id, manage_guild, expected):
+    inter = _interaction(guild_id=guild_id, manage_guild=manage_guild)
+    assert _is_guild_admin(inter) is expected
+
+
 def test_admin_check_failure_is_check_failure():
     """discord.py only routes CheckFailure subclasses as "check failed"."""
     assert issubclass(AdminCheckFailure, app_commands.CheckFailure)
@@ -106,14 +116,21 @@ async def test_other_errors_are_not_handled():
 
 
 @pytest.fixture()
-def tree() -> app_commands.CommandTree:
+def repo_allowlist() -> MagicMock:
+    allowlist = MagicMock()
+    allowlist.get = AsyncMock(return_value=["acme/secret-repo"])
+    return allowlist
+
+
+@pytest.fixture()
+def tree(repo_allowlist) -> app_commands.CommandTree:
     client = MagicMock()
     client._connection._command_tree = None  # MagicMock attrs are truthy
     tree = app_commands.CommandTree(client)
     register_slash_commands(
         tree,
         repo_config=MagicMock(),
-        repo_allowlist=MagicMock(),
+        repo_allowlist=repo_allowlist,
         session_manager=MagicMock(),
         dispatcher=MagicMock(),
     )
@@ -147,3 +164,29 @@ async def test_tree_error_handler_replies_on_denial(tree):
     inter = _interaction(manage_guild=False)
     await tree.on_error(inter, AdminCheckFailure("denied"))
     inter.response.send_message.assert_awaited_once_with("denied", ephemeral=True)
+
+
+# ── autocomplete gate ────────────────────────────────────────
+
+
+def _repo_autocomplete(tree):
+    return tree.get_command("admin_removerepo")._params["repo"].autocomplete
+
+
+@pytest.mark.parametrize(
+    ("guild_id", "manage_guild"),
+    [(123, False), (None, True), (123, None)],
+)
+async def test_admin_removerepo_autocomplete_hidden_from_non_admins(
+    tree, repo_allowlist, guild_id, manage_guild
+):
+    """discord.py skips checks for autocomplete, so the callback gates itself."""
+    inter = _interaction(guild_id=guild_id, manage_guild=manage_guild)
+    assert await _repo_autocomplete(tree)(inter, "") == []
+    repo_allowlist.get.assert_not_awaited()
+
+
+async def test_admin_removerepo_autocomplete_lists_repos_for_admins(tree, repo_allowlist):
+    choices = await _repo_autocomplete(tree)(_interaction(manage_guild=True), "")
+    assert [c.value for c in choices] == ["acme/secret-repo"]
+    repo_allowlist.get.assert_awaited_once_with(123)
