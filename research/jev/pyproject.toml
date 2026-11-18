@@ -6,9 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "torch>=2.6,<3",
-    "gliner2[train]==2.0.0",
-    "transformers>=4.48,<5",
-    "datasets>=3,<5",
+    "gliner2[train]==2.1.0",
+    "transformers>=5.10,<6",
+    "datasets>=5.0.1,<6",
     "accelerate>=1,<2",
     "peft>=0.14,<1",
     "safetensors>=0.4,<1",
@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8,<9", "ruff>=0.15,<1"]
+dev = ["pytest>=9.0.3,<10", "ruff>=0.15,<1"]
 notebook = ["jupyterlab>=4,<5", "ipykernel>=6,<8", "nbclient>=0.10,<1"]
 
 [build-system]
