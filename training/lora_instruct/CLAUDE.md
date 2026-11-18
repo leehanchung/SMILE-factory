@@ -29,6 +29,13 @@ cd training/lora_instruct/
   prompt template, etc.). Default base precision is bf16; `--bits 4/8` enables
   quantized QLoRA via `bitsandbytes`. `--lora_target_modules` defaults to
   `all-linear`.
+- `--trust_remote_code` is **off by default**: it executes Python shipped in
+  the model repo. Pass it only for base models whose repo code you trust and
+  that need it (e.g. MPT-style custom architectures, as in `notebook/`).
+- `inference/deploy_local.sh` binds vLLM to `127.0.0.1` by default. Set
+  `VLLM_API_KEY` to require a bearer token (mandatory if `HOST` is not
+  loopback); `inference/bench.py` sends `OPENAI_API_KEY` as the bearer, so set
+  it to the same value.
 - Default dataset is `yahma/alpaca-cleaned`; default prompt template is
   `alpaca` (see `templates/alpaca.json`).
 - Multi-GPU is **DDP via `torchrun --nproc_per_node=<N>`** (don't export

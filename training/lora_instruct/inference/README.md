@@ -1,5 +1,17 @@
 # Inference
 
+## Local serving
+
+`deploy_local.sh` starts vLLM's OpenAI-compatible server. It binds to
+`127.0.0.1` by default (`HOST`/`PORT`/`MODEL` env vars override). Set
+`VLLM_API_KEY` to require a bearer token; it is **required** when `HOST` is not
+a loopback address:
+
+```bash
+VLLM_API_KEY=... HOST=0.0.0.0 ./deploy_local.sh
+OPENAI_API_KEY=$VLLM_API_KEY uv run python bench.py \
+    --api-url http://localhost:8000/v1/chat/completions --model <model>
+```
 
 ## Benchmarking Online LLM API Services
 There's no obvious standards in benchmarking LLM API Services, where inference optimization packages mostly focuses on benchmarking model serving workers instead of the end to end model serving services. This benchmark aims to benchmark LLM APIs from an user's perspective for capacity planning and scaling needs.

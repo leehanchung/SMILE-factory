@@ -128,6 +128,9 @@ def train(
     eval_samples: int = 0,  # >0: generate from N held-out prompts each eval
     eval_sample_new_tokens: int = 128,
     early_stopping_patience: int = 0,  # >0: stop after N evals w/o eval_loss improvement
+    # security: only enable for base models whose repo code you have reviewed/trust
+    # (runs arbitrary Python from the model repo, e.g. MPT-style custom architectures)
+    trust_remote_code: bool = False,
 ):
     assert base_model, (
         "Please specify a --base_model, e.g. --base_model='Qwen/Qwen2.5-1.5B'"
@@ -168,7 +171,9 @@ def train(
     prompter = Prompter(prompt_template_name)
 
     # ---- tokenizer ----
-    tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        base_model, trust_remote_code=trust_remote_code
+    )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"  # right pad for causal-LM training
@@ -190,7 +195,7 @@ def train(
         quantization_config=quantization_config,
         dtype=torch.bfloat16 if bits == 0 else None,
         device_map=device_map,
-        trust_remote_code=True,
+        trust_remote_code=trust_remote_code,
     )
 
     if quantization_config is not None:

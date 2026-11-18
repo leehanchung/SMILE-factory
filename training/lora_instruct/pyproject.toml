@@ -42,6 +42,14 @@ dev = [
 [tool.uv]
 # App/scripts project (entry point is finetune.py), not an installable library.
 package = false
+# vllm (through 0.34.0) pins `setuptools>=78.1.1,<81` on Python >3.11, which
+# blocks the fixes for PYSEC-2026-3447 (>=83.0.0) and GHSA-xmj3-9gf7-h52w
+# (>=84.1.0). The cap only protects vllm's *source/editable* builds (ROCm
+# `setup.py develop` + CMake build-dir reuse; vllm PRs #17320, #28592, deferral
+# noted in #59315/#59427). We install prebuilt wheels, and neither vllm nor
+# triton imports setuptools/pkg_resources at runtime, so override it. Drop this
+# once vllm lifts the cap.
+override-dependencies = ["setuptools>=84.1.0"]
 
 [tool.pytest.ini_options]
 # Make the local `utils` package importable in tests without packaging.
