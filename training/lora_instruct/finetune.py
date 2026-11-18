@@ -89,6 +89,26 @@ class TokenizerHelper:
         return tokenized_full_prompt
 
 
+LEGACY_CHECKPOINT_ENV = "LORA_ALLOW_BIN_CHECKPOINT"
+
+
+def _require_legacy_checkpoint_opt_in(path: str) -> None:
+    """Only load a pickle-based ``adapter_model.bin`` when explicitly allowed.
+
+    vLLM 0.34 pins torch 2.14.0, where ``torch.load(weights_only=True)`` can
+    still read arbitrary local files from a crafted checkpoint
+    (GHSA-v32g-mr63-3j83, fixed in torch 2.15.0). Resume from
+    ``adapter_model.safetensors`` instead, or opt in for checkpoints you
+    produced yourself.
+    """
+    if os.environ.get(LEGACY_CHECKPOINT_ENV) != "1":
+        raise SystemExit(
+            f"Refusing to load legacy checkpoint {path}: torch.load is unsafe on "
+            f"torch<2.15 (GHSA-v32g-mr63-3j83). Convert it to safetensors, or set "
+            f"{LEGACY_CHECKPOINT_ENV}=1 if you trust its source."
+        )
+
+
 def train(
     # model/data params
     base_model: str = "",  # the only required argument
@@ -242,11 +262,11 @@ def train(
             print(f"Restarting from {checkpoint_name}")
             from safetensors.torch import load_file
 
-            adapters_weights = (
-                load_file(checkpoint_name)
-                if checkpoint_name.endswith(".safetensors")
-                else torch.load(checkpoint_name, weights_only=True)
-            )
+            if checkpoint_name.endswith(".safetensors"):
+                adapters_weights = load_file(checkpoint_name)
+            else:
+                _require_legacy_checkpoint_opt_in(checkpoint_name)
+                adapters_weights = torch.load(checkpoint_name, weights_only=True)
             set_peft_model_state_dict(model, adapters_weights)
         else:
             print(f"Checkpoint {checkpoint_name} not found")

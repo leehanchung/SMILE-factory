@@ -33,9 +33,14 @@ cd training/lora_instruct/
   the model repo. Pass it only for base models whose repo code you trust and
   that need it (e.g. MPT-style custom architectures, as in `notebook/`).
 - `inference/deploy_local.sh` binds vLLM to `127.0.0.1` by default. Set
-  `VLLM_API_KEY` to require a bearer token (mandatory if `HOST` is not
-  loopback); `inference/bench.py` sends `OPENAI_API_KEY` as the bearer, so set
-  it to the same value.
+  `VLLM_API_KEY` to require a bearer token (passed via the environment, never
+  argv); `inference/bench.py` sends `OPENAI_API_KEY` as the bearer, so set it to
+  the same value. A non-loopback `HOST` also needs `ALLOW_PUBLIC_BIND=1` and an
+  authenticating proxy or network policy in front: vLLM's key does not cover
+  every route (e.g. `/invocations`).
+- Resuming from a pickle-based `adapter_model.bin` requires
+  `LORA_ALLOW_BIN_CHECKPOINT=1`: the torch 2.14 that vLLM pins is affected by
+  GHSA-v32g-mr63-3j83 even with `weights_only=True`. Prefer safetensors.
 - Default dataset is `yahma/alpaca-cleaned`; default prompt template is
   `alpaca` (see `templates/alpaca.json`).
 - Multi-GPU is **DDP via `torchrun --nproc_per_node=<N>`** (don't export

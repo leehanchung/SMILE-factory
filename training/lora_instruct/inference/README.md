@@ -4,11 +4,17 @@
 
 `deploy_local.sh` starts vLLM's OpenAI-compatible server. It binds to
 `127.0.0.1` by default (`HOST`/`PORT`/`MODEL` env vars override). Set
-`VLLM_API_KEY` to require a bearer token; it is **required** when `HOST` is not
-a loopback address:
+`VLLM_API_KEY` to require a bearer token (vLLM reads it from the environment,
+so it stays out of the process arguments).
+
+vLLM's API key only guards some routes; others, such as `/invocations`, serve
+inference without it. To bind a non-loopback `HOST`, put an authenticating
+reverse proxy or a network policy that allowlists clients in front of the
+server, then opt in with `ALLOW_PUBLIC_BIND=1` (a `VLLM_API_KEY` is still
+required):
 
 ```bash
-VLLM_API_KEY=... HOST=0.0.0.0 ./deploy_local.sh
+ALLOW_PUBLIC_BIND=1 VLLM_API_KEY=... HOST=0.0.0.0 ./deploy_local.sh
 OPENAI_API_KEY=$VLLM_API_KEY uv run python bench.py \
     --api-url http://localhost:8000/v1/chat/completions --model <model>
 ```
