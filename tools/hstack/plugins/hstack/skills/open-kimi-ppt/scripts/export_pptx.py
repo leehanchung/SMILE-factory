@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml>=6.0.2"]
 # ///
 """Export a PPTD project to PPTX.
 
@@ -66,6 +66,14 @@ FADE_TRANSITION_XML = (
     '<p:transition spd="fast" advClick="1"><p:fade/></p:transition>'
 )
 MIN_AGENT_BROWSER_VERSION = (0, 33, 2)
+# Exact version installed when no suitable agent-browser is found. Pinned (not
+# @latest) so a compromised or broken new release is never pulled in silently;
+# bump deliberately after checking the release.
+AGENT_BROWSER_PIN = "0.43.0"
+# Minimum versions requested when a Python package has to be installed on
+# demand; they exclude releases with known advisories. Keep them in sync with
+# the PEP 723 `dependencies` blocks at the top of export_pptx.py/export_images.py.
+PYYAML_REQUIREMENT = "pyyaml>=6.0.2"
 MIN_NODE_MAJOR = 18
 NODE_INSTALL_HINT = "Install Node.js 18+ from https://nodejs.org, then retry."
 EDITOR_MISSING_HINT = (
@@ -159,6 +167,8 @@ def default_downloads_dir() -> Path:
 
 
 FALLBACK_ENV = Path.home() / ".cache" / "open-kimi-ppt" / "py"
+# Private npm prefix for agent-browser, so we never `npm install -g`.
+AGENT_BROWSER_PREFIX = Path.home() / ".cache" / "open-kimi-ppt" / "node"
 
 
 def _refresh_import_paths() -> None:
@@ -207,10 +217,11 @@ def _fallback_env_site_packages() -> Optional[Path]:
 def ensure_module(import_name: str, package: str, purpose: str) -> Any:
     """Import `import_name`, installing `package` on demand.
 
-    Tries, in order: uv (fast, no system mutation), `pip --user`, `pip --user
-    --break-system-packages` (PEP 668 hosts such as Homebrew/Debian python), and
-    finally a private venv under ~/.cache/open-kimi-ppt/py. Every strategy is
-    followed by an import-path refresh so the running process picks the package up.
+    `package` is a pip requirement (e.g. "pillow>=13.0"). Tries, in order: uv
+    (fast), `pip --user`, and finally a private venv under ~/.cache/open-kimi-ppt/py
+    (used on PEP 668 "externally managed" hosts such as Homebrew/Debian python;
+    we never pass --break-system-packages). Every strategy is followed by an
+    import-path refresh so the running process picks the package up.
     """
     try:
         return importlib.import_module(import_name)
@@ -223,12 +234,6 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
     if uv:
         attempts.append(("uv", [uv, "pip", "install", "--python", sys.executable, package]))
     attempts.append(("pip --user", [sys.executable, "-m", "pip", "install", "--user", package]))
-    attempts.append(
-        (
-            "pip --user --break-system-packages",
-            [sys.executable, "-m", "pip", "install", "--user", "--break-system-packages", package],
-        )
-    )
 
     failures: List[str] = []
     for label, command in attempts:
@@ -260,17 +265,17 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
 
     raise ExportError(
         f"failed to install {package} (needed for {purpose}). Tried uv, pip --user, "
-        f"pip --break-system-packages, and a private venv.\n"
+        f"and a private venv.\n"
         + "\n".join(failures)
-        + f"\n\nInstall it manually, e.g.: uv pip install --python {sys.executable} {package}"
-        f"\n            or: {sys.executable} -m pip install --user {package}"
+        + f"\n\nInstall it manually, e.g.: uv pip install --python {sys.executable} '{package}'"
+        f"\n            or: {sys.executable} -m pip install --user '{package}'"
         f"\nOr run the script under uv, which resolves dependencies automatically:"
-        f"\n            uv run --with {package} {Path(__file__).name} ..."
+        f"\n            uv run --with '{package}' {Path(__file__).name} ..."
     )
 
 
 def ensure_pyyaml() -> Any:
-    return ensure_module("yaml", "pyyaml", "reading .pptd / .page YAML")
+    return ensure_module("yaml", PYYAML_REQUIREMENT, "reading .pptd / .page YAML")
 
 
 yaml = ensure_pyyaml()
@@ -324,7 +329,18 @@ def ensure_nodejs() -> str:
     return executable
 
 
+def _private_agent_browser() -> Path:
+    bindir = AGENT_BROWSER_PREFIX / "node_modules" / ".bin"
+    return bindir / ("agent-browser.cmd" if os.name == "nt" else "agent-browser")
+
+
 def ensure_agent_browser() -> str:
+    """Return an agent-browser executable at or above MIN_AGENT_BROWSER_VERSION.
+
+    Uses one on PATH if it is new enough, else a previously installed private
+    copy, else installs agent-browser@AGENT_BROWSER_PIN into a private npm
+    prefix under ~/.cache/open-kimi-ppt/node (never a global `npm install -g`).
+    """
     ensure_nodejs()
 
     executable = shutil.which("agent-browser")
@@ -333,35 +349,46 @@ def ensure_agent_browser() -> str:
         log(f"agent-browser version: {'.'.join(map(str, version))}")
         return executable
 
+    private = _private_agent_browser()
+    if private.is_file():
+        private_version = read_agent_browser_version(str(private))
+        if private_version >= MIN_AGENT_BROWSER_VERSION:
+            log(f"agent-browser version: {'.'.join(map(str, private_version))} ({private})")
+            return str(private)
+
+    spec = f"agent-browser@{AGENT_BROWSER_PIN}"
     npm = shutil.which("npm")
     if not npm:
         reason = "not installed" if version is None else ".".join(map(str, version))
         raise ExportError(
-            f"agent-browser {reason}; npm is required to install agent-browser@latest. "
+            f"agent-browser {reason}; npm is required to install {spec}. "
             f"npm ships with Node.js. {NODE_INSTALL_HINT}"
         )
 
     current = "not installed" if version is None else ".".join(map(str, version))
     minimum = ".".join(map(str, MIN_AGENT_BROWSER_VERSION))
-    log(f"agent-browser {current} is below {minimum}; installing agent-browser@latest")
+    log(
+        f"agent-browser {current} is below {minimum}; installing {spec} "
+        f"into {AGENT_BROWSER_PREFIX}"
+    )
+    AGENT_BROWSER_PREFIX.mkdir(parents=True, exist_ok=True)
     process = run_command(
-        [npm, "install", "-g", "agent-browser@latest"],
+        [npm, "install", "--prefix", str(AGENT_BROWSER_PREFIX), "--no-save", spec],
         timeout=300,
     )
     if process.returncode != 0:
-        raise ExportError(f"failed to install agent-browser@latest:\n{process.stdout[-4000:]}")
+        raise ExportError(f"failed to install {spec}:\n{process.stdout[-4000:]}")
 
-    executable = shutil.which("agent-browser")
-    if not executable:
-        raise ExportError("agent-browser@latest installed, but executable is not on PATH")
-    version = read_agent_browser_version(executable)
+    if not private.is_file():
+        raise ExportError(f"{spec} installed, but {private} was not created")
+    version = read_agent_browser_version(str(private))
     if version < MIN_AGENT_BROWSER_VERSION:
         raise ExportError(
-            "agent-browser@latest is still below the required version "
+            f"{spec} is still below the required version "
             f"{minimum}: {'.'.join(map(str, version))}"
         )
-    log(f"agent-browser upgraded to {'.'.join(map(str, version))}")
-    return executable
+    log(f"agent-browser installed: {'.'.join(map(str, version))} ({private})")
+    return str(private)
 
 
 DEBUG_CHROME_PORT = 9337

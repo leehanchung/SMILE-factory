@@ -29,18 +29,33 @@ class ExportPptxTests(unittest.TestCase):
             "/bin/npm",
             "/bin/agent-browser",
             "/bin/npm",
-            "/bin/agent-browser",
         ]
-        run_command.side_effect = [
-            MODULE.subprocess.CompletedProcess([], 0, "v22.11.0\n"),
-            MODULE.subprocess.CompletedProcess([], 0, "agent-browser 0.17.1\n"),
-            MODULE.subprocess.CompletedProcess([], 0, "changed 1 package\n"),
-            MODULE.subprocess.CompletedProcess([], 0, "agent-browser 0.33.2\n"),
-        ]
-        self.assertEqual(MODULE.ensure_agent_browser(), "/bin/agent-browser")
-        self.assertEqual(run_command.call_args_list[2].args[0], [
-            "/bin/npm", "install", "-g", "agent-browser@latest"
+        outputs = iter([
+            "v22.11.0\n",
+            "agent-browser 0.17.1\n",
+            "changed 1 package\n",
+            "agent-browser 0.33.2\n",
         ])
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp) / "node"
+            private = prefix / "node_modules" / ".bin" / (
+                "agent-browser.cmd" if MODULE.os.name == "nt" else "agent-browser"
+            )
+
+            def fake_run(command, **kwargs):
+                if command[:2] == ["/bin/npm", "install"]:
+                    private.parent.mkdir(parents=True)
+                    private.write_text("")
+                return MODULE.subprocess.CompletedProcess(command, 0, next(outputs))
+
+            run_command.side_effect = fake_run
+            with patch.object(MODULE, "AGENT_BROWSER_PREFIX", prefix):
+                self.assertEqual(MODULE.ensure_agent_browser(), str(private))
+        self.assertEqual(run_command.call_args_list[2].args[0], [
+            "/bin/npm", "install", "--prefix", str(prefix), "--no-save",
+            f"agent-browser@{MODULE.AGENT_BROWSER_PIN}",
+        ])
+        self.assertNotIn("@latest", MODULE.AGENT_BROWSER_PIN)
 
     @patch.object(MODULE, "run_command")
     @patch.object(MODULE.shutil, "which")

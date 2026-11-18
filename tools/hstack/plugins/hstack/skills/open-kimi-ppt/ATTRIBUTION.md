@@ -42,8 +42,8 @@ Dependency removal:
    without a `--wasm` flag and without a duplicated copy of the binary.
 7. `ensure_module()` added to `scripts/export_pptx.py`, replacing three separate
    `pip install --user` call sites (PyYAML, Pillow, websocket-client). It tries uv,
-   then `pip --user`, then `pip --break-system-packages` (PEP 668 hosts), then a
-   private venv under `~/.cache/open-kimi-ppt/py`, and refreshes `sys.path` after
+   then `pip --user`, then (e.g. on PEP 668 hosts) a private venv under
+   `~/.cache/open-kimi-ppt/py`, and refreshes `sys.path` after
    each attempt. **Upstream's version could not succeed on a first run**: `site.py`
    only records site-packages directories that existed at interpreter start, so the
    freshly installed package stayed unimportable and the script died.
@@ -69,8 +69,20 @@ Additions:
     Python and Chromium optional) and to state that `npx open-kimi-ppt-skill` is dead.
     Step5.6 now leads with the Node-only export command.
 
+Supply-chain hardening:
+
+13. Python requirements carry lower bounds that exclude releases with known
+    advisories (`pyyaml>=6.0.2`, `pillow>=13.0`, `websocket-client>=1.9`), both in
+    the PEP 723 blocks and in the on-demand installs; `export_images.py` therefore
+    needs Python 3.11+. The `pip --break-system-packages` fallback is gone.
+    agent-browser is installed as a pinned version (`AGENT_BROWSER_PIN`) into a
+    private npm prefix under `~/.cache/open-kimi-ppt/node` instead of
+    `npm install -g agent-browser@latest`. `editor/README.md` points at
+    `scripts/serve.mjs` instead of `npx serve` / the unpublished package.
+
 Everything else — the `SKILL.md` body, `references/`, the rest of `scripts/`,
-`tests/test_*.py`, and `editor/` — is upstream as-is.
+`tests/test_*.py` (apart from the agent-browser install test), and `editor/`
+(apart from its README) — is upstream as-is.
 
 ## Upstream license
 
