@@ -61,6 +61,9 @@ ifneq ($(findstring vllm/,$(MODEL)),)
   # The key reaches bench through its environment, not argv: for the vllm/
   # provider BenchFlow inherits OPENAI_API_KEY from os.environ
   # (benchflow/agents/env.py auto_inherit_env). A .env here would take precedence.
+  # BenchFlow also copies it INTO the agent sandbox, so the evaluated agent can
+  # read it: ENGINE_API_KEY must be a disposable eval-only token (README "Engine
+  # binding & API key").
   ENGINE_KEY_ENV := OPENAI_API_KEY="$${ENGINE_API_KEY:-dummy-key}"
   ENGINE_DEP := check-engine
 else
@@ -109,6 +112,7 @@ smoke: check-engine
 
 # The key reaches curl on stdin (-H @-), never in its argv.
 check-engine:
+	@case "$${ENGINE_API_KEY:-}" in sk-*) echo "warning: ENGINE_API_KEY looks like a provider key; evaluated agents can read it, so use a disposable eval-only token" >&2 ;; esac
 	@h='$(ENGINE_HOST)'; case "$$h" in ""|0.0.0.0) h=127.0.0.1 ;; "::") h=::1 ;; esac; \
 	[[ $$h == *:* ]] && h="[$$h]"; \
 	url="http://$$h:$(ENGINE_PORT)/v1/models"; \

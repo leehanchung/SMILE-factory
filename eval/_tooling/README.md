@@ -68,7 +68,9 @@ Add a benchmark = add a generator path in `scripts/gen_tasks.py`, then
 Already done on this machine (recorded here for reproducibility):
 
 1. **SGLang venv** (Python 3.12, SGLang 0.5.23):
-   `uv venv --python 3.12 ~/venvs/sglang-qwen && uv pip install "sglang[all]==0.5.23"`.
+   `uv venv --python 3.12 ~/venvs/sglang-qwen && uv pip install --prerelease=allow "sglang[all]==0.5.23"`.
+   (`--prerelease=allow` because some SGLang dependencies only publish
+   pre-releases; uv older than 0.12.0 cannot resolve 0.5.23 without it.)
    (Previously 0.5.9, which `pip-audit` flags with several PYSEC advisories fixed
    in later releases; no compatibility reason pinned it. Re-check the Triton /
    CuDNN-workaround flags below after upgrading an existing venv.)
@@ -138,16 +140,25 @@ If something off-host or inside a container must reach the **engine directly**
 (e.g. `host.docker.internal:30000`), start it with `HOST=0.0.0.0` **and**
 `ENGINE_API_KEY=<random secret>` — the scripts refuse a non-loopback `HOST`
 without a key, since an unauthenticated OpenAI endpoint is open GPU compute.
-vLLM's key only guards some routes (`/invocations` serves inference without it),
-so `serve_qwen.sh` also requires `ALLOW_PUBLIC_BIND=1`, confirming the port is
-behind a firewall/network policy or an authenticating reverse proxy covering
-every endpoint. Export the same `ENGINE_API_KEY` (and `ENGINE_HOST=<that HOST>`, which
+Both also require `ALLOW_PUBLIC_BIND=1`, confirming the port is behind a
+firewall/network policy or an authenticating reverse proxy covering every
+endpoint: vLLM's key only guards some routes (`/invocations` serves inference
+without it), and either engine's key is visible to the evaluated agents (below). Export the same `ENGINE_API_KEY` (and `ENGINE_HOST=<that HOST>`, which
 `check-engine` probes) when running `make eval` / `make eval-direct` /
 `make smoke` / `make check-engine`: the Makefile hands it to BenchFlow as the
 agent's `OPENAI_API_KEY` through the environment (placeholder `dummy-key` when
 unset), and `scripts/install_pi_config.sh` writes it, mode 0600, into
 `~/.pi/agent/models.json` for the pi-direct paths. The key never appears in a
-process's argv.
+process's argv (`serve_sglang.sh` hands it to SGLang in a 0600 `--config` file,
+since SGLang has no API-key environment variable).
+
+**The evaluated agent can read `ENGINE_API_KEY`.** BenchFlow copies
+`OPENAI_API_KEY` into the agent's sandbox (the agent calls the engine with it),
+so any benchmark prompt or tool call can read and exfiltrate it. Use a random,
+eval-only token, never a real provider key, and rotate it after runs on an
+exposed engine; `make check-engine` warns when the key looks like a provider key
+(`sk-...`). Proper isolation needs a host-side proxy that holds the engine
+credential and gives each run a disposable token; this harness does not ship one.
 
 Model routing: `model: vllm/qwen35-2b-base` + `agent_env.BENCHFLOW_PROVIDER_BASE_URL`.
 The run-configs point the host-side LiteLLM proxy at `http://localhost:30000/v1`
