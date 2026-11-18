@@ -1,0 +1,1 @@
+System.register(["./yaml-legacy-soNf5IPv.js"],function(n,t){var e;return n({n:function(n){return e.load(n)},t:function(n){return e.load(n)}}),{setters:[function(n){e=n.a}],execute:function(){}}});

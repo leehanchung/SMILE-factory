@@ -1,0 +1,1 @@
+System.register(["./echarts-legacy-Bs2DflTb.js"],function(e,t){var r,c,n,s,u,a,i,f,o,g,h,y,l,m,v,x,S,b,d,j,p,N;return{setters:[function(e){r=e.S,c=e._,n=e.a,s=e.b,u=e.c,a=e.d,i=e.f,f=e.g,o=e.h,g=e.i,h=e.l,y=e.m,l=e.n,m=e.o,v=e.p,x=e.r,S=e.s,b=e.t,d=e.u,j=e.v,p=e.x,N=e.y}],execute:function(){r([j,a,d,N,c,y,i,f,h,v,u,S,g,o,n,m,x,p,l,b]),e("echarts",s)}}});

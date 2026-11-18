@@ -1,0 +1,1 @@
+System.register([],function(t,e){return{setters:[],execute:function(){t("t",(t,e)=>{const n=t.__vccOpts||t;for(const[r,c]of e)n[r]=c;return n})}}});

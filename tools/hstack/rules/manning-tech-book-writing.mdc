@@ -1,0 +1,198 @@
+---
+description: Comprehensive guide for writing technical books following Manning Publications style and standards. Use when authoring Manning books, reviewing chapters, ensuring style compliance, or understanding Manning's technical writing requirements including Chapter 1 guidelines, mental models, opening/summary bullets, callouts/sidebars, and general chapter structure.
+globs:
+  - "**/*.md"
+  - "**/*.adoc"
+  - "**/*.xml"
+alwaysApply: false
+---
+
+# Manning Technical Book Writing
+
+Write effective technical books following Manning Publications' proven style and methodology.
+
+## Quick Start
+
+Manning technical books follow specific patterns that help readers learn effectively:
+
+1. **Get practical quickly** - Minimize theory, maximize hands-on learning
+2. **Concrete to abstract** - Start with examples, build to principles  
+3. **Just-in-time information** - Introduce concepts when needed
+4. **Clear motivation** - Always answer "why should I care?"
+
+## Core Workflow
+
+### Phase 1: Planning Your Chapter
+
+Before writing, establish:
+- **Learning objectives** - What skills will readers gain?
+- **Target audience** - Match complexity to reader level
+- **Concrete examples** - Real scenarios to teach concepts
+- **Mental models** - Visual representations of systems
+
+### Phase 2: Writing Your Chapter
+
+Follow this structure for every chapter:
+
+1. **Opening bullets** - "This chapter covers" + 3-5 topics
+2. **Introduction** - Hook, context, and roadmap (2-6 paragraphs)
+3. **Sections** - Each with own introduction and clear purpose
+4. **Summary bullets** - Restate all key takeaways
+
+See detailed guidelines:
+- **Chapter 1 specific**: [references/chapter-1-guidelines.md](references/chapter-1-guidelines.md)
+- **General structure**: [references/chapter-structure.md](references/chapter-structure.md)
+- **Writing introductions**: [references/introductions.md](references/introductions.md)
+
+### Phase 3: Refinement
+
+Review your chapter against:
+- **Style compliance** - [references/writing-style.md](references/writing-style.md)
+- **Element formatting** - [references/opening-summary-bullets.md](references/opening-summary-bullets.md)
+- **Visual aids** - [references/callouts-sidebars.md](references/callouts-sidebars.md)
+- **File naming** - [references/file-naming.md](references/file-naming.md)
+
+## Key Patterns
+
+### The Mental Model (Critical for Chapter 1)
+
+Every technology needs a clear mental model showing the complete system:
+
+```
+1. Choose simple, concrete scenario (e.g., translating a phrase)
+2. Create diagram showing all components
+3. Annotate data flow through system  
+4. Write rich caption explaining operation
+5. Follow with detailed text explanation
+```
+
+Mental models make abstract concepts concrete and give readers a framework for understanding details.
+
+### Teaching Complex Topics
+
+Use progressive disclosure:
+
+```
+1. Simplest working example
+2. Explain core concepts
+3. Add complexity incrementally
+4. Show variations and edge cases
+5. Abstract to general principles
+6. Suggest when to apply
+```
+
+### Making Content Accessible
+
+Transform abstract concepts into concrete learning:
+
+- **Bad**: "LLMs use transformer architectures for sequence modeling"
+- **Good**: "Let's see how an LLM translates 'Hello' to 'Bonjour' step by step"
+
+Always ground explanations in reader's experience.
+
+## Chapter 1 Excellence
+
+Chapter 1 is crucial - it must answer three questions convincingly:
+
+1. **What is this technology?**
+   - Clear definition with category + differentiation
+   - Concrete example readers can relate to
+   - Position versus alternatives
+
+2. **Why should I care?**
+   - Specific problems it solves
+   - Real benefits with examples
+   - When NOT to use it
+
+3. **How does it work?**
+   - Mental model with complete example
+   - All components clearly shown
+   - End-to-end operation explained
+
+For complete Chapter 1 requirements, see [references/chapter-1-guidelines.md](references/chapter-1-guidelines.md).
+
+## Writing Tips
+
+### Start Strong
+- Hook with story or problem (1-3 sentences)
+- State teaching goal immediately  
+- Provide clear value proposition
+- Never start with history or theory
+
+### Maintain Momentum
+- One concept per paragraph
+- Define terms on first use
+- Use active voice
+- Include frequent "why this matters"
+
+### Code Examples
+- Keep concise but complete
+- Include error handling
+- Show real-world usage
+- Explain key decisions
+
+### Visual Elements
+- Diagrams before complex explanations
+- Annotate all components
+- Show process flow
+- Explain in captions
+
+## Common Pitfalls
+
+### Avoid These Patterns
+- "As we'll see later..." (creates unnecessary suspense)
+- "It's important to note..." (just state the fact)  
+- Long theoretical introductions
+- Feature lists without context
+- Code without explanation
+
+### Fix These Issues
+- **Stacked headings** - Always have text between
+- **Stacked browsables** - Separate with explanatory text
+- **Missing motivation** - Add "why should I care?"
+- **Abstract examples** - Ground in concrete scenarios
+
+## Quick Reference
+
+### Essential Files
+- Chapters: `ch01_[externalID].docx`
+- Figures: `ch01_F001_[externalID].png`  
+- Front matter: `FM_[externalID].docx`
+- Appendices: `APP_A_[externalID].docx`
+
+### Required Elements
+- Opening bullets (3-5, one line each)
+- Chapter introduction (2-6 paragraphs)
+- Section introductions (problem + solution)
+- Summary bullets (complete sentences)
+- 20-35 pages per chapter
+
+### Callout vs Sidebar
+- **Callout**: Essential information reader must not miss
+- **Sidebar**: Interesting but optional enrichment
+
+For detailed decision guide, see [references/callouts-sidebars.md](references/callouts-sidebars.md).
+
+## Resources
+
+### Detailed Guidelines
+- [Chapter 1 Guidelines](references/chapter-1-guidelines.md) - Complete Chapter 1 requirements
+- [Chapter Structure](references/chapter-structure.md) - General chapter checklist  
+- [Writing Style](references/writing-style.md) - Tone, voice, and clarity
+- [Opening/Summary Bullets](references/opening-summary-bullets.md) - Bullet list formatting
+- [Callouts vs Sidebars](references/callouts-sidebars.md) - Visual element usage
+- [Writing Introductions](references/introductions.md) - Chapter and section intros
+- [File Naming](references/file-naming.md) - Naming conventions
+
+### Automation Note
+Manning encourages automating environment setup for readers. Provide one-click installation where possible, in addition to manual setup instructions for teaching purposes.
+
+## Remember
+
+Manning readers are busy professionals who want to:
+- Learn practical skills quickly
+- Understand through concrete examples
+- Apply knowledge immediately
+- Skip unnecessary theory
+
+Write with empathy for your reader's time and goals.

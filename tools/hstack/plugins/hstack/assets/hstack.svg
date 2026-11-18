@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">HStack</title>
+  <desc id="desc">HStack plugin mark</desc>
+  <rect width="256" height="256" rx="48" fill="#111827"/>
+  <path d="M62 64h32v48h68V64h32v128h-32v-52H94v52H62V64z" fill="#F9FAFB"/>
+  <path d="M58 214h140" stroke="#60A5FA" stroke-width="16" stroke-linecap="round"/>
+  <path d="M58 42h140" stroke="#34D399" stroke-width="16" stroke-linecap="round"/>
+</svg>

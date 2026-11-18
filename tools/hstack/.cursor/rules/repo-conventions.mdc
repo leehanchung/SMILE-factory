@@ -1,0 +1,21 @@
+---
+description: Repository conventions for the hstack agent plugin monorepo. Applies when editing any file in this repo.
+alwaysApply: true
+---
+
+# HStack Repo Conventions
+
+This is a multi-platform agent plugin monorepo. Skills in `plugins/hstack/skills/` are shared across Claude Code, OpenAI Codex, and Cursor.
+
+## Key Rules
+
+- Every skill lives in `plugins/hstack/skills/<skill-name>/` with a `SKILL.md` entry point
+- Skill `name` in frontmatter must match the directory name exactly
+- SKILL.md frontmatter requires: `name`, `description`, `allowed-tools`
+- Supporting files go in `references/`, scripts in `scripts/`
+- Keep SKILL.md body under 500 lines — use references for overflow
+- Cursor rules in `rules/` mirror skills with `.mdc` format
+- Codex marketplace metadata lives in `.agents/plugins/marketplace.json` and points to `./plugins/hstack`
+- Directories use `kebab-case`
+- Do not put files other than `plugin.json` inside manifest directories (`.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`)
+- No secrets, API keys, or `.env` files

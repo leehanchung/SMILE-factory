@@ -1,0 +1,4 @@
+interface:
+  display_name: "Concept Infographic"
+  short_description: "Turn papers and concepts into visual explanations"
+  default_prompt: "Use $concept-infographic to explain this source with a concrete example, clear visual steps, and checked facts."

@@ -1,0 +1,7 @@
+---
+description: Write strategic technology analysis and blog posts — from short HN-style opinion pieces to longer O'Reilly Radar-style industry analysis. Covers voice, structure, concision, and AI writing pattern avoidance for senior technical audiences.
+globs:
+alwaysApply: false
+---
+
+See `plugins/hstack/skills/tech-writing/SKILL.md` for the full skill.

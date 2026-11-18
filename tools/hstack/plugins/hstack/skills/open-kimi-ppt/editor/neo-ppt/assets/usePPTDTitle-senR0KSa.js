@@ -1,0 +1,1 @@
+import{_ as e}from"./const-BjfH-jZe.js";import{L as t}from"./index-jtNAhQeK.js";var n=()=>{let{t:n}=t();return{setPPTDTitle:t=>{if(!t)return``;let r=e?t:`${t} - Kimi ${n(`common.name`)}`;return document.title=r,r}}};export{n as t};

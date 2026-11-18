@@ -1,0 +1,31 @@
+---
+description: Guidelines for editing or creating skills in the plugins/hstack/skills directory
+globs:
+  - "plugins/hstack/skills/**/*"
+alwaysApply: false
+---
+
+# Skill Editing Guidelines
+
+When editing or creating skills:
+
+## SKILL.md Structure
+
+Every SKILL.md must have this frontmatter:
+
+```yaml
+---
+name: skill-name
+description: Clear description of when and how to use this skill
+allowed-tools: "Read,Write,Edit,Bash,Glob,Grep,WebSearch,WebFetch"
+---
+```
+
+## Checklist
+
+- `name` field matches the parent directory name
+- `description` is specific about triggers (when to use) and anti-triggers (when not to use)
+- Body uses imperative tone
+- Body does not repeat the description
+- References are in `references/` subdirectory
+- If creating a new skill, also create a matching `rules/<skill-name>.mdc` for Cursor

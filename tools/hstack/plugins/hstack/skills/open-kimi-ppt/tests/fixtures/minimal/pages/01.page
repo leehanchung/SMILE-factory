@@ -1,0 +1,11 @@
+pageType: content
+background: {type: solid, color: "#F7F8FC"}
+elements:
+  - elementId: title
+    elementType: text
+    bounds: [100, 180, 760, 120]
+    content:
+      align: [center, middle]
+      fontFamily: MiSans
+      text: |
+        <p><span style="font-size:42px;color:#171923;font-weight:700">本地导出验证</span></p>

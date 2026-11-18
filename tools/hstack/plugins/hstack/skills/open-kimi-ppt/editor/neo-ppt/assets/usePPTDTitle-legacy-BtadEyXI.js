@@ -1,0 +1,1 @@
+System.register(["./const-legacy-Bw9iWaro.js","./index-legacy-Ce-qKpT_.js"],function(t,e){var n,c;return{setters:[function(t){n=t._},function(t){c=t.L}],execute:function(){t("t",()=>{const{t:t}=c();return{setPPTDTitle:e=>{if(!e)return"";const c=n?e:`${e} - Kimi ${t("common.name")}`;return document.title=c,c}}})}}});

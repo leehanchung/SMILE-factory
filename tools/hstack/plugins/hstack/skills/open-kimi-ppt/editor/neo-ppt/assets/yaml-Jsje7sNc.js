@@ -1,0 +1,1 @@
+import{a as e}from"./yaml-8mzYdWcr.js";function t(t){return e.load(t)}function n(t){return e.load(t)}export{n,t};

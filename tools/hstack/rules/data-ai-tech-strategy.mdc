@@ -1,0 +1,245 @@
+---
+description: Framework for building technical strategy and engineering principles for Data, AI, and Machine Learning organizations. Use when creating or reviewing tech strategy documents, defining engineering principles, building AI/ML roadmaps, establishing MLOps practices, or aligning data platform architecture with business objectives. Covers strategy document creation, principle definition, roadmap planning, and stakeholder communication for data-intensive organizations.
+alwaysApply: false
+---
+
+# Data + AI Technical Strategy
+
+## Purpose
+
+Guide creation of technical strategy documents and engineering principles for Data, AI, and Machine Learning organizations. Produces artifacts that align engineering efforts with business objectives, enable efficient decision-making, and establish long-term competitive advantage.
+
+## When to Use This Skill
+
+| Situation | Output |
+|-----------|--------|
+| New Data/AI organization or major reorg | Full strategy document |
+| Annual/quarterly strategy refresh | Strategy update + roadmap revision |
+| Defining team principles | Engineering principles document |
+| Building ML platform roadmap | 6-18 month technical roadmap |
+| Stakeholder alignment needed | Executive summary + talking points |
+| Competing for scope/resources | Business case with ammunition |
+
+## Core Framework: The Five Pillars
+
+### 1. Business Alignment
+Every technical decision traces to measurable business value:
+- Revenue impact (new ACV contribution, upsell enablement)
+- Cost optimization (operational efficiency, technical debt reduction)
+- Competitive differentiation (capability moats, speed-to-market)
+- Risk mitigation (compliance, security, operational resilience)
+
+### 2. Technical Vision
+Define the target state architecture:
+- Platform consolidation vs. best-of-breed decisions
+- Build vs. buy vs. partner criteria
+- Technology bets (emerging tech adoption, sunset decisions)
+- Integration patterns and boundaries
+
+### 3. Organizational Design
+Structure teams for autonomy and accountability:
+- Functional vs. cross-functional allocation
+- Squad model implementation
+- Skill development and succession
+- Decision rights and escalation paths
+
+### 4. Delivery Excellence
+Establish operational rigor:
+- MLOps maturity targets
+- Quality gates and release criteria
+- Monitoring and observability standards
+- Incident response and on-call practices
+
+### 5. Governance & Ethics
+Build trust through responsible AI:
+- Model governance and auditability
+- Data privacy and compliance
+- Bias detection and mitigation
+- Explainability requirements
+
+## Workflow: Creating a Strategy Document
+
+### Phase 1: Discovery (1-2 weeks)
+1. **Stakeholder interviews**: Understand business priorities, pain points, success metrics
+2. **Current state assessment**: Audit existing capabilities, technical debt, team structure
+3. **Competitive analysis**: Map competitor capabilities and market trends
+4. **Data readiness evaluation**: Assess data quality, accessibility, governance maturity
+
+### Phase 2: Definition (1-2 weeks)
+1. **Vision statement**: One paragraph describing the target state
+2. **Principles definition**: See `references/engineering-principles.md`
+3. **Architecture vision**: Current state → target state → transition plan
+4. **Roadmap draft**: See `references/roadmap-planning.md`
+
+### Phase 3: Alignment (1 week)
+1. **Peer review**: Technical and product leadership feedback
+2. **Executive preview**: Pre-alignment with key decision-makers
+3. **Iteration**: Incorporate feedback, resolve conflicts
+4. **Sign-off**: Written approval from stakeholders
+
+### Phase 4: Communication
+1. **Team rollout**: Walk through strategy with engineering teams
+2. **Documentation**: Publish to wiki/confluence with version history
+3. **Onboarding integration**: Add to new hire materials
+4. **Quarterly refresh cadence**: Schedule recurring reviews
+
+## Strategy Document Structure
+
+See `references/strategy-document-template.md` for full template. Key sections:
+
+```
+1. Executive Summary (1 page)
+   - Vision statement
+   - Key changes from prior strategy
+   - Top 3 priorities
+
+2. Business Context
+   - Business strategy alignment
+   - Customer needs and pain points
+   - Competitive landscape
+
+3. Technical Vision
+   - Target state architecture
+   - Key technology decisions
+   - Build vs. buy rationale
+
+4. Engineering Principles
+   - Core values (4-6 principles)
+   - Decision guidelines
+   - Anti-patterns to avoid
+
+5. Architecture Vision
+   - Current state (with diagrams)
+   - Target state (with diagrams)
+   - Transition roadmap
+
+6. MLOps Maturity
+   - Current maturity level
+   - Target maturity level
+   - Gap closure plan
+
+7. Roadmap
+   - 6-month committed priorities
+   - 12-month directional bets
+   - 18+ month horizon scanning
+
+8. Success Metrics
+   - Business KPIs
+   - Technical KPIs
+   - Team health metrics
+
+9. Governance
+   - Decision-making framework
+   - Review cadence
+   - Escalation paths
+```
+
+## Defining Engineering Principles
+
+Principles must be:
+- **Actionable**: Guide daily decisions
+- **Specific**: Differentiate from generic advice
+- **Measurable**: Observable in practice
+- **Memorable**: Short enough to internalize
+
+See `references/engineering-principles.md` for:
+- Framework for defining principles
+- Data/AI-specific principle examples
+- Anti-patterns to avoid
+- How to socialize and enforce
+
+## MLOps Principles
+
+Machine learning systems require additional engineering rigor beyond traditional software:
+
+**Core MLOps Principles:**
+1. **Reproducibility**: Every experiment, model, and deployment can be recreated
+2. **Versioning**: Data, code, models, and configurations are version-controlled
+3. **Automation**: CI/CD/CT pipelines eliminate manual deployment
+4. **Monitoring**: Model performance, data drift, and system health are observable
+5. **Testing**: Data quality, model behavior, and integration are validated
+
+See `references/mlops-principles.md` for detailed guidance on:
+- MLOps maturity levels (0-4)
+- Implementation patterns
+- Tool selection criteria
+- Common anti-patterns
+
+## Roadmap Planning
+
+### Prioritization Framework
+
+Use business value × feasibility matrix:
+
+| | High Feasibility | Low Feasibility |
+|---|---|---|
+| **High Value** | Do First | Invest & Plan |
+| **Low Value** | Quick Wins | Don't Do |
+
+### Sequencing Principles
+1. **Dependencies first**: Build platform before products
+2. **Quick wins early**: Generate momentum with visible impact
+3. **Risks early**: Tackle uncertainty while options remain
+4. **Buffer included**: Plan for 70% capacity, not 100%
+
+See `references/roadmap-planning.md` for:
+- Template and examples
+- Stakeholder communication
+- Progress tracking
+- Course correction patterns
+
+## Communicating to Leadership
+
+### Frame Technical Decisions in Business Terms
+
+❌ "We need to refactor our ML pipeline architecture"
+✅ "We'll reduce model deployment time from 6 weeks to 1 week, enabling 5x faster response to market changes"
+
+❌ "We should migrate to a unified data platform"
+✅ "Platform consolidation will save $2M/year in infrastructure costs and reduce data preparation time by 60%"
+
+### The Four Leadership Answers
+When executives ask questions, answer with:
+1. **Yes** (with commitment)
+2. **No** (with rationale)
+3. **A number** (specific, quantified)
+4. **I don't know, and will follow up by [date]**
+
+### Building Coalition Support
+- Pre-align with key stakeholders before formal presentations
+- Identify and address objections in advance
+- Use "I intend to..." framing vs. asking permission
+- Document decisions to establish precedent
+
+## Quick Reference
+
+### Strategy Document Checklist
+- [ ] Vision ties to business objectives
+- [ ] Principles are specific and actionable
+- [ ] Architecture has current/target/transition states
+- [ ] Roadmap has clear priorities and sequencing
+- [ ] Success metrics are defined and measurable
+- [ ] Governance model is documented
+- [ ] Key stakeholders have signed off
+
+### Principle Definition Checklist
+- [ ] Fewer than 10 principles total
+- [ ] Each principle fits in one sentence
+- [ ] Principles guide specific decisions
+- [ ] Anti-patterns are identified
+- [ ] Examples illustrate application
+
+### Roadmap Checklist
+- [ ] Business value quantified for each initiative
+- [ ] Dependencies mapped and sequenced
+- [ ] Resource requirements identified
+- [ ] Risks and mitigations documented
+- [ ] Success criteria defined
+- [ ] Review cadence established
+
+## References
+
+- `references/strategy-document-template.md`: Full strategy document template
+- `references/engineering-principles.md`: Framework for defining principles
+- `references/mlops-principles.md`: MLOps-specific principles and maturity model
+- `references/roadmap-planning.md`: Roadmap creation and communication guide
