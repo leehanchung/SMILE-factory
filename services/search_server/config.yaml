@@ -1,6 +1,6 @@
 # search-server config. Backend selection + endpoints; secrets via env vars.
 server:
-  host: "0.0.0.0"
+  host: "127.0.0.1"  # no auth: only expose (0.0.0.0) on a private network
   port: 8000
 
 backend:

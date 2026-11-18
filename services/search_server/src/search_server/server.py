@@ -50,6 +50,12 @@ async def visit(req: VisitRequest) -> dict:
 
 
 def main() -> None:
+    import os
+
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Loopback by default: the service has no auth. Set SEARCH_SERVER_HOST=0.0.0.0
+    # explicitly (e.g. inside a container on a private network) to expose it.
+    host = os.environ.get("SEARCH_SERVER_HOST", "127.0.0.1")
+    port = int(os.environ.get("SEARCH_SERVER_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

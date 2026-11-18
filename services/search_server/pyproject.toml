@@ -4,10 +4,10 @@ version = "0.1.0"
 description = "Tool/search HTTP service for the deep-research agent. Heavy retrieval deps isolated here."
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn>=0.32",
+    "fastapi>=0.163",
+    "uvicorn>=0.54",
     "pydantic>=2.0,<3",
-    "httpx>=0.27",
+    "httpx>=0.28.1",
     # Heavy retrieval backends live HERE (never in libs/dr_agent):
     "rank-bm25>=0.2",
     # "faiss-cpu>=1.8",   # enable for dense retrieval
@@ -20,6 +20,16 @@ dev = [
     "pytest-asyncio>=0.24",
 ]
 dense = ["faiss-cpu>=1.8", "sentence-transformers>=3.0"]
+
+[tool.uv]
+# Floors for vulnerable transitive deps (pip-audit, 2026-11).
+constraint-dependencies = [
+    "anyio>=4.14.2",
+    "certifi>=2026.10.18",
+    "filelock>=4.2.1",
+    "setuptools>=84.1.0",
+    "torch>=2.13.0",
+]
 
 [project.scripts]
 search-server = "search_server.server:main"
