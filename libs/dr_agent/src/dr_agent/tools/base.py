@@ -23,7 +23,9 @@ def make_tool_client(token: str | None = None, **kwargs: Any) -> httpx.AsyncClie
     auth. Extra kwargs go to ``httpx.AsyncClient``.
     """
     token = token if token is not None else os.environ.get(TOKEN_ENV)
-    headers = dict(kwargs.pop("headers", None) or {})
+    # httpx.Headers is case-insensitive, so a caller's "authorization" key
+    # is replaced rather than sent alongside ours.
+    headers = httpx.Headers(kwargs.pop("headers", None))
     if token:
         headers["Authorization"] = f"Bearer {token}"
     kwargs.setdefault("timeout", 30.0)

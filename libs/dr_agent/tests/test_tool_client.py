@@ -28,3 +28,17 @@ def test_explicit_token_wins_and_keeps_headers(monkeypatch):
     headers = _headers("explicit", headers={"x-extra": "1"})
     assert headers["authorization"] == "Bearer explicit"
     assert headers["x-extra"] == "1"
+
+
+def test_token_replaces_caller_auth_header_case_insensitively(monkeypatch):
+    monkeypatch.delenv("SEARCH_SERVER_TOKEN", raising=False)
+    client = make_tool_client("explicit", headers={"authorization": "Bearer stale"})
+    try:
+        assert client.headers.get_list("Authorization") == ["Bearer explicit"]
+    finally:
+        asyncio.run(client.aclose())
+
+
+def test_caller_auth_header_kept_without_token(monkeypatch):
+    monkeypatch.delenv("SEARCH_SERVER_TOKEN", raising=False)
+    assert _headers(headers={"authorization": "Bearer mine"})["authorization"] == "Bearer mine"
