@@ -9,14 +9,14 @@ This directory is intentionally (almost) empty. The integration surface is:
 
 1. **Pull the image** (pinned by digest for reproducibility; `make image` does this):
    ```bash
-   docker pull slimerl/slime:nightly-dev-20261106a-cu130@sha256:652b94c17f968b42e133c7b0d56efb74aed596bc901614f12efba84b648598fa
+   docker pull slimerl/slime:v0.4.0-cu130@sha256:18a84672ca67ddcf611528399c2cda2c2520b52c31c82256597c056af4ee6411
    ```
 2. **Run the container** with this recipe mounted and GPUs attached:
    ```bash
    docker run --rm --gpus all --ipc=host --shm-size=16g \
      --ulimit memlock=-1 --ulimit stack=67108864 \
      -v "$(git rev-parse --show-toplevel)":/repo -w /repo/training/rl_deepresearch \
-     -it slimerl/slime:nightly-dev-20261106a-cu130@sha256:652b94c17f968b42e133c7b0d56efb74aed596bc901614f12efba84b648598fa bash
+     -it slimerl/slime:v0.4.0-cu130@sha256:18a84672ca67ddcf611528399c2cda2c2520b52c31c82256597c056af4ee6411 bash
    ```
    (Mount the **repo root**, not just this recipe dir — the shared `libs/dr_agent`
    lives outside the recipe and must be reachable inside the container.)
