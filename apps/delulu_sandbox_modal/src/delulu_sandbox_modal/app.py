@@ -36,30 +36,55 @@ app = modal.App("discord-orchestrator")
 volume = modal.Volume.from_name("claude-workspaces", create_if_missing=True)
 
 # ── Container Image ──────────────────────────────────────────
+# Pinned Claude Code CLI version baked into the sandbox image. Pinning keeps
+# image rebuilds reproducible and stops an unreviewed npm release from
+# landing in production on the next deploy. To bump: run
+# `npm view @anthropic-ai/claude-code version`, update this constant, then
+# redeploy (`make modal-deploy` / CI) and smoke-test a task.
+CLAUDE_CODE_VERSION = "2.1.327"
+
 # Pre-bake Claude Code into the image so sandbox startup is fast.
 sandbox_image = (
     # Requires Modal Image Builder 2025.06 or newer — the default 2023.12
     # builder only supports Python 3.10–3.12. Set workspace-wide with:
     #   modal config set image_builder_version 2025.06
     modal.Image.debian_slim(python_version="3.14")
-    .apt_install("git", "curl", "ca-certificates")
+    .apt_install("git", "curl", "ca-certificates", "gnupg")
     # app.py is imported inside the sandbox to call run_claude_code, so any
     # third-party module it imports at module level must be present here too.
     .pip_install("structlog>=25.5")
     .run_commands(
         # Install Node.js (required by Claude Code). Node 24 is the
         # current LTS line; Node 20 reached end-of-life in April 2026.
-        "curl -fsSL https://deb.nodesource.com/setup_24.x | bash -",
-        "apt-get install -y nodejs",
-        # Install Claude Code globally
-        "npm install -g @anthropic-ai/claude-code",
+        # Uses NodeSource's apt repo with its signing key pinned via
+        # `signed-by=` (same pattern as `gh` below) instead of piping
+        # their setup script into bash, so apt verifies every package.
+        "mkdir -p -m 755 /etc/apt/keyrings",
+        (
+            # Download to a file first (not a pipe) so a failed fetch fails
+            # the build instead of dearmoring empty input under /bin/sh.
+            "curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key "
+            "-o /tmp/nodesource-repo.gpg.key "
+            "&& gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg "
+            "/tmp/nodesource-repo.gpg.key "
+            "&& rm /tmp/nodesource-repo.gpg.key "
+            "&& chmod go+r /etc/apt/keyrings/nodesource.gpg"
+        ),
+        (
+            'echo "deb [arch=$(dpkg --print-architecture) '
+            "signed-by=/etc/apt/keyrings/nodesource.gpg] "
+            'https://deb.nodesource.com/node_24.x nodistro main" '
+            "| tee /etc/apt/sources.list.d/nodesource.list > /dev/null"
+        ),
+        "apt-get update && apt-get install -y nodejs",
+        # Install Claude Code globally, pinned (see CLAUDE_CODE_VERSION).
+        f"npm install -g @anthropic-ai/claude-code@{CLAUDE_CODE_VERSION}",
         # Install the GitHub CLI (`gh`) so Claude can push branches,
         # open pull requests, list issues, etc. directly via its Bash
         # tool when the user asks for things like "commit and open a
         # PR." Uses GitHub's official apt repo — shorter install path
         # than downloading the .deb manually and also gets security
         # updates via `apt upgrade` on future image rebuilds.
-        "mkdir -p -m 755 /etc/apt/keyrings",
         (
             "curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg "
             "| tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null "
