@@ -213,6 +213,9 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          # SHA256 host-key fingerprint (`ssh-keygen -lf <(ssh-keyscan <host>)`).
+          # Verification is skipped while the secret is unset.
+          fingerprint: ${{ secrets.DROPLET_HOST_FINGERPRINT }}
           script: |
             set -euo pipefail
             export PATH="$HOME/.local/bin:$PATH"

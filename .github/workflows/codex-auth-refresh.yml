@@ -74,6 +74,7 @@ jobs:
         env:
           DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
           # No `set -x` anywhere — leaks would echo the SSH key or token.
@@ -81,7 +82,15 @@ jobs:
           chmod 700 ~/.ssh
           printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/codex_droplet
           chmod 600 ~/.ssh/codex_droplet
-          ssh-keyscan -H "$DROPLET_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # Pin the droplet host key when DROPLET_KNOWN_HOSTS is set (the
+          # output of `ssh-keyscan -H <host>`, verified out of band);
+          # otherwise fall back to trust-on-first-use via ssh-keyscan.
+          if [ -n "${DROPLET_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$DROPLET_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          else
+            echo "::warning::DROPLET_KNOWN_HOSTS not set; trusting droplet host key on first use"
+            ssh-keyscan -H "$DROPLET_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
 
       - name: Restore auth.json (fresher of droplet / secret seed)
         env:
