@@ -6,6 +6,7 @@ import logging
 import os
 import socket
 import zlib
+from collections.abc import Callable
 from typing import Any
 from urllib.parse import urljoin
 
@@ -134,7 +135,9 @@ async def resolve_host(host: str, port: int) -> list[str]:
     return [info[4][0] for info in infos]
 
 
-async def validate_url(url: str) -> tuple[httpx.URL, list[str]]:
+async def validate_url(
+    url: str, resolve_timeout: float | None = None
+) -> tuple[httpx.URL, list[str]]:
     """Check scheme + resolved addresses; return (url, pinned_ips).
 
     Every address the host resolves to must be public. All of them are
@@ -156,8 +159,13 @@ async def validate_url(url: str) -> tuple[httpx.URL, list[str]]:
     try:
         addresses = [ipaddress.ip_address(host)]
     except ValueError:
+        if resolve_timeout is not None and resolve_timeout <= 0:
+            raise BlockedURLError(f"Timed out before resolving host '{host}'")
         try:
-            resolved = await resolve_host(host, port)
+            # DNS runs before client.send(), outside httpx's timeout, so bound it.
+            resolved = await asyncio.wait_for(resolve_host(host, port), resolve_timeout)
+        except TimeoutError as e:
+            raise BlockedURLError(f"Timed out resolving host '{host}'") from e
         except OSError as e:
             raise BlockedURLError(f"Could not resolve host '{host}': {e}") from e
         addresses = []
@@ -172,6 +180,20 @@ async def validate_url(url: str) -> tuple[httpx.URL, list[str]]:
     return parsed, list(dict.fromkeys(str(ip) for ip in addresses))
 
 
+def _pinned_client(timeout: float) -> httpx.AsyncClient:
+    """Client for one pinned-IP hop.
+
+    trust_env=False: an env HTTPS_PROXY/ALL_PROXY would tunnel to the pinned IP
+    and do TLS against the IP instead of the sni_hostname, and would also
+    route around the SSRF pinning.
+    """
+    return httpx.AsyncClient(
+        timeout=httpx.Timeout(timeout, connect=min(timeout, 10.0)),
+        follow_redirects=False,
+        trust_env=False,
+    )
+
+
 async def safe_fetch(
     url: str,
     timeout: float,
@@ -179,21 +201,25 @@ async def safe_fetch(
     max_bytes: int = MAX_RESPONSE_BYTES,
     max_redirects: int = MAX_REDIRECTS,
     client: httpx.AsyncClient | None = None,
+    client_factory: Callable[[], httpx.AsyncClient] | None = None,
 ) -> tuple[httpx.Response, bytes, bool]:
     """GET a URL with SSRF protection; redirects are re-validated hop by hop.
 
+    Each hop gets its own client (unless one is injected via ``client``):
+    requests go to a pinned IP, so two hosts on the same IP would otherwise
+    share a pooled TLS connection and skip the second host's SNI/cert check.
     Returns (final_response, body_bytes, truncated).
     """
-    owns_client = client is None
-    if client is None:
-        client = httpx.AsyncClient(
-            timeout=httpx.Timeout(timeout, connect=min(timeout, 10.0)),
-            follow_redirects=False,
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    make_client = client_factory or (lambda: _pinned_client(timeout))
+    current = url
+    for _hop in range(max_redirects + 1):
+        parsed, pinned_ips = await validate_url(
+            current, resolve_timeout=deadline - loop.time()
         )
-    try:
-        current = url
-        for _hop in range(max_redirects + 1):
-            parsed, pinned_ips = await validate_url(current)
+        hop_client = client if client is not None else make_client()
+        try:
             # Connect to a validated IP; keep Host header + TLS SNI/cert check on the name.
             headers = {
                 "Host": parsed.netloc.decode("ascii"),
@@ -203,11 +229,11 @@ async def safe_fetch(
             extensions = {"sni_hostname": parsed.host} if parsed.scheme == "https" else {}
             response = None
             for pinned_ip in pinned_ips:
-                request = client.build_request(
+                request = hop_client.build_request(
                     "GET", parsed.copy_with(host=pinned_ip), headers=headers, extensions=extensions
                 )
                 try:
-                    response = await client.send(request, stream=True)
+                    response = await hop_client.send(request, stream=True)
                     break
                 except (httpx.ConnectError, httpx.ConnectTimeout):
                     if pinned_ip == pinned_ips[-1]:
@@ -240,10 +266,10 @@ async def safe_fetch(
                 return response, bytes(body), truncated
             finally:
                 await response.aclose()
-        raise BlockedURLError(f"Too many redirects (max {max_redirects})")
-    finally:
-        if owns_client:
-            await client.aclose()
+        finally:
+            if client is None:
+                await hop_client.aclose()
+    raise BlockedURLError(f"Too many redirects (max {max_redirects})")
 
 
 class WebFetchTool(Tool):

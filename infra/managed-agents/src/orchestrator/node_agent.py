@@ -229,6 +229,8 @@ def _validate_runtime(requested: str, baseline: SandboxRuntime | None) -> Sandbo
         raise ValueError(f"Unknown runtime '{requested}'") from e
     if runtime not in _allowed_runtimes():
         raise ValueError(f"Runtime '{runtime.value}' is not allowed on this worker")
+    if baseline is not None and not isinstance(baseline, SandboxRuntime):
+        baseline = SandboxRuntime(baseline)  # e.g. a harness built outside the loader
     if baseline is not None and _RUNTIME_STRENGTH[runtime] < _RUNTIME_STRENGTH[baseline]:
         raise ValueError(
             f"Runtime '{runtime.value}' would downgrade isolation from '{baseline.value}'"
@@ -297,11 +299,36 @@ def _load_custom_harnesses() -> None:
     try:
         with open(CUSTOM_HARNESSES_PATH) as f:
             custom = json.load(f)
-        for name, defn in custom.items():
-            _all_harnesses[name] = HarnessDefinition(name=name, **defn)
-        logger.info(f"Loaded {len(custom)} custom harnesses from {CUSTOM_HARNESSES_PATH}")
     except Exception as e:
         logger.error(f"Failed to load custom harnesses: {e}")
+        return
+    loaded = 0
+    for name, defn in custom.items():
+        try:
+            _all_harnesses[name] = _custom_harness(name, defn)
+            loaded += 1
+        except (TypeError, ValueError) as e:
+            logger.error(f"Skipping custom harness {name!r}: {e}")
+    logger.info(f"Loaded {loaded} custom harnesses from {CUSTOM_HARNESSES_PATH}")
+
+
+def _custom_harness(name: str, defn: dict) -> HarnessDefinition:
+    """Build a HarnessDefinition from JSON, coercing enum and nested fields.
+
+    JSON gives ``runtime`` as a string and ``network`` as a dict; the runtime
+    comparison in _validate_runtime needs real SandboxRuntime members.
+    """
+    data = dict(defn)
+    if "runtime" in data:
+        try:
+            data["runtime"] = SandboxRuntime(str(data["runtime"]).strip().lower())
+        except ValueError as e:
+            raise ValueError(f"unknown runtime {data['runtime']!r}") from e
+    if isinstance(data.get("network"), dict):
+        from .harness import HarnessNetworkPolicy
+
+        data["network"] = HarnessNetworkPolicy(**data["network"])
+    return HarnessDefinition(name=name, **data)
 
 
 def _detect_available_rootfs() -> list[str]:
@@ -386,9 +413,17 @@ def _clone_harness(base: HarnessDefinition, **overrides) -> HarnessDefinition:
 def _bounded_int(
     overrides: dict, key: str, default: int, maximum: int, minimum: int = 1
 ) -> int:
-    """Read an integer resource override, enforcing minimum <= value <= maximum."""
+    """Read an integer resource override, enforcing minimum <= value <= maximum.
+
+    Without an override the harness default applies, clamped into
+    minimum..maximum: the operator's MAX_SESSION_* ceiling wins over a
+    harness default that exceeds it.
+    """
     if key not in overrides:
-        return default
+        clamped = max(minimum, min(default, maximum))
+        if clamped != default:
+            logger.info(f"{key}: harness default {default} clamped to {clamped}")
+        return clamped
     value = overrides[key]
     if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"resource override {key!r} must be an integer")

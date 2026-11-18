@@ -219,3 +219,39 @@ def test_timeout_override_out_of_bounds_rejected(value):
         node_agent._bounded_int(
             {"timeout_seconds": value}, "timeout_seconds", 3600, 86400, minimum=0
         )
+
+
+def test_harness_defaults_are_clamped_to_ceilings():
+    # No override: an operator ceiling below the harness default still applies.
+    assert node_agent._bounded_int({}, "disk_mb", 4096, 1024) == 1024
+    assert node_agent._bounded_int({}, "timeout_seconds", 0, 600, minimum=0) == 0
+    assert node_agent._bounded_int({}, "vcpus", 0, 16) == 1
+
+
+def test_custom_harness_runtime_string_is_coerced(tmp_path, monkeypatch):
+    import json
+
+    path = tmp_path / "harnesses.json"
+    path.write_text(
+        json.dumps(
+            {
+                "my-gvisor": {"runtime": "gvisor", "image": "x", "network": {"enabled": False}},
+                "bad-runtime": {"runtime": "nope"},
+            }
+        )
+    )
+    monkeypatch.setattr(node_agent, "CUSTOM_HARNESSES_PATH", str(path))
+    monkeypatch.setattr(node_agent, "_all_harnesses", dict(node_agent._all_harnesses))
+    node_agent._load_custom_harnesses()
+    harness = node_agent._all_harnesses["my-gvisor"]
+    assert harness.runtime is SandboxRuntime.GVISOR
+    assert "bad-runtime" not in node_agent._all_harnesses
+    # Comparing against the coerced baseline no longer raises KeyError.
+    monkeypatch.setenv("NODE_AGENT_ALLOWED_RUNTIMES", "firecracker,gvisor,runc")
+    assert node_agent._validate_runtime("gvisor", baseline=harness.runtime) is SandboxRuntime.GVISOR
+
+
+def test_validate_runtime_normalizes_string_baseline(monkeypatch):
+    monkeypatch.setenv("NODE_AGENT_ALLOWED_RUNTIMES", "firecracker,gvisor,runc")
+    with pytest.raises(ValueError, match="downgrade"):
+        node_agent._validate_runtime("runc", baseline="gvisor")

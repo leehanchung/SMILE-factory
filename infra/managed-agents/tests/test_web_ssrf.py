@@ -368,3 +368,55 @@ async def test_unboundable_encodings_refused(monkeypatch, encoding):
     async with _client(handler) as client:
         with pytest.raises(web.UnsupportedEncodingError):
             await safe_fetch("https://good.example/", 10, client=client)
+
+
+async def test_stalled_dns_is_bounded_by_fetch_timeout(monkeypatch):
+    import asyncio
+
+    async def stalled(host: str, port: int) -> list[str]:
+        await asyncio.sleep(60)
+        return ["93.184.216.34"]
+
+    monkeypatch.setattr(web, "resolve_host", stalled)
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    with pytest.raises(BlockedURLError, match="Timed out resolving"):
+        await safe_fetch("https://slow.example/", 0.2)
+    assert loop.time() - start < 5
+
+
+def test_pinned_client_ignores_env_proxies(monkeypatch):
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:3128")
+    monkeypatch.setenv("ALL_PROXY", "http://proxy.invalid:3128")
+    client = web._pinned_client(10)
+    try:
+        assert client._trust_env is False
+        assert not client._mounts  # no proxy transports picked up from env
+    finally:
+        import asyncio
+
+        asyncio.run(client.aclose())
+
+
+async def test_each_redirect_hop_gets_its_own_client(monkeypatch):
+    # Two hostnames on the same IP must not share a pooled (pinned-IP) connection.
+    monkeypatch.setattr(
+        web, "resolve_host", _dns({"a.example": ["93.184.216.34"], "b.example": ["93.184.216.34"]})
+    )
+    hosts_per_client: list[list[str]] = []
+
+    def factory() -> httpx.AsyncClient:
+        seen: list[str] = []
+        hosts_per_client.append(seen)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.append(request.headers["host"])
+            if request.headers["host"] == "a.example":
+                return httpx.Response(302, headers={"location": "https://b.example/"})
+            return httpx.Response(200, text="ok")
+
+        return _client(handler)
+
+    _, body, _ = await safe_fetch("https://a.example/", 10, client_factory=factory)
+    assert body == b"ok"
+    assert hosts_per_client == [["a.example"], ["b.example"]]
