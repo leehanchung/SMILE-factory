@@ -586,6 +586,37 @@ async function loadWasmExporter(wasmPath) {
   return { exportPPTDToPPTXBytes };
 }
 
+// ---------- input guard ----------
+// The vendored pptd WASM links quick-xml 0.38.4, whose duplicate-attribute
+// check is quadratic in the number of attributes on one tag
+// (RUSTSEC-2026-0194, fixed in 0.41.0; no rebuilt WASM exists). Rich-text
+// HTML in the deck reaches that parser, so refuse pathological tags before
+// handing the deck to the WASM writer.
+export const MAX_ATTRS_PER_TAG = 256;
+
+export function findOversizedTag(value, max = MAX_ATTRS_PER_TAG) {
+  const stack = [value];
+  while (stack.length) {
+    const v = stack.pop();
+    if (typeof v === 'string') {
+      if (!v.includes('<')) continue;
+      // Linear scan: split on '<', take each tag body up to the first '>'.
+      for (const part of v.split('<').slice(1)) {
+        const end = part.indexOf('>');
+        const body = end === -1 ? part : part.slice(0, end);
+        let attrs = 0;
+        for (const token of body.split(/\s+/).slice(1)) {
+          if (token && token !== '/') attrs += 1;
+        }
+        if (attrs > max) return { attrs, preview: body.slice(0, 80) };
+      }
+    } else if (v && typeof v === 'object') {
+      for (const child of Object.values(v)) stack.push(child);
+    }
+  }
+  return null;
+}
+
 // ---------- main ----------
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -620,6 +651,14 @@ Env: KIMI_COOKIE, KIMI_ORIGIN`);
   pptd = JSON.parse(JSON.stringify(pptd));
   const images = await resolveImages(pptd, projectRoot);
   console.log(`      ${Object.keys(images).length} image(s)`);
+
+  const oversized = findOversizedTag(pptd);
+  if (oversized) {
+    throw new Error(
+      `rich-text tag has ${oversized.attrs} attributes (limit ${MAX_ATTRS_PER_TAG}); ` +
+        `refusing to export (quick-xml RUSTSEC-2026-0194): <${oversized.preview}`,
+    );
+  }
 
   console.log('[3/5] signature');
   let signature = '';
@@ -682,7 +721,10 @@ Env: KIMI_COOKIE, KIMI_ORIGIN`);
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Run only when executed directly, so tests can import the helpers.
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

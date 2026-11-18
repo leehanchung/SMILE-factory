@@ -42,6 +42,15 @@ sha256_of() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1"; else
   || fail "resvg WASM binary changed; redo the advisory triage in ATTRIBUTION.md item 15"
 pass "WASM binaries match the triaged builds"
 
+echo "[1b] RUSTSEC-2026-0194 input guard"
+node --input-type=module -e "
+const m = await import('$SKILL_DIR/scripts/local-export/export-pptd.mjs');
+const attrs = Array.from({ length: m.MAX_ATTRS_PER_TAG + 1 }, (_, i) => 'a' + i + '=1').join(' ');
+if (m.findOversizedTag({ html: '<p class=x>ok</p>' })) process.exit(1);
+if (!m.findOversizedTag({ s: [{ html: '<span ' + attrs + '>x</span>' }] })) process.exit(2);
+" || fail "oversized-attribute guard broken"
+pass "rich-text attribute cap enforced"
+
 echo "[2] node-only PPTX export (no Python, no browser)"
 node --version >/dev/null 2>&1 || fail "Node.js is required"
 node "$SKILL_DIR/scripts/local-export/export-pptd.mjs" "$FIXTURE" \
