@@ -240,7 +240,7 @@ def train(
             adapters_weights = (
                 load_file(checkpoint_name)
                 if checkpoint_name.endswith(".safetensors")
-                else torch.load(checkpoint_name)
+                else torch.load(checkpoint_name, weights_only=True)
             )
             set_peft_model_state_dict(model, adapters_weights)
         else:

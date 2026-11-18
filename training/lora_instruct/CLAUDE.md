@@ -21,7 +21,7 @@ cd training/lora_instruct/
 - This project uses **uv** (`pyproject.toml` + `uv.lock`), like the rest of the
   monorepo. `uv sync` installs the lean training stack; vllm/openai/tiktoken are
   in an optional `inference` extra (`uv sync --extra inference`). The CUDA build
-  of torch (`2.11.x`, cu13) comes straight from PyPI — no extra index needed, and
+  of torch (`2.14.x`, cu13) comes straight from PyPI — no extra index needed, and
   the system `nvcc` is irrelevant (torch wheels bundle their own CUDA runtime).
 - `finetune.py` reads its training config from CLI flags via `fire`. See the
   `train()` signature in `finetune.py` for the full list of knobs (batch size,

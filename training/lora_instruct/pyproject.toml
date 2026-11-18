@@ -5,14 +5,14 @@ description = "LoRA SFT training recipe (HuggingFace PEFT + LoRA)"
 authors = [{ name = "Han Lee", email = "lee.hanchung@gmail.com" }]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11,<3.14"
 dependencies = [
-    "torch>=2.11.0",
-    "transformers>=5.0.0",
+    "torch>=2.13.0",
+    "transformers>=5.20.0",
     "peft>=0.19.0",
     "accelerate>=1.13.0",
     "bitsandbytes>=0.49.0",
-    "datasets>=4.8.0",
+    "datasets>=5.0.1",
     "sentencepiece>=0.2.0",
     "loralib>=0.1.2",
     "einops>=0.8.0",
@@ -25,7 +25,7 @@ dependencies = [
 #   uv sync --extra inference
 [project.optional-dependencies]
 inference = [
-    "vllm>=0.20.0",
+    "vllm>=0.32.0",
     "openai>=2.33.0",
     "tiktoken>=0.12.0",
     "num2words>=0.5.14",
