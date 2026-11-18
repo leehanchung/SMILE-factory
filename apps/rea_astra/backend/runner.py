@@ -1,10 +1,8 @@
 """Bounded real-agent subprocess execution, durable events, and cancellation."""
 
-from dataclasses import dataclass, field
 import hashlib
 import json
 import os
-from pathlib import Path
 import queue
 import re
 import shutil
@@ -12,8 +10,10 @@ import signal
 import subprocess
 import threading
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 
-from .store import TERMINAL, now
+from .store import now
 
 MODEL = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.:/-]{0,99}$")
 DEFAULT_INSTRUCTIONS = """You are the real research agent for REA Astra, a local research workspace.
@@ -29,14 +29,36 @@ If a tool or service is unavailable, report that failure honestly. Do not substi
 
 def redact(value):
     if isinstance(value, dict):
-        return {key: ("[redacted]" if re.search(r"^(access_token|refresh_token|api_key|authorization)$", key, re.I) else redact(item)) for key, item in value.items()}
+        return {key: ("[redacted]" if re.search(r"^(access_token|refresh_token|api_key|authorization)$", key, re.IGNORECASE) else redact(item)) for key, item in value.items()}
     if isinstance(value, list):
         return [redact(item) for item in value]
     if isinstance(value, str):
-        value = re.sub(r"\bBearer\s+[A-Za-z0-9._~+/-]+=*", "Bearer [redacted]", value, flags=re.I)
+        value = re.sub(r"\bBearer\s+[A-Za-z0-9._~+/-]+=*", "Bearer [redacted]", value, flags=re.IGNORECASE)
         value = re.sub(r"\bsk-[A-Za-z0-9_-]{16,}", "[redacted-api-key]", value)
         value = re.sub(r"(?i)((?:OPENAI_API_KEY|ANTHROPIC_API_KEY|ACCESS_TOKEN|REFRESH_TOKEN)\s*[=:]\s*)[^\s\"']+", r"\1[redacted]", value)
     return value
+
+
+# Environment forwarded to the agent subprocess. Allowlist, not denylist: the
+# backend's own environment can carry unrelated credentials (cloud, VCS, other
+# model providers, ...), and anything forwarded is visible to the agent and to
+# every command it runs. Codex itself only needs a working process environment,
+# its own config/auth home (CODEX_HOME, default ~/.codex), OpenAI API settings
+# when API-key auth is used, and network/TLS settings for corporate proxies.
+AGENT_ENV_KEYS = frozenset({
+    "PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "TERM", "TZ",
+    "TMPDIR", "TMP", "TEMP", "__CF_USER_TEXT_ENCODING",
+    "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_RUNTIME_DIR",
+    "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy",
+    "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS", "RUST_LOG",
+})
+AGENT_ENV_PREFIXES = ("LC_", "OPENAI_", "CODEX_")
+
+
+def agent_env(source=None):
+    """Return the allowlisted subset of ``source`` (default ``os.environ``) for the agent subprocess."""
+    source = os.environ if source is None else source
+    return {key: value for key, value in source.items() if key in AGENT_ENV_KEYS or key.startswith(AGENT_ENV_PREFIXES)}
 
 
 def provider_status(executable="codex"):
@@ -46,9 +68,9 @@ def provider_status(executable="codex"):
     if not binary:
         return result
     try:
-        version = subprocess.run([binary, "--version"], capture_output=True, text=True, timeout=10)
+        version = subprocess.run([binary, "--version"], capture_output=True, text=True, timeout=10, check=False)
         result["version"] = version.stdout.strip().splitlines()[-1] if version.stdout.strip() else "unknown"
-        status = subprocess.run([binary, "login", "status"], capture_output=True, text=True, timeout=10)
+        status = subprocess.run([binary, "login", "status"], capture_output=True, text=True, timeout=10, check=False)
         text = status.stdout + status.stderr
         result["authenticated"] = status.returncode == 0 and "Logged in" in text
         result["auth_method"] = "ChatGPT" if "ChatGPT" in text else "API key" if "API key" in text else "unknown"
@@ -233,11 +255,7 @@ class RunManager:
             argv = self._command(run, thread, workspace, search)
             self.store.update_run(run_id, status="running", started_at=now())
             self.store.add_event(run_id, "run.started", {"run_id": run_id, "provider": "codex", "model": run["model"] or "default", "auto_research": bool(run["auto_research"]), "sandbox": "workspace-write"})
-            # Preserve the installed CLI's authentication environment, but do not forward unrelated provider keys.
-            env = dict(os.environ)
-            for key in list(env):
-                if key.startswith(("ANTHROPIC_", "AWS_", "GOOGLE_", "GITHUB_", "GH_TOKEN")):
-                    env.pop(key, None)
+            env = agent_env()
             process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                        cwd=workspace, env=env, start_new_session=True, bufsize=0)
             with self._lock:

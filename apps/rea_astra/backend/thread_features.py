@@ -13,8 +13,8 @@ import threading
 import uuid
 import zipfile
 
-from .store import now
 from .runner import redact
+from .store import now
 
 
 class Service:

@@ -1,0 +1,24 @@
+# Ruff config for rea_astra (no pyproject.toml: the app is stdlib-only).
+# Picked up by the repo's pre-commit ruff hook (v0.17.5) for apps/**.py.
+# Lint uses ruff's default rule set. The code base is deliberately dense
+# (long single-line expressions), so line length is not linted (E501 is not in
+# the default set); 120 only guides `ruff format` if it is ever applied.
+target-version = "py311"  # hashlib.file_digest, datetime.UTC
+line-length = 120
+extend-exclude = ["*.md"]
+
+[lint]
+# Deliberate patterns in this code base:
+# - BLE001: request handlers and background worker threads catch broad
+#   exceptions on purpose so one failure is reported instead of killing the
+#   server/thread.
+# - TRY004: validators raise ValueError for bad input types because HTTP
+#   handlers map ValueError to a 400; switching to TypeError changes behaviour.
+ignore = ["BLE001", "TRY004"]
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["pathlib.PurePosixPath"]
+
+[lint.per-file-ignores]
+# Test doubles use plain class attributes as fixtures.
+"tests/**" = ["RUF012"]

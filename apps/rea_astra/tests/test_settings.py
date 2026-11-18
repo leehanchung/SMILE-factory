@@ -2,11 +2,11 @@
 import hashlib
 import importlib.util
 import json
-from pathlib import Path
 import tempfile
 import threading
-from types import SimpleNamespace
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import parse_qs, urlsplit
 
 from backend.settings import Service
@@ -136,7 +136,7 @@ class SettingsCase(unittest.TestCase):
                           lambda: self.service.delete_workspace(self.other["id"], True)):
             done, errors = threading.Event(), []
 
-            def run():
+            def run(operation=operation, errors=errors, done=done):
                 try:
                     operation()
                 except Exception as exc:

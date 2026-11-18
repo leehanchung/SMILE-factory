@@ -1,22 +1,22 @@
 """SQLite state and confined files for a single-user research application."""
 
-from contextlib import contextmanager
-from datetime import datetime, timezone
 import hashlib
 import json
 import mimetypes
 import os
-from pathlib import Path
 import re
 import sqlite3
 import uuid
+from contextlib import contextmanager
+from datetime import UTC, datetime
+from pathlib import Path
 
 TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
 IDENTIFIER = re.compile(r"^[a-zA-Z0-9_-]{1,100}$")
 
 
 def now():
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def identifier(value):

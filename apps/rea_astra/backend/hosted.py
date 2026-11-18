@@ -9,8 +9,8 @@ import json
 import re
 import threading
 import time
-from urllib.parse import parse_qs, quote, unquote, urlsplit
 import uuid
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .store import now
 

@@ -4,9 +4,9 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path, PurePosixPath
 import plistlib
 import struct
+from pathlib import Path, PurePosixPath
 
 
 def sha256(data):
@@ -45,9 +45,8 @@ def read_asar(path):
             content = data[base + offset:base + offset + length]
             digest = sha256(content)
             integrity = node.get("integrity")
-            if integrity:
-                if integrity.get("algorithm") != "SHA256" or integrity.get("hash") != digest:
-                    raise ValueError(f"ASAR integrity mismatch: {relative}")
+            if integrity and (integrity.get("algorithm") != "SHA256" or integrity.get("hash") != digest):
+                raise ValueError(f"ASAR integrity mismatch: {relative}")
             item.update(kind="file", size=length, offset=offset,
                         sha256=digest, integrity_verified=bool(integrity))
             entries.append(item)

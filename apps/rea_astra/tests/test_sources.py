@@ -1,11 +1,11 @@
 """Real local file/contract tests; public network is supplied by bounded fixtures."""
 import json
 import os
-from pathlib import Path
 import tempfile
 import unittest
-from urllib.parse import parse_qs, urlsplit
+from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
 
 from backend.sources import SourceService, public_fetch, repo_name
 from backend.store import Store

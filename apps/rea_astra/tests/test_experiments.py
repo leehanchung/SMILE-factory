@@ -6,19 +6,18 @@ test. It actually computes and writes the artifacts asserted by these tests.
 
 import io
 import json
-from pathlib import Path
 import sys
 import tempfile
 import threading
 import unittest
-from urllib.request import Request, urlopen
 import zipfile
+from pathlib import Path
+from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.hosted import HostedAPI
 from backend.runner import RunManager
 from backend.store import Store
-
 
 EXECUTOR = """
 import json, pathlib, statistics, sys

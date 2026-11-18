@@ -6,10 +6,9 @@ The original app remains untouched; generated preview/ is local and Git-ignored.
 """
 
 import argparse
-from pathlib import Path
 import re
 import shutil
-
+from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent.parent
 

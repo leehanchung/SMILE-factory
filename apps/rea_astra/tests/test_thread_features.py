@@ -2,19 +2,18 @@
 
 import io
 import json
-from pathlib import Path
 import sys
 import tempfile
 import threading
 import time
 import unittest
 import zipfile
+from pathlib import Path
 
 from backend.hosted import HostedAPI
 from backend.runner import RunManager
 from backend.store import Store
 from backend.thread_features import Service
-
 
 FIXTURE = r'''
 import json,pathlib,sys,time

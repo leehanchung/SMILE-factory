@@ -1,15 +1,13 @@
 """Recovered UI contracts against genuine subprocess fixtures, not mocked run rows."""
 
-import json
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
-from backend.hosted import HostedAPI, MODEL
+from backend.hosted import MODEL, HostedAPI
 from backend.runner import RunManager
 from backend.store import Store
-
 
 PLANNER_FIXTURE = r'''
 import json, pathlib, sys
@@ -51,7 +49,7 @@ class HostedTests(unittest.TestCase):
         return session, run
 
     def test_start_retry_is_idempotent_and_rejects_changed_context_or_workspace(self):
-        session, run = self.start_and_wait()
+        session, _run = self.start_and_wait()
         self.api.start_session(self.workspace, "Please plan a real computation", "Arithmetic", session_id=session,
                                model=MODEL, auto_accept=False, client_message_id="client-1")
         self.assertEqual(len(self.store.list_runs(session)), 1)
@@ -82,7 +80,7 @@ class HostedTests(unittest.TestCase):
         self.assertEqual(handler.result, (200, {"ok": True, "enabled": True, "auto_accept": True}))
 
     def test_late_registered_file_links_are_resolved_in_snapshot(self):
-        session, run = self.start_and_wait()
+        session, _run = self.start_and_wait()
         path = self.store.file_path(session, "late-report.md")
         self.api.emit(session, "late-file", {"type": "text", "text": "[report](" + str(path) + ":12)"})
         path.write_text("Actual report")
@@ -92,7 +90,7 @@ class HostedTests(unittest.TestCase):
         self.assertNotIn(str(path), event["text"])
 
     def test_native_events_project_once_with_tool_identity_and_client_message(self):
-        session, run = self.start_and_wait()
+        session, _run = self.start_and_wait()
         first = self.api.snapshot(session)
         second = self.api.snapshot(session)
         self.assertEqual(first["events"], second["events"])

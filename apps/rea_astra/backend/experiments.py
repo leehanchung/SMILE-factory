@@ -11,19 +11,18 @@ import io
 import json
 import mimetypes
 import os
-from pathlib import Path
 import re
 import threading
 import time
 import uuid
-from urllib.parse import parse_qs, quote, unquote, urlsplit
 import zipfile
 from contextlib import nullcontext
+from pathlib import Path
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
+from .report_bridge import MarkdownContent, inject_bridge
 from .runner import MODEL
 from .store import now
-from .report_bridge import inject_bridge, MarkdownContent
-
 
 WORKER_INSTRUCTIONS = """You are executing an explicitly approved research plan.
 Perform the actual analysis, code execution, or source research the plan requires.
@@ -390,7 +389,7 @@ class ExperimentService:
                       if name in files and self.store.file_path(exp["worker"], name).is_file()), None)
         if not entry:
             return None
-        item, path = self.resolve_file(entry, exp)
+        item, _path = self.resolve_file(entry, exp)
         data = self.read_file(item)
         if entry.endswith(".md"):
             # Escaped preformatted Markdown preserves all evidence without executing it.
@@ -431,7 +430,7 @@ class ExperimentService:
                         raise FileNotFoundError("Report asset not found") from exc
                 media_type = mimetypes.guess_type(relative)[0] or "application/octet-stream"
             else:
-                item, file = self.resolve_file(relative, exp)
+                item, _file = self.resolve_file(relative, exp)
                 data, media_type = self.read_file(item), item["media_type"]
             self.send_bytes(h, data, media_type, {"Content-Security-Policy": "sandbox"})
             return

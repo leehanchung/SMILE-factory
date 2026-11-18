@@ -1,13 +1,13 @@
 import http.client
 import json
-from pathlib import Path
 import sys
 import tempfile
 import threading
 import unittest
+from pathlib import Path
 
 from backend.runner import RunManager
-from backend.server import make_handler, ResearchHTTPServer
+from backend.server import ResearchHTTPServer, make_handler
 from backend.store import Store
 
 

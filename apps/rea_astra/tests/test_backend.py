@@ -1,13 +1,16 @@
 """Real process fixtures exercise runner behavior; they do not impersonate inference."""
 
-from pathlib import Path
+import json
+import os
 import sys
 import tempfile
 import unittest
+from itertools import pairwise
+from pathlib import Path
+from unittest import mock
 
-from backend.runner import RunManager, redact
+from backend.runner import RunManager, agent_env, redact
 from backend.store import Store
-
 
 SUCCESS = r'''
 import json, pathlib, sys
@@ -50,7 +53,7 @@ class BackendCase(unittest.TestCase):
         events = self.store.list_events(run["id"])
         self.assertIn("item.completed", [event["kind"] for event in events])
         self.assertEqual(events[-1]["kind"], "run.finished")
-        self.assertTrue(all(a["id"] < b["id"] for a, b in zip(events, events[1:])))
+        self.assertTrue(all(a["id"] < b["id"] for a, b in pairwise(events)))
         self.assertEqual(self.store.list_events(run["id"], events[-2]["id"]), events[-1:])
         files = self.store.list_files(self.thread["id"])
         self.assertEqual(files[0]["path"], "results.csv")
@@ -149,6 +152,38 @@ class BackendCase(unittest.TestCase):
         self.assertEqual(result["authorization"], "[redacted]")
         self.assertNotIn("secret-value", result["output"])
         self.assertNotIn("abc.123", result["output"])
+
+    def test_agent_env_is_allowlisted(self):
+        source = {"PATH": "/bin", "HOME": "/home/u", "LANG": "C.UTF-8", "LC_ALL": "C", "TMPDIR": "/tmp",
+                  "OPENAI_API_KEY": "sk-fixture", "OPENAI_BASE_URL": "https://example.invalid", "CODEX_HOME": "/c",
+                  "HTTPS_PROXY": "http://proxy", "SSL_CERT_FILE": "/ca.pem",
+                  "ANTHROPIC_API_KEY": "x", "AWS_SECRET_ACCESS_KEY": "x", "GH_TOKEN": "x", "GITHUB_TOKEN": "x",
+                  "GOOGLE_APPLICATION_CREDENTIALS": "x", "HF_TOKEN": "x", "DATABASE_URL": "x", "MODAL_TOKEN_SECRET": "x",
+                  "SLACK_BOT_TOKEN": "x", "AZURE_OPENAI_API_KEY": "x", "DISCORD_TOKEN": "x", "PYTHONPATH": "/evil"}
+        self.assertEqual(sorted(agent_env(source)), sorted(["PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "OPENAI_API_KEY",
+                                                            "OPENAI_BASE_URL", "CODEX_HOME", "HTTPS_PROXY", "SSL_CERT_FILE"]))
+        self.assertEqual(agent_env(source)["OPENAI_API_KEY"], "sk-fixture")
+        self.assertEqual(agent_env({}), {})
+
+    def test_agent_subprocess_receives_only_allowlisted_env(self):
+        source = 'import json, os, pathlib; pathlib.Path("env.json").write_text(json.dumps(sorted(os.environ)))\n' + SUCCESS
+        with mock.patch.dict(os.environ, {"HF_TOKEN": "leak", "DATABASE_URL": "leak", "AWS_SECRET_ACCESS_KEY": "leak",
+                                          "CODEX_HOME": "/codex-home", "OPENAI_API_KEY": "sk-fixture"}):
+            runner = self.runner(source)
+            run = runner.start(self.thread["id"], "Dump env", search=False)
+            result = runner.wait(run["id"], 10)
+        self.assertEqual(result["status"], "completed", result)
+        with self.store.open_file(self.thread["id"], "env.json") as stream:
+            names = set(json.loads(stream.read()))
+        self.assertIn("CODEX_HOME", names)
+        self.assertIn("OPENAI_API_KEY", names)
+        self.assertTrue({"HF_TOKEN", "DATABASE_URL", "AWS_SECRET_ACCESS_KEY"}.isdisjoint(names), names)
+        # Python may add a few interpreter-specific variables of its own (e.g. __PYVENV_LAUNCHER__ on macOS).
+        allowed = {"PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "TERM", "TZ", "TMPDIR", "TMP", "TEMP"}
+        unexpected = {n for n in names if n not in allowed and not n.startswith(("LC_", "OPENAI_", "CODEX_", "XDG_", "__"))
+                      and n.upper() not in {"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"}
+                      and n not in {"SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS", "RUST_LOG"}}
+        self.assertEqual(unexpected, set())
 
 
 if __name__ == "__main__":

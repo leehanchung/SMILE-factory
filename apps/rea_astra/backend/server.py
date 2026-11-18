@@ -1,22 +1,22 @@
 """Loopback-only HTTP API, SSE replay, and confined research artifacts."""
 
 import argparse
-from email.parser import BytesParser
-from email.policy import default as email_policy
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
-from pathlib import Path
 import secrets
 import sqlite3
 import sys
 import time
 import traceback
-from urllib.parse import parse_qs, quote, unquote, urlsplit
 import uuid
+from email.parser import BytesParser
+from email.policy import default as email_policy
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .runner import RunManager, provider_status, redact
-from .store import Store, TERMINAL
+from .store import TERMINAL, Store
 
 MAX_BODY = 20 * 1024 * 1024
 
@@ -290,7 +290,6 @@ def make_handler(store, runner, static_root, extra_route=None):
 
         def list_directory(self, path):
             self.send_error(404, "Directory listing disabled")
-            return None
 
     return Handler
 

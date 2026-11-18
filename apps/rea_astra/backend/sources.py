@@ -6,11 +6,8 @@ submitted context references acquire content. Feed-file serving is owned by the
 experiment service. Public downloads have byte/time caps and reject redirects.
 """
 
-from email.parser import BytesParser
-from email.policy import default
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import signal
@@ -18,10 +15,13 @@ import subprocess
 import tempfile
 import time
 import uuid
+import xml.etree.ElementTree as ET
+from email.parser import BytesParser
+from email.policy import default
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
-import xml.etree.ElementTree as ET
 
 from .store import now
 
@@ -510,7 +510,7 @@ class SourceService:
             else:
                 reply({"error": "Method not supported"}, 405)
         except HTTPError as exc:
-            reply({"error": "Public source unavailable (HTTP %s); credentials are not used" % exc.code}, 502)
+            reply({"error": f"Public source unavailable (HTTP {exc.code}); credentials are not used"}, 502)
         except (URLError, TimeoutError, OSError) as exc:
             reply({"error": "Public source acquisition failed: " + str(exc)}, 502)
         except (ValueError, ET.ParseError) as exc:

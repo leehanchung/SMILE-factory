@@ -8,12 +8,12 @@ The selected entry must be a static SPA shell, not a server-rendered data page.
 Every saved artifact receives its SHA-256, byte count and reference provenance.
 """
 import argparse
-from collections import deque
 import hashlib
-from html.parser import HTMLParser
 import json
-from pathlib import Path
 import re
+from collections import deque
+from html.parser import HTMLParser
+from pathlib import Path
 from urllib.parse import unquote, urljoin, urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 

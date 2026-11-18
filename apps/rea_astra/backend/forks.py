@@ -5,14 +5,13 @@ Historical executions are copied with provenance, never rerun or represented as
 new executions. Provider session IDs are cleared before any continuation.
 """
 
-from contextlib import nullcontext
 import json
 import os
-from pathlib import Path
 import re
 import threading
-from urllib.parse import quote, unquote
 import uuid
+from contextlib import nullcontext
+from urllib.parse import quote, unquote
 
 from .store import now
 

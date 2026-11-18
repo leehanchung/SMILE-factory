@@ -2,13 +2,13 @@
 """Run the installed REA CLI on the extracted shell, preserving every result."""
 
 import argparse
-from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from datetime import UTC, datetime
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,7 +24,7 @@ def main():
     extracted = ROOT / "extracted/app"
     if not (extracted / "package.json").is_file():
         parser.error("Run make extract first")
-    output = ROOT / "evidence" / datetime.now(timezone.utc).strftime("run-%Y%m%dT%H%M%S%fZ")
+    output = ROOT / "evidence" / datetime.now(UTC).strftime("run-%Y%m%dT%H%M%S%fZ")
     output.mkdir(parents=True)
     paths = ["package.json", "out/main/index.js", "out/preload/index.js", "out/preload/lab.js"]
     if args.include_renderer:
@@ -34,9 +34,12 @@ def main():
     for path in paths:
         command += ["--source-path", path]
     command += ["--detail", "summary", "--evidence_output", str(output / "bundle.json"), "--format", "json"]
-    with tempfile.TemporaryDirectory(prefix="rea-astra-cli-") as working:
-        with (output / "result.json").open("w") as result, (output / "progress.jsonl").open("w") as progress:
-            completed = subprocess.run(command, cwd=working, stdout=result, stderr=progress, check=False)
+    with (
+        tempfile.TemporaryDirectory(prefix="rea-astra-cli-") as working,
+        (output / "result.json").open("w") as result,
+        (output / "progress.jsonl").open("w") as progress,
+    ):
+        completed = subprocess.run(command, cwd=working, stdout=result, stderr=progress, check=False)
     (output / "run.json").write_text(json.dumps({"command": command, "exit_code": completed.returncode}, indent=2) + "\n")
     print(f"REA exit {completed.returncode}; saved complete output to {output}")
     return completed.returncode
