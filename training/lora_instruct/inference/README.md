@@ -14,7 +14,16 @@ server, then opt in with `ALLOW_PUBLIC_BIND=1` (a `VLLM_API_KEY` is still
 required):
 
 ```bash
-ALLOW_PUBLIC_BIND=1 VLLM_API_KEY=... HOST=0.0.0.0 ./deploy_local.sh
+# Terminal 1: the server (stays in the foreground). The script runs vLLM in
+# the project's uv environment, so `uv sync --extra inference` is enough.
+export VLLM_API_KEY=...
+ALLOW_PUBLIC_BIND=1 HOST=0.0.0.0 ./deploy_local.sh
+```
+
+```bash
+# Terminal 2: the benchmark. Export the same key here; it isn't inherited
+# from terminal 1.
+export VLLM_API_KEY=...
 OPENAI_API_KEY=$VLLM_API_KEY uv run python bench.py \
     --api-url http://localhost:8000/v1/chat/completions --model <model>
 ```

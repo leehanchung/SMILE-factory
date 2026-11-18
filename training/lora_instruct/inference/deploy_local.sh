@@ -42,10 +42,20 @@ if [[ $is_loopback -eq 0 ]]; then
     fi
 fi
 
+# Run inside the project's uv environment (the `inference` extra holds vLLM)
+# unless a virtualenv is already active, so a fresh `uv sync --extra inference`
+# works without activating .venv by hand.
+proj_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -z "${VIRTUAL_ENV:-}" ]] && command -v uv >/dev/null 2>&1; then
+    PY=(uv run --project "$proj_dir" --extra inference python)
+else
+    PY=(python)
+fi
+
 # Locate the NCCL lib bundled with torch's nvidia-nccl wheel, searching only the
 # installed `nvidia` namespace package (not the whole filesystem). `|| true`
 # because `head` closing the pipe early would otherwise fail under pipefail.
-nvidia_dirs=$(python -c 'import nvidia; print("\n".join(nvidia.__path__))' 2>/dev/null || true)
+nvidia_dirs=$("${PY[@]}" -c 'import nvidia; print("\n".join(nvidia.__path__))' 2>/dev/null || true)
 nccl_dir=""
 if [[ -n $nvidia_dirs ]]; then
     nccl_lib=$(echo "$nvidia_dirs" | xargs -I{} find {} -name libnccl.so.2 2>/dev/null | head -n 1 || true)
@@ -62,4 +72,4 @@ fi
 # keeps the token out of `ps` and /proc/<pid>/cmdline.
 [[ -n "${VLLM_API_KEY:-}" ]] && export VLLM_API_KEY
 
-exec python -m vllm.entrypoints.openai.api_server --model "$MODEL" --host "$HOST" --port "$PORT"
+exec "${PY[@]}" -m vllm.entrypoints.openai.api_server --model "$MODEL" --host "$HOST" --port "$PORT"
