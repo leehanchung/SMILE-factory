@@ -26,6 +26,9 @@ on:
   issues:
     types: [opened, assigned]
 
+# Deny-all default; the job below grants exactly what it needs.
+permissions: {}
+
 jobs:
   claude:
     name: Claude
@@ -72,11 +75,11 @@ jobs:
       # runner needs an actual git repo on disk. Without this step the
       # action fails with "fatal: not a git repository" before any
       # edits happen.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 1
 
-      - uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@e5812cd75691ca7bbfc57c0ecf4441db3a1ab7dd  # v1.0.281
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Surface the Actions workflow permissions for actions:read

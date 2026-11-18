@@ -34,6 +34,13 @@ on:
     # jobs run, so a PR that touches nothing in delulu skips them.
   workflow_dispatch:
 
+# Least privilege for the default GITHUB_TOKEN. paths-filter needs
+# pull-requests: read to list a PR's changed files via the API; the
+# deploy jobs authenticate with their own secrets (Modal token, SSH).
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   # ── Paths filter ─────────────────────────────────────────────
   #
@@ -57,8 +64,10 @@ jobs:
       sandbox: ${{ steps.filter.outputs.sandbox }}
       sandbox_runtime: ${{ steps.filter.outputs.sandbox_runtime }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
         id: filter
         with:
           filters: |
@@ -95,8 +104,10 @@ jobs:
       run:
         working-directory: apps/delulu_discord
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           enable-cache: true
       - name: install dev deps
@@ -120,8 +131,10 @@ jobs:
       run:
         working-directory: apps/delulu_sandbox_modal
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           enable-cache: true
       - name: install dev deps
@@ -155,8 +168,10 @@ jobs:
       (needs.changes.outputs.sandbox_runtime == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           enable-cache: true
       - name: deploy modal sandbox app
@@ -193,7 +208,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: SSH into droplet, rebuild, and restart
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2  # v1.2.5
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: root

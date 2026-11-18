@@ -53,6 +53,9 @@ concurrency:
   group: codex-auth
   cancel-in-progress: false
 
+# Deny-all default; each job grants exactly what it needs.
+permissions: {}
+
 jobs:
   refresh:
     name: Refresh Codex auth.json
