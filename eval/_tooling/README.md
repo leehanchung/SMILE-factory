@@ -53,6 +53,7 @@ eval/
     scripts/serve_qwen.sh         start vLLM alternative (:8000)
     scripts/gen_tasks.py          dataset -> eval/benchmarks/<name>/tasks/
     scripts/smoke_pi.sh           agent -> engine end-to-end check (no Docker)
+    scripts/install_pi_config.sh  install pi's models.json (+ engine key, 0600)
     scripts/run_local.py          DEBUG fallback: pi -> engine direct (no BenchFlow)
     pi/models.json                pi provider config (-> ~/.pi/agent/models.json)
     docs/                         investigations (e.g. the BenchFlow proxy bug)
@@ -137,10 +138,16 @@ If something off-host or inside a container must reach the **engine directly**
 (e.g. `host.docker.internal:30000`), start it with `HOST=0.0.0.0` **and**
 `ENGINE_API_KEY=<random secret>` — the scripts refuse a non-loopback `HOST`
 without a key, since an unauthenticated OpenAI endpoint is open GPU compute.
-Export the same `ENGINE_API_KEY` when running `make eval` / `make smoke` /
-`make check-engine`: the Makefile passes it as the agent's `OPENAI_API_KEY`
-(placeholder `dummy-key` when unset) and `smoke_pi.sh` writes it into
-`~/.pi/agent/models.json`.
+vLLM's key only guards some routes (`/invocations` serves inference without it),
+so `serve_qwen.sh` also requires `ALLOW_PUBLIC_BIND=1`, confirming the port is
+behind a firewall/network policy or an authenticating reverse proxy covering
+every endpoint. Export the same `ENGINE_API_KEY` (and `ENGINE_HOST=<that HOST>`, which
+`check-engine` probes) when running `make eval` / `make eval-direct` /
+`make smoke` / `make check-engine`: the Makefile hands it to BenchFlow as the
+agent's `OPENAI_API_KEY` through the environment (placeholder `dummy-key` when
+unset), and `scripts/install_pi_config.sh` writes it, mode 0600, into
+`~/.pi/agent/models.json` for the pi-direct paths. The key never appears in a
+process's argv.
 
 Model routing: `model: vllm/qwen35-2b-base` + `agent_env.BENCHFLOW_PROVIDER_BASE_URL`.
 The run-configs point the host-side LiteLLM proxy at `http://localhost:30000/v1`
