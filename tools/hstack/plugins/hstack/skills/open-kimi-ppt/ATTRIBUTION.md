@@ -104,18 +104,37 @@ Supply-chain hardening:
     `version().stores()`, unchanged in 3.2.x; its existing IndexedDB opens as before.
     `tests/selftest.sh` fails if the chunks regress to the old versions.
 
-    **Not fixed — the Rust/WASM modules** (`pptd_wasm_bg-DPPWdROu.wasm`: zip 4.6.1,
-    quick-xml 0.38.4, unsafe-libyaml; `index_bg-Blvrv-U2.wasm`: resvg stack with
-    bytes 1.6.0, rustybuzz/ttf-parser). No Rust source exists upstream and the
-    crates are statically linked, so they cannot be bumped. Exposure is limited:
-    the PPTX writer exports only `exportPPTDToPPTXBytes` (it writes archives from the
-    user's own deck; the zip advisories, including GHSA-m665-v7pm-7grj, are in the
-    archive reader/extraction paths), and the resvg module renders SVG from that same
-    deck inside the browser/Node WASM sandbox.
+15. **The Rust/WASM modules cannot be rebuilt; their advisories were triaged
+    against the binaries** (analysis 2026-11-18). No newer build exists: upstream
+    has no commits, tags or releases after `07eeaad`, its npm package is unpublished,
+    and no other npm package ships `pptd_wasm`. `index_bg-Blvrv-U2.wasm` is
+    byte-identical (sha256 `22bf6e9f…2d70`) to `@resvg/resvg-wasm@2.6.2`, the latest
+    stable release (only `2.7.0-alpha.*` prereleases are newer).
+    `pptd_wasm_bg-DPPWdROu.wasm` (sha256 `f62500af…e746`) has no name section, so
+    the evidence is the panic `Location` records in its data segment (file path plus
+    line, emitted for every compiled-in panic site) and the crates' string literals,
+    matched against each crate's source at the embedded version. Its imports are
+    JS-value helpers only (no filesystem or network), and its one entry point,
+    `exportPPTDToPPTXBytes(pptd, options, signature)`, takes the deck as a JS object
+    plus raw image bytes and returns PPTX bytes; nothing passes it a ZIP.
+
+    | Crate (binary) | Advisory | Verdict and evidence |
+    |---|---|---|
+    | zip 4.6.1 (pptd) | GHSA-m665-v7pm-7grj / RUSTSEC-2026-0548 (critical), GHSA-8hxf-qr8p-62x4 / RUSTSEC-2026-0545, GHSA-q7v9-x93c-xqv3 / RUSTSEC-2026-0429, RUSTSEC-2026-0367, -0368, -0369 | **Not affected.** All six are in the reader: `ZipStreamReader`, `ZipArchive::extract` symlink and permission handling, AES/HMAC read. Panic sites exist only in `write.rs`, `types.rs` (`local_block`/`block` header serialisation) and `zipcrypto.rs` (`ZipCryptoWriter::finish`). None are in `read.rs`, `read/stream.rs`, `spec.rs` or `aes.rs`. Reader-only literals (`Could not find EOCD`, `Invalid local file header`, `Invalid Central Directory header`, symlink and extraction errors, `Invalid file path`, the AES authentication message) are absent. The only `read.rs` code present is `parse_single_extra_field`, which `write.rs` calls to validate extra fields. No inflate code is linked (zlib-rs deflate and zopfli only). GHSA-9hj8 and GHSA-hjqx do not cover 4.6.1. |
+    | quick-xml 0.38.4 (pptd) | RUSTSEC-2026-0195 (`NsReader` namespace allocation) | **Not affected.** `name.rs` has a single panic site, `QName::local_name` (line 111). There is no `NamespaceResolver` site and no `reader/ns_reader.rs` code. |
+    | quick-xml 0.38.4 (pptd) | RUSTSEC-2026-0194 (quadratic duplicate-attribute check) | **Present and reachable; low impact, no fix available.** `IterState::check_for_duplicates` (`events/attributes.rs:827`) is compiled in and runs when the deck's rich-text HTML (`<p>`, `<span style=…>`, see `references/pptd.md`) is parsed by `pptd/rust/richtext.rs`. A deck with a huge number of attributes on one tag can stall the export, a CPU-only DoS of the local process, with no memory corruption or data exposure. The input is the user's own deck. `export_pptx.py` runs the Node exporter with `timeout=300`; a direct `node export-pptd.mjs` call has no limit. |
+    | unsafe-libyaml 0.2.11 (pptd) | RUSTSEC-2024-0449 (unmaintained) | Informational only. GHSA-r24f-hg58-vfrw (unaligned write on 32-bit) is fixed in 0.2.10. |
+    | bytes 1.6.0 (resvg) | RUSTSEC-2026-0007 / GHSA-434x-w66g-qw3r (`BytesMut::reserve` overflow) | **Not affected.** The only bytes panic site is `lib.rs:137` (`panic_advance`). There is no `bytes_mut.rs` site, although `reserve_inner` contains `.expect("overflow")`, so `BytesMut::reserve` is not linked. |
+    | rustybuzz 0.7.0, ttf-parser 0.18.1 (resvg) | RUSTSEC-2026-0206, RUSTSEC-2026-0192 (unmaintained) | Informational only. No vulnerability advisories. |
+
+    All other crate versions embedded in either module return no OSV advisories.
+    `tests/selftest.sh` pins both WASM sha256s, so a re-vendor fails until this
+    triage is redone.
 
 Everything else — the `SKILL.md` body, `references/`, the rest of `scripts/`,
 `tests/test_*.py` (apart from the agent-browser install test), and `editor/`
 (apart from its README and the chunks listed in item 14) — is upstream as-is.
+The WASM binaries in item 15 are unmodified.
 
 ## Upstream license
 

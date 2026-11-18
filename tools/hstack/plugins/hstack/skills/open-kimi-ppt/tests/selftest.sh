@@ -33,6 +33,14 @@ grep -q 'Dexie.js 3.2.7' "$ASSETS/dexie-HNSdyusO.js" && grep -q 'Dexie.js 3.2.7'
 grep -q 'KaTeX 0.18.11' "$ASSETS/katex-BotMgawn.js" && grep -q 'KaTeX 0.18.11' "$ASSETS/katex-legacy-COlBCYAe.js" \
   || fail "KaTeX chunk is not the patched 0.18.11 build (GHSA-238p-pmpm-9mq7)"
 pass "Dexie 3.2.7 and KaTeX 0.18.11 chunks"
+# The Rust/WASM modules were triaged for advisories by content (ATTRIBUTION.md
+# item 15); a different binary needs that triage redone before it ships.
+sha256_of() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -d' ' -f1; }
+[[ "$(sha256_of "$ASSETS/pptd_wasm_bg-DPPWdROu.wasm")" == "f62500af4546ab379b458d405c2c6b18d659a1a18a4299baba03ccb4dc08e746" ]] \
+  || fail "pptd_wasm binary changed; redo the advisory triage in ATTRIBUTION.md item 15"
+[[ "$(sha256_of "$ASSETS/index_bg-Blvrv-U2.wasm")" == "22bf6e9f9a100d972da0411a69c5ba504367fc1fa87b3b64e3f35e53926d2d70" ]] \
+  || fail "resvg WASM binary changed; redo the advisory triage in ATTRIBUTION.md item 15"
+pass "WASM binaries match the triaged builds"
 
 echo "[2] node-only PPTX export (no Python, no browser)"
 node --version >/dev/null 2>&1 || fail "Node.js is required"
