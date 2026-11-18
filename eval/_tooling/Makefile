@@ -26,19 +26,27 @@ CONCURRENCY ?= 5
 N ?= 50
 # ENGINE_PORT: local engine — SGLang 30000, vLLM 8000
 ENGINE_PORT ?= 30000
-ENGINE_URL ?= http://localhost:$(ENGINE_PORT)/v1
-# ENGINE_API_KEY: bearer key the engine requires. Optional for the default
-# loopback-only engine; REQUIRED when the engine binds a non-loopback HOST (e.g.
-# HOST=0.0.0.0 so task containers can reach it via host.docker.internal). Exported
-# so recipes read it from the environment; it is never put on a command line.
-# Unset -> placeholder "dummy-key".
+# ENGINE_API_KEY: bearer key clients send to the engine endpoint: vLLM's key
+# (serve-vllm requires one for a non-loopback HOST), or the token of the
+# authenticating proxy in front of SGLang (serve_sglang.sh never hands SGLang a
+# key, since SGLang logs it). Optional for the default loopback-only engine.
+# Exported so recipes read it from the environment; it is never put on a command
+# line. Unset -> placeholder "dummy-key".
 ENGINE_API_KEY ?=
 export ENGINE_API_KEY
-# ENGINE_HOST: where check-engine probes the engine; set it to the HOST the serve
+# ENGINE_HOST: where clients reach the engine; set it to the HOST the serve
 # script was started with (e.g. ENGINE_HOST=::1). Wildcard binds map to loopback
 # (0.0.0.0 -> 127.0.0.1, :: -> ::1) and IPv6 literals get bracketed. A separate
 # knob because some shells export HOST as the machine's hostname.
 ENGINE_HOST ?= 127.0.0.1
+# ENGINE_URL: the one engine endpoint every path uses. check-engine probes
+# $(ENGINE_URL)/models; BenchFlow's host-side proxy and pi (install_pi_config.sh
+# sets models.json's baseUrl) call it. Derived from ENGINE_HOST/ENGINE_PORT;
+# override it outright for a remote engine.
+_engine_host = $(if $(filter-out 0.0.0.0,$(ENGINE_HOST)),$(if $(filter ::,$(ENGINE_HOST)),::1,$(ENGINE_HOST)),127.0.0.1)
+_engine_hostport = $(if $(findstring :,$(_engine_host)),[$(_engine_host)],$(_engine_host)):$(ENGINE_PORT)
+ENGINE_URL ?= http://$(_engine_hostport)/v1
+export ENGINE_URL
 # Token budget for the self-hosted model. CRITICAL: without an explicit maxTokens,
 # benchflow's pi-acp registers the model with maxTokens = its own _DEFAULT_MAX_TOKENS
 # (16384) and pi then asks SGLang for a completion that large — prompt+completion
@@ -113,16 +121,14 @@ smoke: check-engine
 # The key reaches curl on stdin (-H @-), never in its argv.
 check-engine:
 	@case "$${ENGINE_API_KEY:-}" in sk-*) echo "warning: ENGINE_API_KEY looks like a provider key; evaluated agents can read it, so use a disposable eval-only token" >&2 ;; esac
-	@h='$(ENGINE_HOST)'; case "$$h" in ""|0.0.0.0) h=127.0.0.1 ;; "::") h=::1 ;; esac; \
-	[[ $$h == *:* ]] && h="[$$h]"; \
-	url="http://$$h:$(ENGINE_PORT)/v1/models"; \
+	@url='$(ENGINE_URL)/models'; \
 	if [[ -n "$${ENGINE_API_KEY:-}" ]]; then \
 	  printf 'Authorization: Bearer %s\n' "$$ENGINE_API_KEY" | curl -sf -m 10 -H @- "$$url" >/dev/null; \
 	else \
 	  curl -sf -m 10 "$$url" >/dev/null; \
 	fi \
-	  && echo "engine up at $$h:$(ENGINE_PORT)" \
-	  || (echo "engine NOT reachable at $$h:$(ENGINE_PORT) — run 'make serve' first" && exit 1)
+	  && echo "engine up at $(ENGINE_URL)" \
+	  || (echo "engine NOT reachable at $(ENGINE_URL) — run 'make serve' first" && exit 1)
 
 # Docker-free DEBUG fallback (NOT BenchFlow): pi -> engine direct, same tasks+scorer.
 # For sanity-checking the model while the BenchFlow proxy bug is open

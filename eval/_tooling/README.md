@@ -137,20 +137,29 @@ overrides). That is enough for the normal flow: BenchFlow's LiteLLM proxy runs o
 the host and reaches the engine over loopback; containers only talk to the proxy.
 
 If something off-host or inside a container must reach the **engine directly**
-(e.g. `host.docker.internal:30000`), start it with `HOST=0.0.0.0` **and**
-`ENGINE_API_KEY=<random secret>` — the scripts refuse a non-loopback `HOST`
-without a key, since an unauthenticated OpenAI endpoint is open GPU compute.
-Both also require `ALLOW_PUBLIC_BIND=1`, confirming the port is behind a
-firewall/network policy or an authenticating reverse proxy covering every
-endpoint: vLLM's key only guards some routes (`/invocations` serves inference
-without it), and either engine's key is visible to the evaluated agents (below). Export the same `ENGINE_API_KEY` (and `ENGINE_HOST=<that HOST>`, which
-`check-engine` probes) when running `make eval` / `make eval-direct` /
-`make smoke` / `make check-engine`: the Makefile hands it to BenchFlow as the
-agent's `OPENAI_API_KEY` through the environment (placeholder `dummy-key` when
-unset), and `scripts/install_pi_config.sh` writes it, mode 0600, into
-`~/.pi/agent/models.json` for the pi-direct paths. The key never appears in a
-process's argv (`serve_sglang.sh` hands it to SGLang in a 0600 `--config` file,
-since SGLang has no API-key environment variable).
+(e.g. `host.docker.internal:30000`), an unauthenticated OpenAI endpoint is open
+GPU compute, so both scripts refuse a non-loopback `HOST` unless
+`ALLOW_PUBLIC_BIND=1` confirms the port is behind a firewall/network policy or an
+authenticating reverse proxy covering every endpoint:
+
+- **SGLang** (`serve_sglang.sh`) is never given a key: SGLang 0.5.23 echoes its
+  resolved server args, `api_key` included, in the startup log and `/server_info`
+  ([sgl-project/sglang#37457](https://github.com/sgl-project/sglang/issues/37457)).
+  For authentication, keep SGLang on loopback and expose an authenticating
+  reverse proxy; `ENGINE_API_KEY` is then that proxy's token.
+- **vLLM** (`serve_qwen.sh`) also needs `ENGINE_API_KEY`, which it reads as
+  `VLLM_API_KEY` from the environment. Its key only guards some routes
+  (`/invocations` serves inference without it), hence the opt-in.
+
+Point the clients at the engine with `ENGINE_HOST=<that HOST>` (and
+`ENGINE_PORT`), or set `ENGINE_URL` outright for a remote engine: the Makefile
+derives one `ENGINE_URL` that `check-engine` probes, BenchFlow's proxy calls, and
+`scripts/install_pi_config.sh` writes as the provider `baseUrl` in
+`~/.pi/agent/models.json` for `make smoke` / `make eval-direct`. Export
+`ENGINE_API_KEY` too when the endpoint needs one: the Makefile hands it to
+BenchFlow as the agent's `OPENAI_API_KEY` through the environment (placeholder
+`dummy-key` when unset), and `install_pi_config.sh` writes it into the same 0600
+`models.json`. The key never appears in a process's argv.
 
 **The evaluated agent can read `ENGINE_API_KEY`.** BenchFlow copies
 `OPENAI_API_KEY` into the agent's sandbox (the agent calls the engine with it),
