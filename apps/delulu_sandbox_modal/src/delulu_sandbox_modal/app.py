@@ -45,10 +45,11 @@ sandbox_image = (
     .apt_install("git", "curl", "ca-certificates")
     # app.py is imported inside the sandbox to call run_claude_code, so any
     # third-party module it imports at module level must be present here too.
-    .pip_install("structlog>=24.0")
+    .pip_install("structlog>=25.5")
     .run_commands(
-        # Install Node.js (required by Claude Code)
-        "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -",
+        # Install Node.js (required by Claude Code). Node 24 is the
+        # current LTS line; Node 20 reached end-of-life in April 2026.
+        "curl -fsSL https://deb.nodesource.com/setup_24.x | bash -",
         "apt-get install -y nodejs",
         # Install Claude Code globally
         "npm install -g @anthropic-ai/claude-code",
@@ -231,7 +232,7 @@ def _flatten_stream_event(
 provisioner_image = (
     modal.Image.debian_slim(python_version="3.14")
     .apt_install("git", "ca-certificates")
-    .pip_install("structlog>=24.0")
+    .pip_install("structlog>=25.5")
     # Same rationale as sandbox_image above — provision_workspace
     # and commit_workspace both import `repo_provisioner` at
     # runtime, so the package has to be in the container.
