@@ -268,6 +268,46 @@ def _meets_floor(dist: str, floor: Optional[Tuple[int, ...]]) -> bool:
     return _version_at_least(installed, floor)
 
 
+def _imported_from_dist(module: Any, dist: str) -> Optional[bool]:
+    """Whether `module` was loaded from `dist`'s own files (None: can't tell)."""
+    origin = getattr(module, "__file__", None)
+    if not origin:
+        return None
+    try:
+        distribution = importlib.metadata.distribution(dist)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    files = distribution.files
+    if not files:
+        return None
+    target = Path(origin).resolve()
+    for entry in files:
+        try:
+            if Path(distribution.locate_file(entry)).resolve() == target:
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def _module_meets_floor(module: Any, dist: str, floor: Optional[Tuple[int, ...]]) -> bool:
+    """True when the module *actually imported* satisfies `floor`.
+
+    Distribution metadata alone is not enough: an older copy earlier on
+    sys.path can shadow a patched install. So also reject a module whose own
+    ``__version__`` is below the floor, or whose file is not one of `dist`'s.
+    """
+    if floor is None:
+        return True
+    if not _meets_floor(dist, floor):
+        return False
+    reported = getattr(module, "__version__", None)
+    if isinstance(reported, str) and _version_tuple(reported.lstrip("vV")):
+        if not _version_at_least(reported, floor):
+            return False
+    return _imported_from_dist(module, dist) is not False
+
+
 def _import_fresh(import_name: str) -> Any:
     """Import `import_name`, dropping any copy loaded before an upgrade."""
     for name in [m for m in sys.modules if m == import_name or m.startswith(import_name + ".")]:
@@ -292,9 +332,12 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
         log(f"{package} is required for {purpose}; installing it now")
     else:
         # An older copy may still carry the advisories the floor excludes.
-        if _meets_floor(dist, floor):
+        if _module_meets_floor(module, dist, floor):
             return module
-        log(f"installed {dist} is older than {package} (needed for {purpose}); upgrading it")
+        log(
+            f"imported {import_name} is older than {package} or shadows the installed "
+            f"{dist} (needed for {purpose}); upgrading it"
+        )
 
     def _load(label: str) -> Optional[Any]:
         try:
@@ -302,8 +345,12 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
         except ImportError:
             failures.append(f"[{label}] installed, but {import_name} is still not importable")
             return None
-        if not _meets_floor(dist, floor):
-            failures.append(f"[{label}] installed, but an older {dist} still shadows {package}")
+        if not _module_meets_floor(module, dist, floor):
+            failures.append(
+                f"[{label}] installed, but the imported {import_name} "
+                f"({getattr(module, '__file__', '?')}) is an older copy on sys.path "
+                f"that shadows {package}; remove it"
+            )
             return None
         return module
 

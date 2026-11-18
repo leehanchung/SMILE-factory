@@ -3,10 +3,11 @@ import importlib.util
 import os
 import tempfile
 import time
+import types
 import unittest
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "export_pptx.py"
@@ -289,6 +290,50 @@ class EnsureModuleFloorTests(unittest.TestCase):
     def test_current_module_is_not_reinstalled(self, run_command, _version):
         MODULE.ensure_module("json", "fakedist>=2.0", "testing")
         run_command.assert_not_called()
+
+
+class ImportedModuleFloorTests(unittest.TestCase):
+    """The imported module must itself meet the floor, not just the metadata."""
+
+    def _dist(self, root, files):
+        dist = MagicMock()
+        dist.files = files
+        dist.locate_file.side_effect = lambda entry: Path(root) / entry
+        return dist
+
+    @patch.object(MODULE.importlib.metadata, "version", return_value="9.9")
+    def test_old_reported_version_is_rejected(self, _version):
+        module = types.SimpleNamespace(__version__="1.0")
+        self.assertFalse(MODULE._module_meets_floor(module, "fakedist", (2, 0)))
+
+    @patch.object(MODULE.importlib.metadata, "version", return_value="9.9")
+    def test_module_outside_the_distribution_is_rejected(self, _version):
+        with tempfile.TemporaryDirectory() as tmp:
+            installed = Path(tmp, "site", "fake", "__init__.py")
+            shadow = Path(tmp, "shadow", "fake", "__init__.py")
+            for path in (installed, shadow):
+                path.parent.mkdir(parents=True)
+                path.write_text("")
+            dist = self._dist(Path(tmp, "site"), ["fake/__init__.py"])
+            with patch.object(MODULE.importlib.metadata, "distribution", return_value=dist):
+                ok = types.SimpleNamespace(__file__=str(installed))
+                bad = types.SimpleNamespace(__file__=str(shadow))
+                self.assertTrue(MODULE._module_meets_floor(ok, "fakedist", (2, 0)))
+                self.assertFalse(MODULE._module_meets_floor(bad, "fakedist", (2, 0)))
+
+    @patch.object(MODULE.importlib.metadata, "version", return_value="9.9")
+    @patch.object(MODULE, "_refresh_import_paths")
+    @patch.object(MODULE.shutil, "which", return_value=None)
+    @patch.object(MODULE, "_fallback_env_site_packages", return_value=None)
+    def test_shadowing_old_copy_fails_install(self, _venv, _which, _refresh, _version):
+        old = types.ModuleType("fakeshadow")
+        old.__version__ = "1.0"
+        ok = MODULE.subprocess.CompletedProcess([], 0, "")
+        with patch.dict(MODULE.sys.modules, {"fakeshadow": old}), \
+                patch.object(MODULE, "_import_fresh", return_value=old), \
+                patch.object(MODULE, "run_command", return_value=ok):
+            with self.assertRaisesRegex(MODULE.ExportError, "shadows fakedist>=2.0"):
+                MODULE.ensure_module("fakeshadow", "fakedist>=2.0", "testing")
 
 
 class OversizedTagGuardTests(unittest.TestCase):
