@@ -85,6 +85,47 @@ def test_allowlist_matches_canonical_host(monkeypatch, extra_dns):
     assert validate_url("http://xn--fa-hia.example/")
 
 
+def test_trailing_dot_host_is_resolved_as_written(extra_dns):
+    # `host` may be expanded by resolver search domains while `host.` is
+    # absolute; HTTPX connects to `host.`, so that is the name checked.
+    extra_dns["dotted.example"] = "93.184.216.34"
+    extra_dns["dotted.example."] = "10.0.0.5"
+    with pytest.raises(UnsafeURLError, match="non-public"):
+        validate_url("http://dotted.example./")
+    assert validate_url("http://dotted.example/")
+
+
+async def test_safe_fetch_trailing_dot_resolves_and_fetches_the_dotted_name(extra_dns):
+    extra_dns["dotted.example."] = "93.184.216.34"
+    seen: list[bytes] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.raw_host)
+        return httpx.Response(200, stream=Body(b"ok"))
+
+    async with _client(handler) as c:
+        res = await safe_fetch("http://dotted.example./", client=c)
+    assert seen == [b"dotted.example."] and res.content == b"ok"
+
+
+@pytest.mark.parametrize(
+    "entry,url",
+    [
+        ("internal.example", "http://internal.example./"),
+        ("internal.example.", "http://internal.example/"),
+    ],
+)
+def test_allowlist_ignores_trailing_dot(monkeypatch, entry, url):
+    monkeypatch.setenv("SEARCH_SERVER_URL_ALLOWLIST", entry)
+    assert validate_url(url)
+
+
+@pytest.mark.parametrize("url", ["http://./", "http://a..example./"])
+def test_rejects_empty_or_doubled_dot_hosts(url):
+    with pytest.raises(UnsafeURLError):
+        validate_url(url)
+
+
 # --- overall deadline ------------------------------------------------------
 
 
@@ -187,19 +228,66 @@ async def test_safe_fetch_rejects_decompression_bomb_without_materialising(
     assert sizes and max(sizes) <= 64 * 1024 + 1  # never decoded more than the budget + 1
 
 
-async def test_safe_fetch_ignores_trailing_bytes_after_eof():
+async def test_safe_fetch_ignores_trailing_bytes_after_deflate_eof():
     payload = b"done"
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
-            stream=Body(gzip.compress(payload) + b"garbage"),
-            headers={"content-encoding": "gzip"},
+            stream=Body(zlib.compress(payload) + b"garbage"),
+            headers={"content-encoding": "deflate"},
         )
 
     async with _client(handler) as c:
         res = await safe_fetch("http://public.example/", client=c)
     assert res.content == payload
+
+
+@pytest.mark.parametrize("chunk", [4096, 1])
+async def test_safe_fetch_decodes_every_gzip_member(chunk):
+    # RFC 1952 §2.2: a gzip body may be several concatenated members.
+    first, second = b"first member " * 50, b"second member " * 50
+    stream = gzip.compress(first) + gzip.compress(second)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, stream=Body(stream, chunk=chunk), headers={"content-encoding": "gzip"}
+        )
+
+    async with _client(handler) as c:
+        res = await safe_fetch("http://public.example/", client=c)
+    assert res.content == first + second
+
+
+async def test_safe_fetch_caps_multi_member_gzip_total():
+    member = gzip.compress(b"a" * 60)
+    body_ = member * 3  # 180 decoded bytes in total, 60 per member
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=Body(body_), headers={"content-encoding": "gzip"})
+
+    async with _client(handler) as c:
+        with pytest.raises(UnsafeURLError, match="too large"):
+            await safe_fetch("http://public.example/", client=c, max_bytes=150)
+
+
+@pytest.mark.parametrize(
+    "tail,match",
+    [
+        (gzip.compress(b"second " * 50)[:-8], "truncated compressed body"),  # cut 2nd member
+        (b"\x1f", "truncated compressed body"),  # only the start of a 2nd header
+        (b"garbage", "invalid compressed body"),  # not a gzip member
+    ],
+)
+async def test_safe_fetch_rejects_bad_trailing_gzip_member(tail, match):
+    stream = gzip.compress(b"first") + tail
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=Body(stream), headers={"content-encoding": "gzip"})
+
+    async with _client(handler) as c:
+        with pytest.raises(UnsafeURLError, match=match):
+            await safe_fetch("http://public.example/", client=c)
 
 
 async def test_safe_fetch_caps_raw_bytes_without_content_length():

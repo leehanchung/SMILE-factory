@@ -75,13 +75,16 @@ def _ascii_host(url: str) -> str:
     HTTPX encodes non-ASCII hosts with the `idna` package (IDNA 2008), which
     differs from the stdlib IDNA 2003 codec `socket.getaddrinfo` would use
     (``faß`` -> ``xn--fa-hia`` vs ``fass``), so never resolve the raw name.
+    A trailing dot is kept: ``host.`` (absolute) and ``host`` (subject to
+    resolver search domains) can resolve differently, and HTTPX connects to the
+    dotted name, so that is the name that must be resolved and checked.
     """
     try:
         host = httpx.URL(url).raw_host.decode("ascii")
     except (httpx.InvalidURL, UnicodeError) as e:
         raise UnsafeURLError(f"invalid hostname: {e}") from None
-    host = host.lower().rstrip(".")
-    if not host or "%" in host:
+    host = host.lower()
+    if not host.rstrip(".") or host.endswith("..") or "%" in host:
         raise UnsafeURLError("invalid hostname")
     return host
 
@@ -94,7 +97,7 @@ def _allowlisted_hosts() -> frozenset[str]:
         if not h:
             continue
         try:
-            hosts.add(_ascii_host(f"http://{h}/"))
+            hosts.add(_ascii_host(f"http://{h}/").rstrip("."))
         except UnsafeURLError:
             continue
     return frozenset(hosts)
@@ -153,7 +156,9 @@ def validate_url(url: str) -> str:
     Performs a blocking DNS lookup; call via `asyncio.to_thread` from async code.
     """
     host, port = check_url_syntax(url)
-    if host in _allowlisted_hosts():
+    # Allowlist matching ignores the trailing dot (both forms name the host the
+    # operator trusts); DNS validation below uses the exact name HTTPX uses.
+    if host.rstrip(".") in _allowlisted_hosts():
         return url
     try:
         infos = socket.getaddrinfo(host, port or 0, proto=socket.IPPROTO_TCP)
@@ -178,20 +183,26 @@ class _BoundedDecoder:
     `zlib`'s `max_length` caps each call's output at the remaining budget (+1 to
     detect overflow), so a highly compressible chunk is never materialised in
     full. Deflate falls back to raw deflate (no zlib header), like HTTPX.
+    Gzip may be multi-member (RFC 1952 §2.2): each member is decoded in turn
+    under the same budget; bytes after a member that are not another valid
+    gzip member are rejected.
     """
 
     def __init__(self, encoding: str, max_bytes: int) -> None:
         self.max_bytes = max_bytes
         self.size = 0
         self.eof = False
-        self._fed = False  # any compressed bytes seen (empty bodies are fine)
+        self._gzip = encoding in ("gzip", "x-gzip")
+        # Bytes fed to the current decoder (gzip: current member). An empty body,
+        # or nothing after a complete gzip member, is not truncation.
+        self._member_fed = False
         self._raw_fallback = encoding == "deflate"
         # Compressed input seen while the zlib-vs-raw-deflate choice is still
         # open; replayed into a raw decoder if the zlib header turns out bad.
         # Bounded by the caller's raw-byte cap.
         self._seen = bytearray()
         self._d = None
-        if encoding in ("gzip", "x-gzip"):
+        if self._gzip:
             self._d = zlib.decompressobj(16 + zlib.MAX_WBITS)
         elif encoding == "deflate":
             self._d = zlib.decompressobj(zlib.MAX_WBITS)
@@ -208,11 +219,11 @@ class _BoundedDecoder:
         if self._d is None:
             self._emit(data, body)
             return
-        self._fed = True
         buf = data
         if self._raw_fallback:
             self._seen.extend(data)
         while buf and not self.eof:
+            self._member_fed = True
             try:
                 out = self._d.decompress(buf, self.max_bytes - self.size + 1)
             except zlib.error as e:
@@ -231,23 +242,32 @@ class _BoundedDecoder:
                 self._raw_fallback = False
                 self._seen = bytearray()
             self._emit(out, body)
-            self.eof = self._d.eof
+            if self._d.eof:
+                if self._gzip:
+                    # Member complete; anything left is the next member.
+                    buf = self._d.unused_data
+                    self._d = zlib.decompressobj(16 + zlib.MAX_WBITS)
+                    self._member_fed = False
+                    continue
+                self.eof = True
+                break
             buf = self._d.unconsumed_tail
             if not out:
                 break
 
     def finish(self, body: bytearray) -> None:
-        if self._d is not None and not self.eof:
+        if self._d is not None and not self.eof and self._member_fed:
             try:
                 out = self._d.flush(self.max_bytes - self.size + 1)
             except zlib.error as e:
                 raise UnsafeURLError(f"invalid compressed body: {e}") from None
             self._emit(out, body)
-            self.eof = self._d.eof
-            if self._fed and not self.eof:
+            if not self._d.eof:
                 # flush() returns partial output without raising when the
-                # stream lacks its final block or gzip trailer.
+                # stream (or the last gzip member) lacks its final block or
+                # trailer.
                 raise UnsafeURLError("truncated compressed body")
+            self.eof = True
 
 
 def _content_encoding(headers: httpx.Headers) -> str:

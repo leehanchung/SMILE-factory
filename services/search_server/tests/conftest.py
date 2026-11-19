@@ -21,7 +21,9 @@ FAKE_DNS: dict[str, list[str]] = {
 
 def _fake_getaddrinfo(host, port, *args, **kwargs):
     try:
-        ips = FAKE_DNS[host]
+        # An absolute name ("host.") resolves like the bare name here; tests
+        # that need them to differ register both via `extra_dns`.
+        ips = FAKE_DNS[host[:-1] if host.endswith(".") else host]
     except KeyError:
         try:  # IP literals resolve to themselves, like the real resolver
             ips = [str(url_guard.ipaddress.ip_address(host))]
