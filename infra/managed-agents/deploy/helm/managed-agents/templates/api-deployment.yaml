@@ -156,6 +156,20 @@ spec:
                   name: {{ .Values.llm.anthropic.apiKeySecret }}
                   key: {{ .Values.llm.anthropic.apiKeySecretKey }}
             {{- end }}
+            # API keys for the /v1 routes (required; fail closed)
+            - name: MANAGED_AGENTS_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.apiKeysSecret }}
+                  key: {{ .Values.auth.apiKeysSecretKey }}
+            {{- if eq .Values.orchestrator.backend "hybrid" }}
+            # Bearer token presented to node agents
+            - name: NODE_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.orchestrator.nodeAgent.tokenSecret }}
+                  key: {{ .Values.orchestrator.nodeAgent.tokenSecretKey }}
+            {{- end }}
             # Session namespace for Job creation
             - name: SESSION_NAMESPACE
               valueFrom:
