@@ -130,6 +130,39 @@ async def test_safe_fetch_decodes_compressed_body(encoding, compress):
     assert res.content == payload
 
 
+@pytest.mark.parametrize(
+    "encoding,compress",
+    [
+        ("deflate", zlib.compress),
+        ("deflate", _raw_deflate),
+        ("gzip", gzip.compress),
+    ],
+)
+async def test_safe_fetch_decodes_one_byte_chunks(encoding, compress):
+    """The zlib-vs-raw-deflate choice must survive a header split across chunks."""
+    payload = b"hello world " * 100
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, stream=Body(compress(payload), chunk=1), headers={"content-encoding": encoding}
+        )
+
+    async with _client(handler) as c:
+        res = await safe_fetch("http://public.example/", client=c)
+    assert res.content == payload
+
+
+def test_raw_deflate_fallback_survives_split_header():
+    """Feed raw deflate one byte at a time straight into the decoder."""
+    payload = b"split header " * 50
+    dec = url_guard._BoundedDecoder("deflate", 1 << 20)
+    body = bytearray()
+    for b in _raw_deflate(payload):
+        dec.feed(bytes([b]), body)
+    dec.finish(body)
+    assert bytes(body) == payload
+
+
 @pytest.mark.parametrize("encoding,compress", [("gzip", gzip.compress), ("deflate", _raw_deflate)])
 async def test_safe_fetch_rejects_decompression_bomb_without_materialising(
     monkeypatch, encoding, compress

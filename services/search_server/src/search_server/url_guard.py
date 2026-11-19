@@ -186,6 +186,10 @@ class _BoundedDecoder:
         self.eof = False
         self._fed = False  # any compressed bytes seen (empty bodies are fine)
         self._raw_fallback = encoding == "deflate"
+        # Compressed input seen while the zlib-vs-raw-deflate choice is still
+        # open; replayed into a raw decoder if the zlib header turns out bad.
+        # Bounded by the caller's raw-byte cap.
+        self._seen = bytearray()
         self._d = None
         if encoding in ("gzip", "x-gzip"):
             self._d = zlib.decompressobj(16 + zlib.MAX_WBITS)
@@ -206,16 +210,26 @@ class _BoundedDecoder:
             return
         self._fed = True
         buf = data
+        if self._raw_fallback:
+            self._seen.extend(data)
         while buf and not self.eof:
             try:
                 out = self._d.decompress(buf, self.max_bytes - self.size + 1)
             except zlib.error as e:
-                if self._raw_fallback and self.size == 0:
+                if self._raw_fallback:
+                    # Not a zlib stream: restart as raw deflate from the very
+                    # first byte (the header may have arrived split across
+                    # several transport chunks).
                     self._raw_fallback = False
                     self._d = zlib.decompressobj(-zlib.MAX_WBITS)
+                    buf = bytes(self._seen)
+                    self._seen = bytearray()
                     continue
                 raise UnsafeURLError(f"invalid compressed body: {e}") from None
-            self._raw_fallback = False
+            if out or self._d.eof:
+                # The zlib header was accepted: no more fallback needed.
+                self._raw_fallback = False
+                self._seen = bytearray()
             self._emit(out, body)
             self.eof = self._d.eof
             buf = self._d.unconsumed_tail
