@@ -42,7 +42,9 @@ cd training/lora_instruct/
   `adapter_model.bin`, or Trainer state such as `optimizer.pt` /
   `rng_state.pth`) requires `LORA_TRUST_CHECKPOINT=1`: the torch 2.14 that vLLM
   pins is affected by GHSA-v32g-mr63-3j83 even with `weights_only=True`. Only
-  set it for checkpoints you produced.
+  set it for checkpoints you produced. The same switch lets `--base_model`
+  load pickle-only `pytorch_model.bin` weights; by default the base model must
+  ship safetensors (`use_safetensors=True`).
 - Default dataset is `yahma/alpaca-cleaned`; default prompt template is
   `alpaca` (see `templates/alpaca.json`).
 - Multi-GPU is **DDP via `torchrun --nproc_per_node=<N>`** (don't export

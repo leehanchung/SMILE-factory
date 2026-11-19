@@ -124,6 +124,17 @@ def _require_trusted_checkpoint(checkpoint_dir: str) -> None:
         )
 
 
+def _base_model_use_safetensors() -> bool | None:
+    """``use_safetensors`` for the base-model load.
+
+    Without it, ``from_pretrained`` falls back to ``pytorch_model.bin`` via
+    ``torch.load``, which torch 2.14 cannot do safely (GHSA-v32g-mr63-3j83).
+    Require safetensors unless the caller trusts the source, in which case
+    return None to keep Transformers' default fallback.
+    """
+    return None if os.environ.get(TRUST_CHECKPOINT_ENV) == "1" else True
+
+
 def train(
     # model/data params
     base_model: str = "",  # the only required argument
@@ -231,6 +242,8 @@ def train(
         dtype=torch.bfloat16 if bits == 0 else None,
         device_map=device_map,
         trust_remote_code=trust_remote_code,
+        # Refuse pickle-only (.bin) base weights unless LORA_TRUST_CHECKPOINT=1.
+        use_safetensors=_base_model_use_safetensors(),
     )
 
     if quantization_config is not None:

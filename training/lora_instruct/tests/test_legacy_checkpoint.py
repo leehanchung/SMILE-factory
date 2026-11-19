@@ -42,3 +42,13 @@ def test_safetensors_only_checkpoint_needs_no_opt_in(monkeypatch, tmp_path):
     monkeypatch.delenv(finetune.TRUST_CHECKPOINT_ENV, raising=False)
     names = ("adapter_model.safetensors", "adapter_config.json", "trainer_state.json")
     finetune._require_trusted_checkpoint(_ckpt(tmp_path, *names))
+
+
+def test_base_model_requires_safetensors_by_default(monkeypatch):
+    monkeypatch.delenv(finetune.TRUST_CHECKPOINT_ENV, raising=False)
+    assert finetune._base_model_use_safetensors() is True
+
+
+def test_base_model_pickle_fallback_with_opt_in(monkeypatch):
+    monkeypatch.setenv(finetune.TRUST_CHECKPOINT_ENV, "1")
+    assert finetune._base_model_use_safetensors() is None
