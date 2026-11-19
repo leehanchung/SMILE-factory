@@ -195,3 +195,57 @@ async def test_safe_fetch_rejects_unsupported_encoding(encoding):
     async with _client(handler) as c:
         with pytest.raises(UnsafeURLError, match="content-encoding"):
             await safe_fetch("http://public.example/", client=c)
+
+
+_TEXT = b"hello world " * 100
+
+
+@pytest.mark.parametrize(
+    "encoding,stream",
+    [
+        ("gzip", gzip.compress(_TEXT)[:-8]),  # missing gzip trailer
+        ("gzip", gzip.compress(_TEXT)[:-20]),  # missing final block
+        ("deflate", zlib.compress(_TEXT)[:-6]),
+        ("deflate", _raw_deflate(_TEXT)[:-4]),
+    ],
+)
+async def test_safe_fetch_rejects_truncated_compressed_body(encoding, stream):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=Body(stream), headers={"content-encoding": encoding})
+
+    async with _client(handler) as c:
+        with pytest.raises(UnsafeURLError, match="truncated compressed body"):
+            await safe_fetch("http://public.example/", client=c)
+
+
+async def test_safe_fetch_allows_empty_body_with_content_encoding():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(204, stream=Body(b""), headers={"content-encoding": "gzip"})
+
+    async with _client(handler) as c:
+        res = await safe_fetch("http://public.example/", client=c)
+    assert res.status_code == 204 and res.content == b""
+
+
+@pytest.mark.parametrize("status", [300, 304])
+async def test_safe_fetch_returns_3xx_without_location(status):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, stream=Body(b"choices"))
+
+    async with _client(handler) as c:
+        res = await safe_fetch("http://public.example/", client=c)
+    assert res.status_code == status and res.content == b"choices"
+
+
+async def test_safe_fetch_does_not_follow_300_with_location():
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(str(request.url))
+        return httpx.Response(
+            300, stream=Body(b"pick one"), headers={"location": "http://127.0.0.1/"}
+        )
+
+    async with _client(handler) as c:
+        res = await safe_fetch("http://public.example/", client=c)
+    assert res.status_code == 300 and calls == ["http://public.example/"]

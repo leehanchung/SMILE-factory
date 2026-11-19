@@ -184,6 +184,7 @@ class _BoundedDecoder:
         self.max_bytes = max_bytes
         self.size = 0
         self.eof = False
+        self._fed = False  # any compressed bytes seen (empty bodies are fine)
         self._raw_fallback = encoding == "deflate"
         self._d = None
         if encoding in ("gzip", "x-gzip"):
@@ -203,6 +204,7 @@ class _BoundedDecoder:
         if self._d is None:
             self._emit(data, body)
             return
+        self._fed = True
         buf = data
         while buf and not self.eof:
             try:
@@ -227,6 +229,11 @@ class _BoundedDecoder:
             except zlib.error as e:
                 raise UnsafeURLError(f"invalid compressed body: {e}") from None
             self._emit(out, body)
+            self.eof = self._d.eof
+            if self._fed and not self.eof:
+                # flush() returns partial output without raising when the
+                # stream lacks its final block or gzip trailer.
+                raise UnsafeURLError("truncated compressed body")
 
 
 def _content_encoding(headers: httpx.Headers) -> str:
@@ -260,11 +267,10 @@ async def _fetch(
             follow_redirects=False,
             headers={"Accept-Encoding": ACCEPT_ENCODING},
         ) as resp:
-            if resp.is_redirect:
-                location = resp.headers.get("location")
-                if not location:
-                    raise UnsafeURLError("redirect without Location header")
-                current = urljoin(current, location)
+            # Only 301/302/303/307/308 with a Location are followed; other 3xx
+            # (e.g. 300 without Location) are ordinary responses with a body.
+            if resp.has_redirect_location:
+                current = urljoin(current, resp.headers["location"])
                 continue
             declared = resp.headers.get("content-length")
             if declared and declared.isdigit() and int(declared) > max_bytes:
