@@ -147,7 +147,7 @@ async def _run(settings: Settings) -> None:
     client, session_manager = create_bot(settings)
     await session_manager.connect()
     try:
-        await client.start(settings.discord_bot_token)
+        await client.start(settings.discord_bot_token.get_secret_value())
     finally:
         await session_manager.close()
 

@@ -4,19 +4,19 @@ version = "0.1.0"
 description = "Discord bot that dispatches Claude Code tasks to Modal sandboxes"
 requires-python = ">=3.14"
 dependencies = [
-    "aiosqlite>=0.20",
-    "discord.py>=2.4,<3",
-    "modal>=1.0",
-    "pydantic>=2.0,<3",
-    "pydantic-settings>=2.0,<3",
-    "structlog>=24.0",
+    "aiosqlite>=0.22",
+    "discord.py>=2.7,<3",
+    "modal>=1.6",
+    "pydantic>=2.14,<3",
+    "pydantic-settings>=2.14.2,<3",
+    "structlog>=26.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.15",
-    "pytest>=8.0",
-    "pytest-asyncio>=0.24",
+    "ruff>=0.17",
+    "pytest>=9.0",
+    "pytest-asyncio>=1.5",
     "pytest-timeout>=2.3",
 ]
 
@@ -37,12 +37,16 @@ packages = ["src/delulu_discord"]
 # which treats it as a Python 2 SyntaxError and reverts every run.
 target-version = "py313"
 line-length = 100
+# ruff >=0.17 also formats fenced code in Markdown; the prd/ docs hold
+# illustrative pseudocode stubs, so keep them out of format/lint.
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 markers = [
     "integration: marks tests that call deployed Modal functions",
