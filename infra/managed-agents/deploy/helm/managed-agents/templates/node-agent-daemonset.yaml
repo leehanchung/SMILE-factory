@@ -47,6 +47,11 @@ spec:
               value: {{ .Values.orchestrator.nodeAgent.logsRoot }}
             - name: REDIS_URL
               value: {{ include "managed-agents.redis.url" . }}
+            - name: NODE_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.orchestrator.nodeAgent.tokenSecret }}
+                  key: {{ .Values.orchestrator.nodeAgent.tokenSecretKey }}
           resources:
             {{- toYaml .Values.orchestrator.nodeAgent.resources | nindent 12 }}
           securityContext:
@@ -66,13 +71,13 @@ spec:
               mountPath: {{ .Values.orchestrator.nodeAgent.logsRoot }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: http
             initialDelaySeconds: 3
             periodSeconds: 5

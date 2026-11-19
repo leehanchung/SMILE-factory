@@ -3,7 +3,7 @@
 # Build:
 #   docker build -f harnesses/aider.Dockerfile -t managed-agents-aider:latest .
 
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1
