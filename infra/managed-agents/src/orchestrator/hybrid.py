@@ -16,6 +16,7 @@ Horizontal scaling = add more workers (any hardware profile).
 
 import asyncio
 import logging
+import os
 import time
 from typing import AsyncIterator, Optional
 
@@ -53,8 +54,13 @@ class HybridOrchestrator(BaseOrchestrator):
         k8s_daemonset_name: str = "node-agent",
         health_check_interval: int = 10,
         scheduling_strategy: str = "bin_pack",
+        node_agent_token: str | None = None,
     ) -> None:
         self.redis_url = redis_url
+        # Shared secret for the node agents' bearer auth (see node_agent.py).
+        self._node_agent_token = (
+            node_agent_token if node_agent_token is not None else os.getenv("NODE_AGENT_TOKEN", "")
+        ).strip()
         self.discovery_mode = discovery_mode
         self.k8s_namespace = k8s_namespace
         self.k8s_daemonset_name = k8s_daemonset_name
@@ -75,7 +81,15 @@ class HybridOrchestrator(BaseOrchestrator):
         if self._redis is None:
             self._redis = aioredis.from_url(self.redis_url)
         if self._http is None:
-            self._http = httpx.AsyncClient(timeout=10.0)
+            headers = {}
+            if self._node_agent_token:
+                headers["Authorization"] = f"Bearer {self._node_agent_token}"
+            else:
+                logger.warning(
+                    "NODE_AGENT_TOKEN is not set; node agents will reject requests "
+                    "unless they run with NODE_AGENT_INSECURE_DEV=1"
+                )
+            self._http = httpx.AsyncClient(timeout=10.0, headers=headers)
         if self._health_task is None:
             self._health_task = asyncio.create_task(self._health_poll_loop())
 

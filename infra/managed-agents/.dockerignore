@@ -1,0 +1,35 @@
+# Build context for all images is this directory (see Makefile `docker build ... .`),
+# so this file -- not docker/.dockerignore -- is the one Docker applies.
+# Keeps local secrets and caches out of `COPY . /app/` layers.
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+sessions.yaml
+!examples/sessions.yaml
+
+# VCS
+.git
+.gitignore
+
+# Python caches / venvs
+__pycache__
+*.py[cod]
+.venv
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local artifacts
+logs/
+*.ext4
+.DS_Store

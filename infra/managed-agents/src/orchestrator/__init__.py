@@ -79,6 +79,7 @@ def create_orchestrator(
             discovery_mode=kwargs.get("discovery_mode", "k8s"),
             k8s_namespace=kwargs.get("k8s_namespace", "managed-agents"),
             k8s_daemonset_name=kwargs.get("k8s_daemonset_name", "node-agent"),
+            node_agent_token=kwargs.get("node_agent_token"),
         )
 
     else:
