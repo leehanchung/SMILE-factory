@@ -40,16 +40,25 @@ network stack. ~125ms boot, ~5MB memory overhead.
 ## Quick Start
 
 ```bash
-# 1. Local dev (postgres + redis)
-cd docker && docker compose up -d
+# 0. Shared secrets first: the services (including the compose `api`
+#    service) fail closed without them; see "Authentication"
+export MANAGED_AGENTS_API_KEYS="$(openssl rand -hex 32)"
+export NODE_AGENT_TOKEN="$(openssl rand -hex 32)"
 
-# 2. Start the API
-cd .. && uvicorn src.api.main:app --port 8000
+# 1. Local dev dependencies only (postgres + redis); the compose `api`
+#    service would also bind :8000 and collide with step 2
+cd docker && docker compose up -d postgres redis
 
-# 3. Start a worker node agent
-ORCHESTRATOR_BACKEND=hybrid \
+# 2. Start the API (sends NODE_AGENT_TOKEN to the workers)
+cd .. && ORCHESTRATOR_BACKEND=hybrid \
 ORCHESTRATOR_WORKER_ADDRESSES=http://localhost:9090 \
+uvicorn src.api.main:app --port 8000
+
+# 3. Start a worker node agent (checks NODE_AGENT_TOKEN)
 uvicorn src.orchestrator.node_agent:app --port 9090
+
+# Call the API
+curl -H "x-api-key: $MANAGED_AGENTS_API_KEYS" http://localhost:8000/v1/agents
 
 # 4. Build rootfs for a harness and launch
 python -m src.orchestrator.rootfs_builder --harness claude-code
@@ -101,6 +110,23 @@ managed-agents/
 | POST | `/v1/sessions/{id}/events` | Send events (messages, tool results) |
 | GET | `/v1/sessions/{id}/stream` | SSE event stream |
 
+### Authentication
+
+| Env var | Service | Purpose |
+|---------|---------|---------|
+| `MANAGED_AGENTS_API_KEYS` | API | Comma-separated keys. Every `/v1/*` route (except `/v1/health`) needs `x-api-key: <key>` or `Authorization: Bearer <key>`. |
+| `MANAGED_AGENTS_INSECURE_DEV` | API | `1` lets the API run without keys (local dev only). |
+| `NODE_AGENT_TOKEN` | API + node agent | Shared secret; the orchestrator sends `Authorization: Bearer <token>` and node agents require it on every endpoint except `/healthz`. |
+| `NODE_AGENT_INSECURE_DEV` | node agent | `1` lets the node agent run without a token (local dev only). |
+| `NODE_AGENT_ALLOWED_RUNTIMES` | node agent | Runtimes a session may request (default `firecracker,gvisor`). A request can never pick a runtime weaker than its harness's default. |
+| `NODE_AGENT_ALLOWED_IMAGE_PREFIXES` | node agent | Registry prefixes allowed for harness `image` overrides (default: none). |
+| `ROOTFS_ROOT` | node agent | Harness `rootfs_path` overrides must resolve inside this directory. |
+
+Both services fail closed: without their secret (and without the matching
+`*_INSECURE_DEV=1` opt-out) they refuse to start. The Helm chart reads the
+secrets from existing Kubernetes Secrets (`auth.apiKeysSecret`,
+`orchestrator.nodeAgent.tokenSecret`).
+
 ### Worker Node Agent (port 9090, internal)
 
 | Method | Path | Description |
@@ -110,6 +136,7 @@ managed-agents/
 | GET | `/sessions/{id}/logs` | Stream VM console log |
 | GET | `/harnesses` | Available harnesses + rootfs status |
 | GET | `/health` | Worker capabilities |
+| GET | `/healthz` | Liveness probe (unauthenticated) |
 
 ## Built-in Harnesses
 
