@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +12,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # ── Discord ──────────────────────────────────────────────
-    discord_bot_token: str
+    # SecretStr keeps the token out of repr()/logs/tracebacks; unwrap
+    # with .get_secret_value() only at the point of use.
+    discord_bot_token: SecretStr
 
     # ── Modal ────────────────────────────────────────────────
     modal_volume_name: str = "claude-workspaces"
