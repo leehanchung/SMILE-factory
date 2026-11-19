@@ -5,13 +5,20 @@ FROM python:3.14-slim
 
 WORKDIR /app
 
-# Install uv for fast dependency resolution
-RUN pip install uv
+# uv for installing from the lockfile. Copied from the official image,
+# pinned by version AND digest so the build is reproducible and can't
+# pick up a tampered/unreviewed release. Bump both together.
+COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /uvx /bin/
 
 # Copy project files
 COPY pyproject.toml uv.lock .python-version ./
 COPY src/ src/
-RUN uv pip install --system .
+# Install the exact, audited versions pinned in uv.lock (runtime deps only),
+# then the project itself without re-resolving its dependencies.
+RUN uv export --frozen --no-hashes --no-emit-project -o /tmp/requirements.txt \
+    && uv pip install --system --no-cache -r /tmp/requirements.txt \
+    && uv pip install --system --no-cache --no-deps . \
+    && rm /tmp/requirements.txt
 
 # Persistent state directory. The Makefile's ``restart`` target
 # mounts the named Docker volume ``disco-data`` here so the bot's
