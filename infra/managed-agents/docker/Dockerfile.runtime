@@ -6,7 +6,7 @@
 #
 # Includes: Claude Code CLI, Bun (Discord MCP server), Python, Node.js, Go
 
-FROM ubuntu:22.04 AS base
+FROM ubuntu:24.04 AS base
 
 LABEL org.opencontainers.image.title="Managed Agents Runtime"
 LABEL org.opencontainers.image.description="Claude Code + Discord runtime for managed-agents sessions"
@@ -27,55 +27,70 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim nano less jq zip unzip \
     # Build tools (for native npm/pip packages)
     build-essential pkg-config \
-    # Python
-    python3.11 python3-pip python3-venv \
-    # Node.js 20.x (LTS)
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    # Python (3.12 on Ubuntu 24.04)
+    python3 python3-pip python3-venv \
     # Go
-    && apt-get install -y golang-go \
+    golang-go \
     # Networking
-    netcat dnsutils \
+    netcat-openbsd dnsutils \
     # Shell
     bash zsh \
+    # pgrep for HEALTHCHECK
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# Bun (required by Discord MCP server plugin)
+# Node.js 24 LTS + Bun -- copied from the official images instead of piping
+# install scripts (NodeSource, bun.sh) into bash.
 # ---------------------------------------------------------------------------
-RUN curl -fsSL https://bun.sh/install | bash
-ENV BUN_INSTALL="/root/.bun"
-ENV PATH="$BUN_INSTALL/bin:$PATH"
+COPY --from=node:24-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+COPY --from=oven/bun:1.4.4-slim /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s bun /usr/local/bin/bunx
 
 # ---------------------------------------------------------------------------
 # Claude Code CLI
 # ---------------------------------------------------------------------------
-# Install via npm (official distribution channel)
-RUN npm install -g @anthropic-ai/claude-code
+# Install via npm (official distribution channel); pinned for reproducible builds
+ARG CLAUDE_CODE_VERSION=2.1.327
+RUN npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 
 # ---------------------------------------------------------------------------
 # Discord plugin pre-install
 # ---------------------------------------------------------------------------
 # Pre-install the Discord plugin so sessions don't need network for setup.
 # The plugin is an MCP server that runs alongside Claude Code.
-RUN mkdir -p /opt/claude-plugins && \
-    cd /opt/claude-plugins && \
-    git clone --depth 1 https://github.com/anthropics/claude-plugins-official.git && \
-    cd claude-plugins-official/external_plugins/discord && \
+# Pinned to a commit for reproducible, reviewable builds; bump deliberately.
+ARG CLAUDE_PLUGINS_REF=e6143c9807a001832badb63e89d58ffe25d542ec
+RUN mkdir -p /opt/claude-plugins/claude-plugins-official && \
+    cd /opt/claude-plugins/claude-plugins-official && \
+    git init -q && \
+    git remote add origin https://github.com/anthropics/claude-plugins-official.git && \
+    git fetch -q --depth 1 origin "${CLAUDE_PLUGINS_REF}" && \
+    git checkout -q --detach FETCH_HEAD && \
+    test "$(git rev-parse HEAD)" = "${CLAUDE_PLUGINS_REF}" && \
+    cd external_plugins/discord && \
     bun install --frozen-lockfile
 
 # ---------------------------------------------------------------------------
 # Python packages (common utilities for agent workspaces)
 # ---------------------------------------------------------------------------
-RUN python3 -m pip install --upgrade pip setuptools wheel && \
-    python3 -m pip install --no-cache-dir \
-    asyncio aiohttp httpx beautifulsoup4 \
+# Ubuntu 24.04's system Python is externally managed (PEP 668), so use a venv.
+# (The PyPI "asyncio" package is an obsolete 3.3-era backport; asyncio is stdlib.)
+RUN python3 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    /opt/venv/bin/pip install --no-cache-dir \
+    aiohttp httpx beautifulsoup4 \
     numpy pandas requests pydantic pyyaml
+ENV PATH="/opt/venv/bin:$PATH"
 
 # ---------------------------------------------------------------------------
 # Node.js global packages
 # ---------------------------------------------------------------------------
-RUN npm install -g typescript ts-node
+# Pinned: ts-node 10.x is compatible with TypeScript 5.x (not the 7.x native port).
+RUN npm install -g typescript@5.9.3 ts-node@10.9.2
 
 # ---------------------------------------------------------------------------
 # Go workspace
@@ -88,11 +103,6 @@ ENV GOPATH=/home/agent/go \
 # Non-root user
 # ---------------------------------------------------------------------------
 RUN groupadd -r agent && useradd -r -g agent -m -d /home/agent agent
-
-# Move Bun to agent-accessible location
-RUN cp -r /root/.bun /home/agent/.bun && \
-    chown -R agent:agent /home/agent/.bun
-ENV BUN_INSTALL="/home/agent/.bun"
 
 # Create directories
 RUN mkdir -p /app /workspace /home/agent/.claude/channels/discord && \
@@ -112,8 +122,10 @@ ENV CLAUDE_PLUGINS_DIR="/opt/claude-plugins/claude-plugins-official/external_plu
 
 USER agent
 
+# Healthy while the session process (Claude Code, or the legacy agent loop) is
+# alive. Exec form, so pgrep never matches a wrapping shell's command line.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:15000/health 2>/dev/null || true
+    CMD ["pgrep", "-f", "claude|src\\.runtime\\.agent_loop"]
 
 # Default: Claude Code with Discord channel
 # Override with: docker run ... python3 -m src.runtime.agent_loop (legacy mode)

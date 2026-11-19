@@ -1,6 +1,6 @@
 # Agent runtime dependencies
-anthropic>=0.18.0
-openai>=1.3.0
-redis>=5.0.0
-httpx>=0.24.0
-beautifulsoup4>=4.12.0
+anthropic>=2.10.0
+openai>=3.55.0
+redis>=8.1.0
+httpx>=0.28.1
+beautifulsoup4>=4.15.0
