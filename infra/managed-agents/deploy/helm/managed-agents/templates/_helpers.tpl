@@ -76,7 +76,7 @@ PostgreSQL database URL
 */}}
 {{- define "managed-agents.postgres.url" -}}
 {{- if .Values.postgresql.enabled }}
-{{- printf "postgresql://%s:%s@%s-postgresql:5432/%s" .Values.postgresql.auth.username .Values.postgresql.auth.password (include "managed-agents.fullname" .) .Values.postgresql.auth.database }}
+{{- printf "postgresql+asyncpg://%s:%s@%s-postgresql:5432/%s" .Values.postgresql.auth.username .Values.postgresql.auth.password (include "managed-agents.fullname" .) .Values.postgresql.auth.database }}
 {{- else }}
 {{- .Values.externalPostgres.url }}
 {{- end }}

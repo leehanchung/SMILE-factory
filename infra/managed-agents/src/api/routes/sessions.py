@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_db, get_k8s_client
+from src.api.deps import get_db, get_orchestrator
 from src.api.models import (
     Agent,
     AgentRef,
@@ -88,7 +88,7 @@ def _serialize_session(session_dict: dict) -> Session:
 async def create_session(
     req: SessionCreate,
     db: AsyncSession = Depends(get_db),
-    k8s_client=Depends(get_k8s_client),
+    orchestrator=Depends(get_orchestrator),
 ) -> Session:
     """Create a new Session.
 
@@ -109,8 +109,7 @@ async def create_session(
             detail=f"Agent {agent_id} not found",
         )
 
-    # TODO: Create K8s Job via k8s_client.create_job(job_spec)
-    # k8s_job_name = await k8s_client.create_job({...})
+    # TODO: Launch via orchestrator.create_session(...)
 
     session_dict = {
         "id": session_id,
@@ -230,7 +229,7 @@ async def archive_session(
 async def delete_session(
     session_id: str,
     db: AsyncSession = Depends(get_db),
-    k8s_client=Depends(get_k8s_client),
+    orchestrator=Depends(get_orchestrator),
 ) -> None:
     """Delete a session and its associated Kubernetes Job."""
     if session_id not in _sessions_store:
@@ -239,7 +238,7 @@ async def delete_session(
             detail=f"Session {session_id} not found",
         )
 
-    # TODO: Delete K8s Job via k8s_client.delete_job(job_name)
+    # TODO: Tear down via orchestrator.terminate_session(session_id)
     # TODO: Hard delete from database
 
     del _sessions_store[session_id]
