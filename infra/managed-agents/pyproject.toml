@@ -8,68 +8,70 @@ readme = "README.md"
 packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 
 # Web framework and server
-fastapi = "^0.104.0"
-uvicorn = {version = "^0.24.0", extras = ["standard"]}
-pydantic = "^2.4.0"
-pydantic-settings = "^2.0.0"
+fastapi = ">=0.163.0,<1.0"
+uvicorn = {version = ">=0.54.0,<1.0", extras = ["standard"]}
+pydantic = "^2.14.0"
+pydantic-settings = "^2.16.0"
 
 # Database
-sqlalchemy = {version = "^2.0.0", extras = ["asyncio"]}
-asyncpg = "^0.29.0"  # PostgreSQL async driver
-alembic = "^1.13.0"  # Database migrations
+sqlalchemy = {version = "^2.1.0", extras = ["asyncio"]}
+asyncpg = ">=0.32.0,<1.0"  # PostgreSQL async driver
+alembic = "^1.20.0"  # Database migrations
 
 # Caching and task queues
-redis = "^5.0.0"
-aioredis = "^2.0.1"
+redis = "^8.1.0"  # use redis.asyncio; aioredis is abandoned and broken on 3.11+
 
 # HTTP client
-httpx = "^0.25.0"
-aiohttp = "^3.9.0"
+httpx = ">=0.28.1,<1.0"
+aiohttp = "^3.14.5"
 
 # LLM integrations
-anthropic = "^0.25.0"
-openai = "^1.3.0"  # For vLLM compatibility
+anthropic = "^2.10.0"
+openai = "^3.55.0"  # For vLLM compatibility
 
 # Kubernetes client
-kubernetes-asyncio = "^28.0.0"
+kubernetes-asyncio = ">=36.1.0"
 
 # System monitoring (for node agent)
-psutil = "^5.9.0"
+psutil = "^7.2.0"
 
 # Utilities
-beautifulsoup4 = "^4.12.0"
+beautifulsoup4 = "^4.15.0"
 html5lib = "^1.1"
-python-dotenv = "^1.0.0"
-click = "^8.1.0"
+python-dotenv = "^1.2.4"
+click = "^8.5.0"
+pyyaml = "^6.0.3"  # used by src/runtime/launcher.py
 
 # Logging and observability
-python-json-logger = "^2.0.0"
-structlog = "^24.1.0"
+python-json-logger = "^4.2.0"
+structlog = ">=26.1.0"
 
 # Async utilities
 asyncio-contextmanager = "^1.0.0"
-tenacity = "^8.2.0"  # Retry logic
+tenacity = "^9.2.0"  # Retry logic
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-pytest-asyncio = "^0.21.0"
-pytest-cov = "^4.1.0"
-httpx = "^0.25.0"  # For test client
-black = "^23.11.0"
-ruff = "^0.1.0"
-mypy = "^1.7.0"
-isort = "^5.12.0"
+pytest = "^9.2.0"
+pytest-asyncio = "^1.5.0"
+pytest-cov = "^7.1.0"
+httpx = ">=0.28.1,<1.0"  # For test client
+black = "^26.10.0"
+ruff = ">=0.17.5,<0.18"
+mypy = "^2.4.0"
+isort = "^9.0.0"
 
 [tool.black]
 line-length = 100
-target-version = ['py311']
+target-version = ["py312"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "RUF"]
 ignore = ["E501"]  # Line too long (handled by black)
 
@@ -78,7 +80,7 @@ profile = "black"
 line_length = 100
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -86,6 +88,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "-v --cov=src --cov-report=term-missing"
 

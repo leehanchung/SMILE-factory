@@ -12,7 +12,7 @@ services:
       # PostgreSQL configuration for development
       POSTGRES_INITDB_ARGS: "-c shared_buffers=256MB -c max_connections=200"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"  # dev credentials: never expose beyond localhost
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -28,7 +28,7 @@ services:
     image: redis:7-alpine
     container_name: managed-agents-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"  # no auth: never expose beyond localhost
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
@@ -43,18 +43,22 @@ services:
   # API Server (local development)
   api:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile.api
     container_name: managed-agents-api
     environment:
       # Database
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/managed_agents
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/managed_agents
       # Redis
       REDIS_URL: redis://redis:6379
       # LLM Configuration
       LLM_DEFAULT_BACKEND: anthropic
       LLM_ANTHROPIC_MODEL: claude-3-5-sonnet-20241022
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # API auth: comma-separated keys for x-api-key / Authorization: Bearer.
+      # The API refuses to start without keys unless MANAGED_AGENTS_INSECURE_DEV=1.
+      MANAGED_AGENTS_API_KEYS: ${MANAGED_AGENTS_API_KEYS:-}
+      MANAGED_AGENTS_INSECURE_DEV: ${MANAGED_AGENTS_INSECURE_DEV:-0}
       # Session configuration
       SESSION_NAMESPACE: managed-agents-sessions
       SESSION_MAX_CONCURRENT: 50
@@ -71,12 +75,12 @@ services:
         condition: service_healthy
     volumes:
       # Mount source code for hot-reload (development only)
-      - ./src:/app/src
-      - ./logs:/app/logs
+      - ../src:/app/src
+      - ../logs:/app/logs
     networks:
       - managed-agents
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)"]
       interval: 30s
       timeout: 5s
       retries: 3
