@@ -50,7 +50,9 @@ AGENT_ENV_KEYS = frozenset({
     "TMPDIR", "TMP", "TEMP", "__CF_USER_TEXT_ENCODING",
     "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_RUNTIME_DIR",
     "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy",
-    "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS", "RUST_LOG",
+    # Non-secret trust-store paths, so corporate-CA setups keep working for every client.
+    "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS", "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE",
+    "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "RUST_LOG",
 })
 AGENT_ENV_PREFIXES = ("LC_", "OPENAI_", "CODEX_")
 

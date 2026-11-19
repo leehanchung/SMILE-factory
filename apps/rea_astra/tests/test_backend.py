@@ -156,12 +156,14 @@ class BackendCase(unittest.TestCase):
     def test_agent_env_is_allowlisted(self):
         source = {"PATH": "/bin", "HOME": "/home/u", "LANG": "C.UTF-8", "LC_ALL": "C", "TMPDIR": "/tmp",
                   "OPENAI_API_KEY": "sk-fixture", "OPENAI_BASE_URL": "https://example.invalid", "CODEX_HOME": "/c",
-                  "HTTPS_PROXY": "http://proxy", "SSL_CERT_FILE": "/ca.pem",
+                  "HTTPS_PROXY": "http://proxy", "SSL_CERT_FILE": "/ca.pem", "REQUESTS_CA_BUNDLE": "/ca.pem",
+                  "CURL_CA_BUNDLE": "/ca.pem", "GIT_SSL_CAINFO": "/ca.pem",
                   "ANTHROPIC_API_KEY": "x", "AWS_SECRET_ACCESS_KEY": "x", "GH_TOKEN": "x", "GITHUB_TOKEN": "x",
                   "GOOGLE_APPLICATION_CREDENTIALS": "x", "HF_TOKEN": "x", "DATABASE_URL": "x", "MODAL_TOKEN_SECRET": "x",
                   "SLACK_BOT_TOKEN": "x", "AZURE_OPENAI_API_KEY": "x", "DISCORD_TOKEN": "x", "PYTHONPATH": "/evil"}
         self.assertEqual(sorted(agent_env(source)), sorted(["PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "OPENAI_API_KEY",
-                                                            "OPENAI_BASE_URL", "CODEX_HOME", "HTTPS_PROXY", "SSL_CERT_FILE"]))
+                                                            "OPENAI_BASE_URL", "CODEX_HOME", "HTTPS_PROXY", "SSL_CERT_FILE",
+                                                            "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "GIT_SSL_CAINFO"]))
         self.assertEqual(agent_env(source)["OPENAI_API_KEY"], "sk-fixture")
         self.assertEqual(agent_env({}), {})
 
