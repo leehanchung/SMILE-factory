@@ -9,7 +9,7 @@ from itertools import pairwise
 from pathlib import Path
 from unittest import mock
 
-from backend.runner import RunManager, agent_env, redact
+from backend.runner import AGENT_ENV_KEYS, AGENT_ENV_PREFIXES, RunManager, agent_env, redact
 from backend.store import Store
 
 SUCCESS = r'''
@@ -160,7 +160,8 @@ class BackendCase(unittest.TestCase):
                   "CURL_CA_BUNDLE": "/ca.pem", "GIT_SSL_CAINFO": "/ca.pem",
                   "ANTHROPIC_API_KEY": "x", "AWS_SECRET_ACCESS_KEY": "x", "GH_TOKEN": "x", "GITHUB_TOKEN": "x",
                   "GOOGLE_APPLICATION_CREDENTIALS": "x", "HF_TOKEN": "x", "DATABASE_URL": "x", "MODAL_TOKEN_SECRET": "x",
-                  "SLACK_BOT_TOKEN": "x", "AZURE_OPENAI_API_KEY": "x", "DISCORD_TOKEN": "x", "PYTHONPATH": "/evil"}
+                  "SLACK_BOT_TOKEN": "x", "AZURE_OPENAI_API_KEY": "x", "DISCORD_TOKEN": "x", "PYTHONPATH": "/evil",
+                  "OPENAI_WEBHOOK_SECRET": "x", "OPENAI_ADMIN_KEY": "x", "CODEX_ADMIN_TOKEN": "x"}
         self.assertEqual(sorted(agent_env(source)), sorted(["PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "OPENAI_API_KEY",
                                                             "OPENAI_BASE_URL", "CODEX_HOME", "HTTPS_PROXY", "SSL_CERT_FILE",
                                                             "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "GIT_SSL_CAINFO"]))
@@ -170,7 +171,8 @@ class BackendCase(unittest.TestCase):
     def test_agent_subprocess_receives_only_allowlisted_env(self):
         source = 'import json, os, pathlib; pathlib.Path("env.json").write_text(json.dumps(sorted(os.environ)))\n' + SUCCESS
         with mock.patch.dict(os.environ, {"HF_TOKEN": "leak", "DATABASE_URL": "leak", "AWS_SECRET_ACCESS_KEY": "leak",
-                                          "CODEX_HOME": "/codex-home", "OPENAI_API_KEY": "sk-fixture"}):
+                                          "CODEX_HOME": "/codex-home", "OPENAI_API_KEY": "sk-fixture",
+                                          "OPENAI_WEBHOOK_SECRET": "leak", "CODEX_ADMIN_TOKEN": "leak"}):
             runner = self.runner(source)
             run = runner.start(self.thread["id"], "Dump env", search=False)
             result = runner.wait(run["id"], 10)
@@ -179,12 +181,12 @@ class BackendCase(unittest.TestCase):
             names = set(json.loads(stream.read()))
         self.assertIn("CODEX_HOME", names)
         self.assertIn("OPENAI_API_KEY", names)
-        self.assertTrue({"HF_TOKEN", "DATABASE_URL", "AWS_SECRET_ACCESS_KEY"}.isdisjoint(names), names)
+        self.assertTrue({"HF_TOKEN", "DATABASE_URL", "AWS_SECRET_ACCESS_KEY", "OPENAI_WEBHOOK_SECRET",
+                         "CODEX_ADMIN_TOKEN"}.isdisjoint(names), names)
         # Python may add a few interpreter-specific variables of its own (e.g. __PYVENV_LAUNCHER__ on macOS).
-        allowed = {"PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "TERM", "TZ", "TMPDIR", "TMP", "TEMP"}
-        unexpected = {n for n in names if n not in allowed and not n.startswith(("LC_", "OPENAI_", "CODEX_", "XDG_", "__"))
-                      and n.upper() not in {"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"}
-                      and n not in {"SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS", "RUST_LOG"}}
+        # Derive the accepted set from the allowlist itself so the test stays portable to environments
+        # (e.g. corporate proxies) that set REQUESTS_CA_BUNDLE and friends.
+        unexpected = {n for n in names if n not in AGENT_ENV_KEYS and not n.startswith((*AGENT_ENV_PREFIXES, "__"))}
         self.assertEqual(unexpected, set())
 
 

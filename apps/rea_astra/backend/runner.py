@@ -52,9 +52,15 @@ AGENT_ENV_KEYS = frozenset({
     "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy",
     # Non-secret trust-store paths, so corporate-CA setups keep working for every client.
     "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS", "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE",
-    "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "RUST_LOG",
+    "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CODEX_CA_CERTIFICATE", "RUST_LOG",
+    # Codex CLI auth/config. Enumerated explicitly (no OPENAI_*/CODEX_* prefix
+    # match) so unrelated provider secrets such as OPENAI_WEBHOOK_SECRET or admin
+    # keys never reach the agent.
+    "CODEX_HOME", "CODEX_API_KEY", "OPENAI_API_KEY", "OPENAI_BASE_URL",
+    "OPENAI_ORG_ID", "OPENAI_ORGANIZATION", "OPENAI_PROJECT",
 })
-AGENT_ENV_PREFIXES = ("LC_", "OPENAI_", "CODEX_")
+# Locale categories only (LC_ALL, LC_CTYPE, ...): never secrets.
+AGENT_ENV_PREFIXES = ("LC_",)
 
 
 def agent_env(source=None):
