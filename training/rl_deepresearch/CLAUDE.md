@@ -6,7 +6,7 @@ two functions. Do not vendor or fork slime.
 ## The integration in one paragraph
 
 slime (Megatron train + SGLang rollout, bridged by a Ray Data Buffer) runs as a
-**Docker image** (`slimerl/slime:latest`). It calls our code by CLI flag:
+**Docker image** (`slimerl/slime`, pinned by digest via `SLIME_IMAGE` in the Makefile). It calls our code by CLI flag:
 `--custom-generate-function-path plugins.rollout.generate` (the rollout, which
 drives the shared `dr_agent` agent loop) and `--custom-rm-path
 plugins.reward.reward_func` (a shim to the `dr_agent` reward registry). Both reuse
