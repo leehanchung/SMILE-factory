@@ -3,7 +3,7 @@
 # Stage 2: Runtime (minimal image)
 
 # Stage 1: Build dependencies and install app
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 # Install system dependencies for building
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -11,21 +11,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Install Poetry outside the app venv so it is not shipped in the runtime image
+ARG POETRY_VERSION=2.4.0
+RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
 
-# Copy pyproject.toml and install dependencies
+# Create virtual environment; VIRTUAL_ENV makes Poetry install into it
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    VIRTUAL_ENV=/opt/venv \
+    POETRY_VIRTUALENVS_CREATE=false
+
+# Copy pyproject.toml + lock and install main dependencies only
 COPY pyproject.toml poetry.lock* /tmp/
 WORKDIR /tmp
-RUN pip install --no-cache-dir poetry && \
-    poetry install --no-dev --no-root && \
-    pip install --no-cache-dir poetry
+RUN poetry install --only main --no-root --no-interaction --no-ansi
 
 # ============================================================================
 # Stage 2: Runtime image
 # ============================================================================
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Set labels for image metadata
 LABEL org.opencontainers.image.title="Managed Agents API"
@@ -63,9 +67,9 @@ RUN mkdir -p /app/logs /app/tmp && \
 # Switch to non-root user
 USER appuser
 
-# Health check
+# Health check (curl is not installed in the slim runtime image)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)" || exit 1
 
 # Expose port
 EXPOSE 8000
