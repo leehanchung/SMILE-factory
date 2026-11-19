@@ -1,12 +1,30 @@
 """Dependency injection for database, Redis, orchestrator, and other services."""
 
+import asyncio
 import os
 from typing import AsyncGenerator
 
 import redis.asyncio as aioredis
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.orchestrator import BaseOrchestrator, create_orchestrator
+
+READINESS_TIMEOUT_SECONDS = 2.0
+
+
+def normalize_database_url(url: str) -> str:
+    """Point a bare PostgreSQL URL at the asyncpg driver.
+
+    ``create_async_engine`` needs an async dialect, but Helm and most tooling
+    emit ``postgresql://`` (or ``postgres://``). URLs that already name a
+    driver (``postgresql+asyncpg://``, ``sqlite+aiosqlite://``, ...) pass
+    through unchanged.
+    """
+    for prefix in ("postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+asyncpg://" + url[len(prefix) :]
+    return url
 
 
 # Global instances
@@ -28,7 +46,9 @@ async def init_deps(
     )
     redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
 
-    _db_engine = create_async_engine(database_url, echo=False, pool_size=20, max_overflow=10)
+    _db_engine = create_async_engine(
+        normalize_database_url(database_url), echo=False, pool_size=20, max_overflow=10
+    )
     _session_factory = async_sessionmaker(_db_engine, class_=AsyncSession, expire_on_commit=False)
     _redis_client = aioredis.from_url(redis_url)
 
@@ -45,6 +65,33 @@ async def init_deps(
         ),
         discovery_mode=os.getenv("ORCHESTRATOR_DISCOVERY_MODE", "k8s"),
     )
+
+
+async def _ping_postgres() -> None:
+    async with _db_engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
+
+
+async def _ping_redis() -> None:
+    await _redis_client.ping()
+
+
+async def check_deps(timeout: float = READINESS_TIMEOUT_SECONDS) -> dict[str, str]:
+    """Probe PostgreSQL and Redis; return ``{name: error}`` for each one that failed."""
+    if _db_engine is None or _redis_client is None:
+        return {"deps": "not initialized"}
+    checks = {"postgres": _ping_postgres, "redis": _ping_redis}
+    results = await asyncio.gather(
+        *(asyncio.wait_for(check(), timeout) for check in checks.values()),
+        return_exceptions=True,
+    )
+    failures: dict[str, str] = {}
+    for name, result in zip(checks, results):
+        if isinstance(result, BaseException):
+            failures[name] = (
+                "timeout" if isinstance(result, asyncio.TimeoutError) else type(result).__name__
+            )
+    return failures
 
 
 async def close_deps() -> None:
