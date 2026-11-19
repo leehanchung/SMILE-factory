@@ -32,3 +32,8 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "C", "B"]
 ignore = ["E501", "B008", "C901"]
+
+[tool.uv]
+# Floor transitive deps above known-vulnerable releases
+# (anyio PYSEC-2026-4023/4024/4025, certifi PYSEC-2026-4320).
+constraint-dependencies = ["anyio>=4.14.2", "certifi>=2026.10.18"]
