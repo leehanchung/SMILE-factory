@@ -1,7 +1,10 @@
 # Node agent: runs on worker nodes, manages bubblewrap-sandboxed sessions.
 # Requires bubblewrap installed on the host or in the image.
+# Runs as root on purpose: it manages sandboxes / microVMs (namespaces, /dev/kvm).
+# Requires NODE_AGENT_TOKEN (bearer auth; refuses to start without it). Still never
+# expose :9090 beyond the cluster network.
 
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bubblewrap \
@@ -10,22 +13,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY pyproject.toml poetry.lock* ./
 
-RUN pip install --no-cache-dir poetry && \
+ARG POETRY_VERSION=2.4.0
+RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}" && \
     poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --only main
+    poetry install --no-interaction --no-ansi --only main --no-root
 
 COPY src/ ./src/
 
 # ---
 
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bubblewrap \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app /app
 

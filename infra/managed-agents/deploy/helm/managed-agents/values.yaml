@@ -105,6 +105,15 @@ runtime:
 # ============================================================================
 # LLM Backend Configuration
 # ============================================================================
+# Control-plane API authentication (required: the API refuses to start without keys).
+# Create the Secret out of band, e.g.:
+#   kubectl create secret generic managed-agents-api-keys \
+#     --from-literal=api-keys="$(openssl rand -hex 32)"
+auth:
+  # Existing Secret with comma-separated keys, exposed as MANAGED_AGENTS_API_KEYS
+  apiKeysSecret: managed-agents-api-keys
+  apiKeysSecretKey: api-keys
+
 llm:
   # Default backend: "anthropic" or "vllm"
   defaultBackend: anthropic
@@ -235,6 +244,14 @@ orchestrator:
 
     # Port for the node agent HTTP API
     port: 9090
+
+    # Existing Secret with the shared bearer token (NODE_AGENT_TOKEN) the
+    # orchestrator presents to node agents. Required: node agents refuse to
+    # start without it. e.g.
+    #   kubectl create secret generic managed-agents-node-agent-token \
+    #     --from-literal=token="$(openssl rand -hex 32)"
+    tokenSecret: managed-agents-node-agent-token
+    tokenSecretKey: token
 
     # Max sessions per worker node
     maxSessions: 20

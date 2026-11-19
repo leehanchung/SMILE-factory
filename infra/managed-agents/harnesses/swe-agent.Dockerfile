@@ -7,7 +7,7 @@
 # Build:
 #   docker build -f harnesses/swe-agent.Dockerfile -t managed-agents-swe-agent:latest .
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1
@@ -19,10 +19,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq vim less \
     && rm -rf /var/lib/apt/lists/*
 
-# Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Node.js 24 LTS -- copied from the official image
+# instead of piping the NodeSource setup script into bash.
+COPY --from=node:24-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Install SWE-agent
 RUN pip install --no-cache-dir swe-agent
