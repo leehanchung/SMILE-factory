@@ -11,6 +11,8 @@ require any change in the agent or the trainer.
 Security:
 - Optional shared secret: when ``SEARCH_SERVER_TOKEN`` is set, every endpoint
   except ``/health`` requires ``Authorization: Bearer <token>``.
+- Request bodies over ``MAX_REQUEST_BYTES`` are refused (413) by an ASGI
+  middleware before routing, auth or JSON parsing.
 - ``/visit`` URLs are model-chosen; they are SSRF-checked (``url_guard``) before
   any fetch, and the implementation must fetch via ``url_guard.safe_fetch``.
 """
@@ -33,6 +35,7 @@ from search_server.url_guard import (
 
 MAX_QUERY_LENGTH = 2048
 MAX_TOP_K = 100
+MAX_REQUEST_BYTES = 64 * 1024
 
 TOKEN_ENV = "SEARCH_SERVER_TOKEN"
 
@@ -53,7 +56,76 @@ def require_token(authorization: str | None = Header(default=None)) -> None:
         )
 
 
+class BodySizeLimitMiddleware:
+    """Pure-ASGI guard: refuse request bodies over `max_bytes` with 413.
+
+    Runs before routing, auth and FastAPI's body parsing, which would otherwise
+    read and JSON-decode an arbitrarily large body before the bearer-token
+    dependency or the Pydantic field bounds could reject it. A declared
+    ``Content-Length`` over the limit is refused without reading anything; a
+    chunked body is buffered only up to the limit, then replayed to the app.
+    """
+
+    def __init__(self, app, max_bytes: int) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        for name, value in scope.get("headers", []):
+            if name == b"content-length":
+                try:
+                    declared = int(value)
+                except ValueError:
+                    await self._reject(send, 400, b"invalid Content-Length")
+                    return
+                if declared > self.max_bytes:
+                    await self._reject(send, 413, b"request body too large")
+                    return
+        body = bytearray()
+        while True:
+            message = await receive()
+            if message["type"] != "http.request":  # client disconnected
+                return
+            body.extend(message.get("body", b""))
+            if len(body) > self.max_bytes:
+                await self._reject(send, 413, b"request body too large")
+                return
+            if not message.get("more_body", False):
+                break
+        replayed = False
+
+        async def replay():
+            nonlocal replayed
+            if not replayed:
+                replayed = True
+                return {"type": "http.request", "body": bytes(body), "more_body": False}
+            return await receive()
+
+        await self.app(scope, replay, send)
+
+    @staticmethod
+    async def _reject(send, status_code: int, detail: bytes) -> None:
+        payload = b'{"detail":"' + detail + b'"}'
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status_code,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(payload)).encode()),
+                    (b"connection", b"close"),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": payload})
+
+
 app = FastAPI(title="search-server")
+# Every request body is tiny JSON (query/url <= 2048 chars); 64 KiB is ample.
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=MAX_REQUEST_BYTES)
 api = APIRouter(dependencies=[Depends(require_token)])
 
 

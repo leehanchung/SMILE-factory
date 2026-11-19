@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from search_server.server import app
+from search_server.server import MAX_REQUEST_BYTES, app
 
 
 @pytest.fixture
@@ -97,3 +97,28 @@ def test_token_accepted(client, monkeypatch, path):
 def test_health_never_needs_token(client, monkeypatch):
     monkeypatch.setenv("SEARCH_SERVER_TOKEN", "s3cret")
     assert client.get("/health").json() == {"status": "ok"}
+
+
+def test_oversized_declared_body_rejected_before_auth(client, monkeypatch):
+    monkeypatch.setenv("SEARCH_SERVER_TOKEN", "s3cret")
+    big = b'{"query":"' + b"x" * (MAX_REQUEST_BYTES + 1) + b'"}'
+    r = client.post("/search", content=big, headers={"content-type": "application/json"})
+    assert r.status_code == 413  # not 401: refused before the token dependency
+
+
+def test_oversized_chunked_body_rejected(client):
+    def gen():
+        for _ in range(MAX_REQUEST_BYTES // 1024 + 2):
+            yield b"x" * 1024
+
+    r = client.post("/search", content=gen(), headers={"content-type": "application/json"})
+    assert r.status_code == 413
+
+
+def test_small_chunked_body_still_reaches_handler(client):
+    def gen():
+        yield b'{"query":'
+        yield b'"q"}'
+
+    r = client.post("/search", content=gen(), headers={"content-type": "application/json"})
+    assert r.status_code == 500  # stub reached

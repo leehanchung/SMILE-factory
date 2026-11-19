@@ -6,6 +6,16 @@ import pytest
 from search_server.url_guard import UnsafeURLError, safe_fetch, validate_url
 
 
+class Body(httpx.AsyncByteStream):
+    """Unread streaming body (`content=` would be pre-read, unlike the network)."""
+
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+
+    async def __aiter__(self):
+        yield self.data
+
+
 @pytest.mark.parametrize(
     "url",
     [
@@ -85,7 +95,7 @@ def _client(handler) -> httpx.AsyncClient:
 
 async def test_safe_fetch_public_ok():
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, content=b"hello")
+        return httpx.Response(200, stream=Body(b"hello"))
 
     async with _client(handler) as c:
         res = await safe_fetch("http://public.example/", client=c)
@@ -97,7 +107,7 @@ async def test_safe_fetch_follows_safe_redirect():
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/start":
             return httpx.Response(302, headers={"location": "/end"})
-        return httpx.Response(200, content=b"done")
+        return httpx.Response(200, stream=Body(b"done"))
 
     async with _client(handler) as c:
         res = await safe_fetch("http://public.example/start", client=c)
