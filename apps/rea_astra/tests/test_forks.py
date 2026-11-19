@@ -67,7 +67,9 @@ class ForkTests(unittest.TestCase):
         copied_run = self.store.list_runs(target)[0]
         self.assertNotEqual(copied_run["id"], source_run["id"])
         self.assertIsNone(copied_run["provider_thread_id"])
-        self.assertEqual(self.hosted.get_meta(target)["fork_run_provenance"][copied_run["id"]]["source_run_id"], source_run["id"])
+        self.assertEqual(
+            self.hosted.get_meta(target)["fork_run_provenance"][copied_run["id"]]["source_run_id"], source_run["id"]
+        )
         self.assertEqual(self.store.file_path(target, "result.txt").read_text(), "12")
         self.store.file_path(self.parent, "result.txt").write_text("source changed")
         self.assertEqual(self.store.file_path(target, "result.txt").read_text(), "12")
@@ -96,7 +98,15 @@ class ForkTests(unittest.TestCase):
     def test_fork_experiments_copy_actual_files_and_completed_state_privately(self):
         self.run_source()
         self.hosted.set_meta(self.parent, plan={"plan_id": "approved"}, plan_phase="review")
-        exp = self.hosted.experiments.launch(self.workspace, {"session_uuid": self.parent, "plan_id": "approved", "title": "Compute sum", "body": "Execute sum and write report.md."})
+        exp = self.hosted.experiments.launch(
+            self.workspace,
+            {
+                "session_uuid": self.parent,
+                "plan_id": "approved",
+                "title": "Compute sum",
+                "body": "Execute sum and write report.md.",
+            },
+        )
         run = self.hosted.experiments.latest_run(exp)
         finished = self.runner.wait(run["id"], timeout=10)
         self.hosted.experiments.on_finish(finished)

@@ -16,7 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rea", default=os.environ.get("REA", shutil.which("rea")))
-    parser.add_argument("--include-renderer", action="store_true", help="May exceed REA's per-source time budget; partial evidence is retained")
+    parser.add_argument(
+        "--include-renderer",
+        action="store_true",
+        help="May exceed REA's per-source time budget; partial evidence is retained",
+    )
     args = parser.parse_args()
     if not args.rea:
         parser.error("Provide --rea /absolute/path/to/rea (or REA environment variable). See docs/method.md.")
@@ -40,7 +44,9 @@ def main():
         (output / "progress.jsonl").open("w") as progress,
     ):
         completed = subprocess.run(command, cwd=working, stdout=result, stderr=progress, check=False)
-    (output / "run.json").write_text(json.dumps({"command": command, "exit_code": completed.returncode}, indent=2) + "\n")
+    (output / "run.json").write_text(
+        json.dumps({"command": command, "exit_code": completed.returncode}, indent=2) + "\n"
+    )
     print(f"REA exit {completed.returncode}; saved complete output to {output}")
     return completed.returncode
 

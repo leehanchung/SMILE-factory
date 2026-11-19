@@ -1,8 +1,9 @@
 # Ruff config for rea_astra (no pyproject.toml: the app is stdlib-only).
-# Picked up by the repo's pre-commit ruff hook (v0.17.5) for apps/**.py.
+# Picked up by the repo's pre-commit ruff hooks (`ruff` + `ruff-format`) for
+# apps/**.py; checked clean with ruff 0.15.10 (main's hook rev) and 0.17.5.
 # Lint uses ruff's default rule set. The code base is deliberately dense
 # (long single-line expressions), so line length is not linted (E501 is not in
-# the default set); 120 only guides `ruff format` if it is ever applied.
+# the default set); 120 is the `ruff format` width.
 target-version = "py311"  # hashlib.file_digest, datetime.UTC
 line-length = 120
 extend-exclude = ["*.md"]
@@ -14,7 +15,9 @@ extend-exclude = ["*.md"]
 #   server/thread.
 # - TRY004: validators raise ValueError for bad input types because HTTP
 #   handlers map ValueError to a 400; switching to TypeError changes behaviour.
-ignore = ["BLE001", "TRY004"]
+# - E701/E731: compact one-line `if x: return y` guards and small named lambdas
+#   are part of the dense house style (older ruff releases flag them by default).
+ignore = ["BLE001", "TRY004", "E701", "E731"]
 
 [lint.flake8-bugbear]
 extend-immutable-calls = ["pathlib.PurePosixPath"]

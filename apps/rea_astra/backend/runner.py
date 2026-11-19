@@ -29,13 +29,24 @@ If a tool or service is unavailable, report that failure honestly. Do not substi
 
 def redact(value):
     if isinstance(value, dict):
-        return {key: ("[redacted]" if re.search(r"^(access_token|refresh_token|api_key|authorization)$", key, re.IGNORECASE) else redact(item)) for key, item in value.items()}
+        return {
+            key: (
+                "[redacted]"
+                if re.search(r"^(access_token|refresh_token|api_key|authorization)$", key, re.IGNORECASE)
+                else redact(item)
+            )
+            for key, item in value.items()
+        }
     if isinstance(value, list):
         return [redact(item) for item in value]
     if isinstance(value, str):
         value = re.sub(r"\bBearer\s+[A-Za-z0-9._~+/-]+=*", "Bearer [redacted]", value, flags=re.IGNORECASE)
         value = re.sub(r"\bsk-[A-Za-z0-9_-]{16,}", "[redacted-api-key]", value)
-        value = re.sub(r"(?i)((?:OPENAI_API_KEY|ANTHROPIC_API_KEY|ACCESS_TOKEN|REFRESH_TOKEN)\s*[=:]\s*)[^\s\"']+", r"\1[redacted]", value)
+        value = re.sub(
+            r"(?i)((?:OPENAI_API_KEY|ANTHROPIC_API_KEY|ACCESS_TOKEN|REFRESH_TOKEN)\s*[=:]\s*)[^\s\"']+",
+            r"\1[redacted]",
+            value,
+        )
     return value
 
 
@@ -45,20 +56,55 @@ def redact(value):
 # every command it runs. Codex itself only needs a working process environment,
 # its own config/auth home (CODEX_HOME, default ~/.codex), OpenAI API settings
 # when API-key auth is used, and network/TLS settings for corporate proxies.
-AGENT_ENV_KEYS = frozenset({
-    "PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "TERM", "TZ",
-    "TMPDIR", "TMP", "TEMP", "__CF_USER_TEXT_ENCODING",
-    "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_RUNTIME_DIR",
-    "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy",
-    # Non-secret trust-store paths, so corporate-CA setups keep working for every client.
-    "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS", "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE",
-    "GIT_SSL_CAINFO", "GIT_SSL_CAPATH", "CODEX_CA_CERTIFICATE", "RUST_LOG",
-    # Codex CLI auth/config. Enumerated explicitly (no OPENAI_*/CODEX_* prefix
-    # match) so unrelated provider secrets such as OPENAI_WEBHOOK_SECRET or admin
-    # keys never reach the agent.
-    "CODEX_HOME", "CODEX_API_KEY", "OPENAI_API_KEY", "OPENAI_BASE_URL",
-    "OPENAI_ORG_ID", "OPENAI_ORGANIZATION", "OPENAI_PROJECT",
-})
+AGENT_ENV_KEYS = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "SHELL",
+        "LANG",
+        "TERM",
+        "TZ",
+        "TMPDIR",
+        "TMP",
+        "TEMP",
+        "__CF_USER_TEXT_ENCODING",
+        "XDG_CONFIG_HOME",
+        "XDG_CACHE_HOME",
+        "XDG_DATA_HOME",
+        "XDG_STATE_HOME",
+        "XDG_RUNTIME_DIR",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "NO_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+        "no_proxy",
+        # Non-secret trust-store paths, so corporate-CA setups keep working for every client.
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "NODE_EXTRA_CA_CERTS",
+        "REQUESTS_CA_BUNDLE",
+        "CURL_CA_BUNDLE",
+        "GIT_SSL_CAINFO",
+        "GIT_SSL_CAPATH",
+        "CODEX_CA_CERTIFICATE",
+        "RUST_LOG",
+        # Codex CLI auth/config. Enumerated explicitly (no OPENAI_*/CODEX_* prefix
+        # match) so unrelated provider secrets such as OPENAI_WEBHOOK_SECRET or admin
+        # keys never reach the agent.
+        "CODEX_HOME",
+        "CODEX_API_KEY",
+        "OPENAI_API_KEY",
+        "OPENAI_BASE_URL",
+        "OPENAI_ORG_ID",
+        "OPENAI_ORGANIZATION",
+        "OPENAI_PROJECT",
+    }
+)
 # Locale categories only (LC_ALL, LC_CTYPE, ...): never secrets.
 AGENT_ENV_PREFIXES = ("LC_",)
 
@@ -71,8 +117,13 @@ def agent_env(source=None):
 
 def provider_status(executable="codex"):
     binary = shutil.which(executable)
-    result = {"provider": "codex", "installed": bool(binary), "authenticated": False,
-              "auth_method": "unknown", "capabilities": ["coding", "research", "files", "web_search", "streaming", "cancel"]}
+    result = {
+        "provider": "codex",
+        "installed": bool(binary),
+        "authenticated": False,
+        "auth_method": "unknown",
+        "capabilities": ["coding", "research", "files", "web_search", "streaming", "cancel"],
+    }
     if not binary:
         return result
     try:
@@ -96,8 +147,16 @@ class Handle:
 
 
 class RunManager:
-    def __init__(self, store, timeout_seconds=600, command_factory=None, max_output_bytes=16 * 1024 * 1024,
-                 max_concurrent=2, on_run_finished=None, executable="codex"):
+    def __init__(
+        self,
+        store,
+        timeout_seconds=600,
+        command_factory=None,
+        max_output_bytes=16 * 1024 * 1024,
+        max_concurrent=2,
+        on_run_finished=None,
+        executable="codex",
+    ):
         self.store = store
         self.timeout_seconds = timeout_seconds
         self.command_factory = command_factory
@@ -131,7 +190,12 @@ class RunManager:
             run = self.store.create_run(thread_id, prompt, model=model, auto_research=auto_research)
             handle = Handle(thread_id=thread_id)
             self._handles[run["id"]] = handle
-            handle.worker = threading.Thread(target=self._run, args=(run, thread, prompt, instructions, search, handle), daemon=True, name=f"research-{run['id']}")
+            handle.worker = threading.Thread(
+                target=self._run,
+                args=(run, thread, prompt, instructions, search, handle),
+                daemon=True,
+                name=f"research-{run['id']}",
+            )
             handle.worker.start()
         return run
 
@@ -221,14 +285,22 @@ class RunManager:
         root = self.store.thread_path(thread_id)
         count = 0
         for directory, dirs, names in os.walk(root, followlinks=False):
-            dirs[:] = [name for name in dirs if not name.startswith(".") and name not in {"node_modules", "__pycache__", "venv"} and not (Path(directory) / name).is_symlink()]
+            dirs[:] = [
+                name
+                for name in dirs
+                if not name.startswith(".")
+                and name not in {"node_modules", "__pycache__", "venv"}
+                and not (Path(directory) / name).is_symlink()
+            ]
             for name in names:
                 path = Path(directory) / name
                 if name.startswith(".") or path.is_symlink() or path.suffix in {".pyc"}:
                     continue
                 count += 1
                 if count > 500:
-                    self.store.add_event(run_id, "artifact.warning", {"message": "Artifact inventory limited to 500 files"})
+                    self.store.add_event(
+                        run_id, "artifact.warning", {"message": "Artifact inventory limited to 500 files"}
+                    )
                     return
                 relative = path.relative_to(root).as_posix()
                 try:
@@ -262,16 +334,35 @@ class RunManager:
             workspace.mkdir(parents=True, exist_ok=True)
             argv = self._command(run, thread, workspace, search)
             self.store.update_run(run_id, status="running", started_at=now())
-            self.store.add_event(run_id, "run.started", {"run_id": run_id, "provider": "codex", "model": run["model"] or "default", "auto_research": bool(run["auto_research"]), "sandbox": "workspace-write"})
+            self.store.add_event(
+                run_id,
+                "run.started",
+                {
+                    "run_id": run_id,
+                    "provider": "codex",
+                    "model": run["model"] or "default",
+                    "auto_research": bool(run["auto_research"]),
+                    "sandbox": "workspace-write",
+                },
+            )
             env = agent_env()
-            process = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                       cwd=workspace, env=env, start_new_session=True, bufsize=0)
+            process = subprocess.Popen(
+                argv,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=workspace,
+                env=env,
+                start_new_session=True,
+                bufsize=0,
+            )
             with self._lock:
                 handle.process = process
             full_prompt = DEFAULT_INSTRUCTIONS + "\n" + instructions + "\n\nUser request:\n" + prompt
             if not run["auto_research"]:
                 full_prompt += "\n\nAuto-research is disabled: gather only evidence needed to propose a plan; do not run a substantial experiment until explicitly approved."
             data = full_prompt.encode()
+
             def write_input():
                 try:
                     remaining = memoryview(data)
@@ -281,8 +372,10 @@ class RunManager:
                     process.stdin.close()
                 except (BrokenPipeError, OSError, ValueError):
                     pass
+
             threading.Thread(target=write_input, daemon=True).start()
             output_queue = queue.Queue(maxsize=256)
+
             def enqueue(item):
                 while not stop_readers.is_set():
                     try:
@@ -290,6 +383,7 @@ class RunManager:
                         return
                     except queue.Full:
                         continue
+
             def drain(stream, source):
                 try:
                     while True:
@@ -301,7 +395,11 @@ class RunManager:
                     pass
                 finally:
                     enqueue((source, None))
-            readers = [threading.Thread(target=drain, args=(process.stdout, "stdout"), daemon=True), threading.Thread(target=drain, args=(process.stderr, "stderr"), daemon=True)]
+
+            readers = [
+                threading.Thread(target=drain, args=(process.stdout, "stdout"), daemon=True),
+                threading.Thread(target=drain, args=(process.stderr, "stderr"), daemon=True),
+            ]
             for reader in readers:
                 reader.start()
             deadline = time.monotonic() + self.timeout_seconds
@@ -345,7 +443,11 @@ class RunManager:
                     self.store.update_run(run_id, provider_thread_id=event["thread_id"])
                 elif kind == "item.completed":
                     item = event.get("item", {})
-                    if isinstance(item, dict) and item.get("type") == "agent_message" and isinstance(item.get("text"), str):
+                    if (
+                        isinstance(item, dict)
+                        and item.get("type") == "agent_message"
+                        and isinstance(item.get("text"), str)
+                    ):
                         final_messages[item.get("id", str(len(final_messages)))] = item["text"]
                 elif kind == "turn.completed":
                     completed, usage = True, event.get("usage")
@@ -387,8 +489,14 @@ class RunManager:
                         except OSError:
                             pass
             final_text = "\n\n".join(final_messages.values())
-            self.store.finish_run(run_id, terminal, final_text=final_text, error=error, return_code=return_code, usage=usage)
-            self.store.add_event(run_id, "run.finished", {"run_id": run_id, "status": terminal, "error": error, "return_code": return_code, "usage": usage})
+            self.store.finish_run(
+                run_id, terminal, final_text=final_text, error=error, return_code=return_code, usage=usage
+            )
+            self.store.add_event(
+                run_id,
+                "run.finished",
+                {"run_id": run_id, "status": terminal, "error": error, "return_code": return_code, "usage": usage},
+            )
             try:
                 if self.on_run_finished:
                     try:

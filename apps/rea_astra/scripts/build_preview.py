@@ -37,14 +37,16 @@ def build(project=PROJECT):
     )
     if count != 1:
         raise SystemExit("Expected exactly one renderer CSP; refusing an ambiguous preview build.")
-    html = html.replace('<script type="module"', '<script type="module" src="/bridge.js"></script>\n    <script type="module"', 1)
+    html = html.replace(
+        '<script type="module"', '<script type="module" src="/bridge.js"></script>\n    <script type="module"', 1
+    )
     (shell / "index.html").write_text(html)
     shutil.copy2(bridge, preview / "bridge.js")
     shutil.copytree(workspace, preview / "workspace", dirs_exist_ok=True)
     (preview / "index.html").write_text(
         '<!doctype html><html lang="en"><meta charset="utf-8">'
         '<meta http-equiv="refresh" content="0;url=/workspace/">'
-        '<title>REA Astra offline preview</title>'
+        "<title>REA Astra offline preview</title>"
         '<a href="/workspace/">Open workspace reconstruction</a> · '
         '<a href="/shell/">Open recovered desktop shell</a></html>\n'
     )

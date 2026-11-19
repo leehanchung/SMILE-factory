@@ -92,12 +92,16 @@ class ExperimentService:
     def event(self, exp, kind, **payload):
         data = {"eid": exp["eid"], **payload}
         with self.store.connect() as db:
-            db.execute("INSERT INTO hosted_experiment_events(workspace,kind,payload,created_at) VALUES (?,?,?,?)",
-                       (exp["workspace"], kind, json.dumps(data), now()))
+            db.execute(
+                "INSERT INTO hosted_experiment_events(workspace,kind,payload,created_at) VALUES (?,?,?,?)",
+                (exp["workspace"], kind, json.dumps(data), now()),
+            )
 
     def events(self, workspace, after=0):
-        rows = self.store._all("SELECT * FROM hosted_experiment_events WHERE workspace=? AND id>? ORDER BY id LIMIT 500",
-                               (workspace, max(0, int(after))))
+        rows = self.store._all(
+            "SELECT * FROM hosted_experiment_events WHERE workspace=? AND id>? ORDER BY id LIMIT 500",
+            (workspace, max(0, int(after))),
+        )
         for row in rows:
             row["payload"] = json.loads(row["payload"])
         return rows
@@ -110,30 +114,56 @@ class ExperimentService:
         run = self.latest_run(exp)
         if not run:
             return "stopped"
-        return {"queued": "running", "running": "running", "completed": "completed",
-                "cancelled": "stopped", "interrupted": "stopped", "failed": "failed"}[run["status"]]
+        return {
+            "queued": "running",
+            "running": "running",
+            "completed": "completed",
+            "cancelled": "stopped",
+            "interrupted": "stopped",
+            "failed": "failed",
+        }[run["status"]]
 
     def checkpoints(self, exp):
-        return [json.loads(row["data"]) for row in self.store._all(
-            "SELECT data FROM hosted_checkpoints WHERE eid=? ORDER BY sequence", (exp["eid"],))]
+        return [
+            json.loads(row["data"])
+            for row in self.store._all(
+                "SELECT data FROM hosted_checkpoints WHERE eid=? ORDER BY sequence", (exp["eid"],)
+            )
+        ]
 
     def row(self, exp):
         points = self.checkpoints(exp)
         last = points[-1] if points else {}
         status = self.status(exp)
-        return {"eid": exp["eid"], "display_label": exp["display_label"], "number": exp["display_label"],
-                "title": exp["title"], "created_at": exp["created_at"], "status": status,
-                "experiment_kind": "research", "outcome": exp.get("outcome"), "eta": None,
-                "dispatched_by": exp["parent"], "thread_id": exp["parent"],
-                "user_id": "local:dev",
-                "worker_alive": status == "running", "checkpoint_count": len(points),
-                "last_summary": last.get("summary"), "last_seq": last.get("sequence", 0),
-                "allowed_actions": ["stop"] if status == "running" else ["resume", "rename", "delete"],
-                "fabric_id": "local"}
+        return {
+            "eid": exp["eid"],
+            "display_label": exp["display_label"],
+            "number": exp["display_label"],
+            "title": exp["title"],
+            "created_at": exp["created_at"],
+            "status": status,
+            "experiment_kind": "research",
+            "outcome": exp.get("outcome"),
+            "eta": None,
+            "dispatched_by": exp["parent"],
+            "thread_id": exp["parent"],
+            "user_id": "local:dev",
+            "worker_alive": status == "running",
+            "checkpoint_count": len(points),
+            "last_summary": last.get("summary"),
+            "last_seq": last.get("sequence", 0),
+            "allowed_actions": ["stop"] if status == "running" else ["resume", "rename", "delete"],
+            "fabric_id": "local",
+        }
 
     def rows(self, workspace):
-        return [self.row(exp) for exp in self.store._all(
-            "SELECT * FROM hosted_experiments WHERE workspace=? AND deleted=0 AND archived=0 ORDER BY display_label DESC", (workspace,))]
+        return [
+            self.row(exp)
+            for exp in self.store._all(
+                "SELECT * FROM hosted_experiments WHERE workspace=? AND deleted=0 AND archived=0 ORDER BY display_label DESC",
+                (workspace,),
+            )
+        ]
 
     def states(self, parent):
         result = {}
@@ -153,7 +183,9 @@ class ExperimentService:
         try:
             while time.monotonic() < deadline and not self.hosted.closed.is_set():
                 for event in self.events(workspace, after):
-                    h.wfile.write(f"event: {event['kind']}\nid: {event['id']}\ndata: {json.dumps(event['payload'])}\n\n".encode())
+                    h.wfile.write(
+                        f"event: {event['kind']}\nid: {event['id']}\ndata: {json.dumps(event['payload'])}\n\n".encode()
+                    )
                     after = event["id"]
                 h.wfile.write(b": keepalive\n\n")
                 h.wfile.flush()
@@ -164,19 +196,43 @@ class ExperimentService:
     def _checkpoint(self, exp, kind, summary, body, run_id=None):
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            if run_id and db.execute("SELECT 1 FROM hosted_checkpoints WHERE eid=? AND run_id=?", (exp["eid"], run_id)).fetchone():
+            if (
+                run_id
+                and db.execute(
+                    "SELECT 1 FROM hosted_checkpoints WHERE eid=? AND run_id=?", (exp["eid"], run_id)
+                ).fetchone()
+            ):
                 return None
-            sequence = db.execute("SELECT COALESCE(MAX(sequence),0)+1 FROM hosted_checkpoints WHERE eid=?", (exp["eid"],)).fetchone()[0]
+            sequence = db.execute(
+                "SELECT COALESCE(MAX(sequence),0)+1 FROM hosted_checkpoints WHERE eid=?", (exp["eid"],)
+            ).fetchone()[0]
             files = self.store.list_files(exp["worker"])
-            point = {"feed_id": f"chk_{sequence:03}", "category": "checkpoint", "type": kind,
-                     "sequence": sequence, "timestamp": now(), "title": summary[:200],
-                     "summary": summary, "body": body,
-                     "artifacts": [{"path": self.virtual_path(item), "title": item["path"]} for item in files],
-                     "visualizations": []}
-            db.execute("INSERT INTO hosted_checkpoints VALUES (?,?,?,?)", (exp["eid"], sequence, run_id, json.dumps(point)))
+            point = {
+                "feed_id": f"chk_{sequence:03}",
+                "category": "checkpoint",
+                "type": kind,
+                "sequence": sequence,
+                "timestamp": now(),
+                "title": summary[:200],
+                "summary": summary,
+                "body": body,
+                "artifacts": [{"path": self.virtual_path(item), "title": item["path"]} for item in files],
+                "visualizations": [],
+            }
+            db.execute(
+                "INSERT INTO hosted_checkpoints VALUES (?,?,?,?)", (exp["eid"], sequence, run_id, json.dumps(point))
+            )
         self._snapshot_files(exp, sequence)
-        self.event(exp, "checkpoint", sequence=sequence, checkpoint_type=kind, summary=summary,
-                   body=body, timestamp=point["timestamp"], rendered=True)
+        self.event(
+            exp,
+            "checkpoint",
+            sequence=sequence,
+            checkpoint_type=kind,
+            summary=summary,
+            body=body,
+            timestamp=point["timestamp"],
+            rendered=True,
+        )
         return point
 
     def _snapshot_files(self, exp, sequence):
@@ -189,8 +245,10 @@ class ExperimentService:
                     continue
                 except (OSError, ValueError, UnicodeDecodeError):
                     text = None
-                db.execute("INSERT OR REPLACE INTO hosted_file_snapshots VALUES (?,?,?,?,?)",
-                           (exp["eid"], sequence, item["path"], text, item["sha256"]))
+                db.execute(
+                    "INSERT OR REPLACE INTO hosted_file_snapshots VALUES (?,?,?,?,?)",
+                    (exp["eid"], sequence, item["path"], text, item["sha256"]),
+                )
 
     def launch(self, workspace, body):
         features = getattr(self.hosted, "thread_features", None)
@@ -199,7 +257,9 @@ class ExperimentService:
 
     def _launch(self, workspace, body):
         if body.get("max_gpus") is not None and body["max_gpus"] != 0:
-            raise ValueError("GPU execution is unavailable in this local CPU workspace. Set max_gpus to 0 or connect a GPU executor before launching.")
+            raise ValueError(
+                "GPU execution is unavailable in this local CPU workspace. Set max_gpus to 0 or connect a GPU executor before launching."
+            )
         parent = body.get("session_uuid")
         thread = self.store.get_thread(parent)
         if not thread or thread["workspace_id"] != workspace:
@@ -221,15 +281,26 @@ class ExperimentService:
             raise ValueError("This proposal is no longer awaiting approval; reload the current plan")
         eid = "exp_0" + uuid.uuid4().hex[:25]
         worker_model = "" if thread["worker_model"] == "codex-default" else thread["worker_model"]
-        worker = self.store.create_thread(workspace, title, planner_model=worker_model, worker_model=worker_model,
-                                          thread_id="th_0" + uuid.uuid4().hex[:25])
+        worker = self.store.create_thread(
+            workspace,
+            title,
+            planner_model=worker_model,
+            worker_model=worker_model,
+            thread_id="th_0" + uuid.uuid4().hex[:25],
+        )
         with self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            label = db.execute("SELECT COALESCE(MAX(display_label),0)+1 FROM hosted_experiments WHERE workspace=?", (workspace,)).fetchone()[0]
-            db.execute("INSERT INTO hosted_experiments(eid,workspace,parent,worker,plan_id,title,body,display_label,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-                       (eid, workspace, parent, worker["id"], plan_id, title.strip()[:200], plan, label, now()))
+            label = db.execute(
+                "SELECT COALESCE(MAX(display_label),0)+1 FROM hosted_experiments WHERE workspace=?", (workspace,)
+            ).fetchone()[0]
+            db.execute(
+                "INSERT INTO hosted_experiments(eid,workspace,parent,worker,plan_id,title,body,display_label,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+                (eid, workspace, parent, worker["id"], plan_id, title.strip()[:200], plan, label, now()),
+            )
         exp = self.get(eid)
-        self.hosted.set_meta(worker["id"], kind="worker", workspace=workspace, thread_id=worker["id"], parent=parent, eid=eid)
+        self.hosted.set_meta(
+            worker["id"], kind="worker", workspace=workspace, thread_id=worker["id"], parent=parent, eid=eid
+        )
         for item in self.store.list_files(parent):
             if not item["path"].startswith(("uploads/", "source-")):
                 continue
@@ -243,10 +314,17 @@ class ExperimentService:
             self.store.register_file(worker["id"], item["path"], kind="attachment")
         self._snapshot_files(exp, 0)
         self._checkpoint(exp, "plan", title.strip(), plan)
-        context = "\n\n".join(message["role"] + ": " + message["content"] for message in self.store.list_messages(parent))[-20000:]
+        context = "\n\n".join(
+            message["role"] + ": " + message["content"] for message in self.store.list_messages(parent)
+        )[-20000:]
         prompt = f"Approved plan: {title}\n\n{plan}\n\nParent conversation context:\n{context}"
         try:
-            self.runner.start(worker["id"], prompt, model="" if thread["worker_model"] == "codex-default" else thread["worker_model"], instructions=self.worker_instructions())
+            self.runner.start(
+                worker["id"],
+                prompt,
+                model="" if thread["worker_model"] == "codex-default" else thread["worker_model"],
+                instructions=self.worker_instructions(),
+            )
         except Exception:
             # A retry may start this same persisted experiment through /resume.
             self.event(exp, "status_changed", status="stopped")
@@ -259,14 +337,40 @@ class ExperimentService:
         pending = self.hosted.get_meta(parent).get("plan")
         if pending and (not plan_id or pending.get("plan_id") == plan_id):
             self.hosted.set_meta(parent, plan=None, plan_phase=None)
-        already = self.store._one("SELECT id FROM hosted_events WHERE session=? AND source=?", (parent, "accepted:" + eid))
-        self.hosted.emit(parent, "accepted:" + eid, {"type": "plan_accepted", "plan_id": plan_id,
-                         "eid": eid, "display_label": exp["display_label"], "title": exp["title"], "timestamp": now()})
-        self.hosted.emit(parent, "launched:" + eid, {"type": "plan_ready", "plan_id": plan_id,
-                         "title": exp["title"], "plan": exp["body"], "kind": "experiment", "launched": True,
-                         "experiment_eid": eid, "display_label": exp["display_label"], "timestamp": now()})
+        already = self.store._one(
+            "SELECT id FROM hosted_events WHERE session=? AND source=?", (parent, "accepted:" + eid)
+        )
+        self.hosted.emit(
+            parent,
+            "accepted:" + eid,
+            {
+                "type": "plan_accepted",
+                "plan_id": plan_id,
+                "eid": eid,
+                "display_label": exp["display_label"],
+                "title": exp["title"],
+                "timestamp": now(),
+            },
+        )
+        self.hosted.emit(
+            parent,
+            "launched:" + eid,
+            {
+                "type": "plan_ready",
+                "plan_id": plan_id,
+                "title": exp["title"],
+                "plan": exp["body"],
+                "kind": "experiment",
+                "launched": True,
+                "experiment_eid": eid,
+                "display_label": exp["display_label"],
+                "timestamp": now(),
+            },
+        )
         if not already:
-            self.event(exp, "experiment_created", **{key: value for key, value in self.row(exp).items() if key != "eid"})
+            self.event(
+                exp, "experiment_created", **{key: value for key, value in self.row(exp).items() if key != "eid"}
+            )
 
     def migrate_legacy_ids(self):
         """Explicit offline repair for early local IDs; refuses active workers.
@@ -280,15 +384,35 @@ class ExperimentService:
             rows = db.execute("SELECT eid,worker FROM hosted_experiments").fetchall()
             mapping = {row["eid"]: "exp_0" + uuid.uuid4().hex[:25] for row in rows if not valid.fullmatch(row["eid"])}
             for row in rows:
-                if row["eid"] in mapping and db.execute("SELECT 1 FROM runs WHERE thread_id=? AND status IN ('queued','running')", (row["worker"],)).fetchone():
+                if (
+                    row["eid"] in mapping
+                    and db.execute(
+                        "SELECT 1 FROM runs WHERE thread_id=? AND status IN ('queued','running')", (row["worker"],)
+                    ).fetchone()
+                ):
                     raise ValueError("Stop active experiment workers before migrating IDs")
             for old, new in mapping.items():
-                for table in ("hosted_experiments", "hosted_checkpoints", "hosted_file_snapshots", "hosted_report_versions", "hosted_report_sharing", "hosted_worker_messages"):
+                for table in (
+                    "hosted_experiments",
+                    "hosted_checkpoints",
+                    "hosted_file_snapshots",
+                    "hosted_report_versions",
+                    "hosted_report_sharing",
+                    "hosted_worker_messages",
+                ):
                     db.execute(f"UPDATE {table} SET eid=? WHERE eid=?", (new, old))
-                for table, column in (("hosted_report_versions", "id"), ("hosted_report_sharing", "revision_id"),
-                                      ("hosted_experiment_events", "payload"), ("hosted_checkpoints", "data"),
-                                      ("hosted_events", "data"), ("hosted_events", "source"), ("hosted_meta", "data")):
-                    db.execute(f"UPDATE {table} SET {column}=replace({column},?,?) WHERE instr({column},?)>0", (old, new, old))
+                for table, column in (
+                    ("hosted_report_versions", "id"),
+                    ("hosted_report_sharing", "revision_id"),
+                    ("hosted_experiment_events", "payload"),
+                    ("hosted_checkpoints", "data"),
+                    ("hosted_events", "data"),
+                    ("hosted_events", "source"),
+                    ("hosted_meta", "data"),
+                ):
+                    db.execute(
+                        f"UPDATE {table} SET {column}=replace({column},?,?) WHERE instr({column},?)>0", (old, new, old)
+                    )
             return mapping
 
     def on_finish(self, run):
@@ -301,8 +425,11 @@ class ExperimentService:
         point = self._checkpoint(exp, "completion" if succeeded else "stopped", summary, body, run["id"])
         if point:
             self.hosted.set_meta(exp["worker"], report_revision_override=None)
-            if any(item["run_id"] == run["id"] and item["path"] in {"report.md", "report.html", "index.html", "app/index.html"}
-                   for item in self.store.list_files(exp["worker"])):
+            if any(
+                item["run_id"] == run["id"]
+                and item["path"] in {"report.md", "report.html", "index.html", "app/index.html"}
+                for item in self.store.list_files(exp["worker"])
+            ):
                 self.hosted.set_meta(exp["worker"], report_deleted=False)
             self.event(exp, "status_changed", status=self.status(exp))
             self.event(exp, "worker_alive_changed", alive=False)
@@ -314,23 +441,58 @@ class ExperimentService:
                 # revision baseline. The client still needs this first event
                 # to refresh its iframe; prev_revision_id:null is supported.
                 if previous != report["revision"]:
-                    self.hosted.emit(exp["worker"], "report-revision:" + run["id"],
-                                     {"type": "artifact_revision", "revision_id": report["revision"],
-                                      "prev_revision_id": previous, "summary": "Report updated by the worker",
-                                      "changed_paths": [item["path"] for item in self.store.list_files(exp["worker"]) if item["run_id"] == run["id"]],
-                                      "delete_paths": [], "timestamp": now()})
+                    self.hosted.emit(
+                        exp["worker"],
+                        "report-revision:" + run["id"],
+                        {
+                            "type": "artifact_revision",
+                            "revision_id": report["revision"],
+                            "prev_revision_id": previous,
+                            "summary": "Report updated by the worker",
+                            "changed_paths": [
+                                item["path"]
+                                for item in self.store.list_files(exp["worker"])
+                                if item["run_id"] == run["id"]
+                            ],
+                            "delete_paths": [],
+                            "timestamp": now(),
+                        },
+                    )
                 self.hosted.set_meta(exp["worker"], last_report_revision=report["revision"])
-                self.hosted.emit(exp["parent"], "result-page:" + run["id"],
-                                 {"type": "result_page", "experiment_eid": exp["eid"],
-                                  "display_label": exp["display_label"], "title": exp["title"],
-                                  "result_file_path": report["source"], "timestamp": now()})
-            self.hosted.emit(exp["parent"], "experiment-state:" + run["id"],
-                             {"type": "experiment_completed" if succeeded else "experiment_stalled",
-                              "experiment_eid": exp["eid"], "display_label": exp["display_label"],
-                              "title": exp["title"], "timestamp": now()})
-            self.hosted.emit(exp["parent"], "experiment-result:" + run["id"],
-                             {"type": "text", "id": "result-" + run["id"], "text": f"Experiment #{exp['display_label']} — {summary}\n\n{self.hosted.render_text(exp['worker'], body)}",
-                              "experiment_eid": exp["eid"], "timestamp": now()})
+                self.hosted.emit(
+                    exp["parent"],
+                    "result-page:" + run["id"],
+                    {
+                        "type": "result_page",
+                        "experiment_eid": exp["eid"],
+                        "display_label": exp["display_label"],
+                        "title": exp["title"],
+                        "result_file_path": report["source"],
+                        "timestamp": now(),
+                    },
+                )
+            self.hosted.emit(
+                exp["parent"],
+                "experiment-state:" + run["id"],
+                {
+                    "type": "experiment_completed" if succeeded else "experiment_stalled",
+                    "experiment_eid": exp["eid"],
+                    "display_label": exp["display_label"],
+                    "title": exp["title"],
+                    "timestamp": now(),
+                },
+            )
+            self.hosted.emit(
+                exp["parent"],
+                "experiment-result:" + run["id"],
+                {
+                    "type": "text",
+                    "id": "result-" + run["id"],
+                    "text": f"Experiment #{exp['display_label']} — {summary}\n\n{self.hosted.render_text(exp['worker'], body)}",
+                    "experiment_eid": exp["eid"],
+                    "timestamp": now(),
+                },
+            )
         return True
 
     def final_response(self, run):
@@ -342,7 +504,11 @@ class ExperimentService:
                 cursor = event["id"]
                 payload = event["payload"]
                 item = payload.get("item", {})
-                if payload.get("type") == "item.completed" and item.get("type") == "agent_message" and isinstance(item.get("text"), str):
+                if (
+                    payload.get("type") == "item.completed"
+                    and item.get("type") == "agent_message"
+                    and isinstance(item.get("text"), str)
+                ):
                     last = item["text"]
             if len(events) < 1000:
                 return last or run.get("final_text", "")
@@ -381,23 +547,43 @@ class ExperimentService:
         if override:
             saved = self.store._one("SELECT * FROM hosted_report_versions WHERE id=? AND eid=?", (override, exp["eid"]))
             if saved:
-                return {"data": saved["html"], "entry": saved["entry"],
-                        "revision": saved["id"][len(exp["eid"]) + 1:], "source": saved["entry"],
-                        "archive": saved["archive"]}
+                return {
+                    "data": saved["html"],
+                    "entry": saved["entry"],
+                    "revision": saved["id"][len(exp["eid"]) + 1 :],
+                    "source": saved["entry"],
+                    "archive": saved["archive"],
+                }
         files = {item["path"]: item for item in self.store.list_files(exp["worker"])}
-        entry = next((name for name in ("index.html", "app/index.html", "report.html", "report.md")
-                      if name in files and self.store.file_path(exp["worker"], name).is_file()), None)
+        entry = next(
+            (
+                name
+                for name in ("index.html", "app/index.html", "report.html", "report.md")
+                if name in files and self.store.file_path(exp["worker"], name).is_file()
+            ),
+            None,
+        )
         if not entry:
             return None
         item, _path = self.resolve_file(entry, exp)
         data = self.read_file(item)
         if entry.endswith(".md"):
             # Escaped preformatted Markdown preserves all evidence without executing it.
-            data = ("<!doctype html><html><head><meta charset='utf-8'><title>" + html.escape(exp["title"]) +
-                    "</title><style>body{max-width:900px;margin:3rem auto;padding:0 2rem;font:16px/1.65 system-ui;color:#222;background:#faf9f6}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}</style>"
-                    "</head><body><pre data-rea-markdown='true'>" + html.escape(data.decode("utf-8", errors="replace")) + "</pre></body></html>").encode()
+            data = (
+                "<!doctype html><html><head><meta charset='utf-8'><title>"
+                + html.escape(exp["title"])
+                + "</title><style>body{max-width:900px;margin:3rem auto;padding:0 2rem;font:16px/1.65 system-ui;color:#222;background:#faf9f6}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}</style>"
+                "</head><body><pre data-rea-markdown='true'>"
+                + html.escape(data.decode("utf-8", errors="replace"))
+                + "</pre></body></html>"
+            ).encode()
         inventory = "\n".join(name + ":" + info["sha256"] for name, info in sorted(files.items())).encode()
-        return {"data": data, "entry": entry, "revision": hashlib.sha256(data + inventory).hexdigest(), "source": item["path"]}
+        return {
+            "data": data,
+            "entry": entry,
+            "revision": hashlib.sha256(data + inventory).hexdigest(),
+            "source": item["path"],
+        }
 
     @staticmethod
     def send_bytes(h, data, content_type, headers=None):
@@ -434,24 +620,55 @@ class ExperimentService:
                 data, media_type = self.read_file(item), item["media_type"]
             self.send_bytes(h, data, media_type, {"Content-Security-Policy": "sandbox"})
             return
-        self.send_bytes(h, inject_bridge(report["data"]), "text/html; charset=utf-8", {
-            "X-Silico-App-Entrypoint": report["entry"], "X-Silico-App-Revision": report["revision"],
-            "X-Silico-App-Source": report["source"], "X-Silico-App-Portable-Html": "true",
-            "X-Silico-App-Bridge": "ready-v1",
-            "Content-Security-Policy": "sandbox allow-scripts allow-modals; default-src 'none'; script-src 'unsafe-inline' 'self'; style-src 'unsafe-inline' 'self'; img-src 'self' data:; connect-src 'none'"})
+        self.send_bytes(
+            h,
+            inject_bridge(report["data"]),
+            "text/html; charset=utf-8",
+            {
+                "X-Silico-App-Entrypoint": report["entry"],
+                "X-Silico-App-Revision": report["revision"],
+                "X-Silico-App-Source": report["source"],
+                "X-Silico-App-Portable-Html": "true",
+                "X-Silico-App-Bridge": "ready-v1",
+                "Content-Security-Policy": "sandbox allow-scripts allow-modals; default-src 'none'; script-src 'unsafe-inline' 'self'; style-src 'unsafe-inline' 'self'; img-src 'self' data:; connect-src 'none'",
+            },
+        )
 
     def changeset(self, exp):
-        baseline = {row["path"]: row for row in self.store._all("SELECT * FROM hosted_file_snapshots WHERE eid=? AND sequence=0", (exp["eid"],))}
+        baseline = {
+            row["path"]: row
+            for row in self.store._all("SELECT * FROM hosted_file_snapshots WHERE eid=? AND sequence=0", (exp["eid"],))
+        }
         changes = []
         for item in self.store.list_files(exp["worker"]):
             exists = self.store.file_path(item["thread_id"], item["path"]).is_file()
-            changes.append({"path": self.virtual_path(item), "rel_path": item["path"], "in_worktree": True,
-                            "change_type": "deleted" if not exists else "added" if item["path"] not in baseline else "modified" if item["sha256"] != baseline[item["path"]]["sha256"] else "unchanged",
-                            "size": item["size"], "diff_available": item["size"] <= 2 * 1024 * 1024,
-                            "internal": False, "fabric_id": "local"})
-        return {"changes": changes, "experiment_dir": "/workspace-files/" + exp["worker"],
-                "worktree_root": "/workspace-files/" + exp["worker"], "tracked_files": [],
-                "truncated": False, "worktree_scan_failed": False, "tracked_files_truncated": False}
+            changes.append(
+                {
+                    "path": self.virtual_path(item),
+                    "rel_path": item["path"],
+                    "in_worktree": True,
+                    "change_type": "deleted"
+                    if not exists
+                    else "added"
+                    if item["path"] not in baseline
+                    else "modified"
+                    if item["sha256"] != baseline[item["path"]]["sha256"]
+                    else "unchanged",
+                    "size": item["size"],
+                    "diff_available": item["size"] <= 2 * 1024 * 1024,
+                    "internal": False,
+                    "fabric_id": "local",
+                }
+            )
+        return {
+            "changes": changes,
+            "experiment_dir": "/workspace-files/" + exp["worker"],
+            "worktree_root": "/workspace-files/" + exp["worker"],
+            "tracked_files": [],
+            "truncated": False,
+            "worktree_scan_failed": False,
+            "tracked_files_truncated": False,
+        }
 
     def file_diff(self, exp, path, checkpoint=None):
         item, actual = self.resolve_file(path, exp, allow_missing=True)
@@ -459,9 +676,15 @@ class ExperimentService:
         before_seq = 0
         if checkpoint is not None:
             sequence = int(checkpoint)
-            row = self.store._one("SELECT MAX(sequence) AS n FROM hosted_file_snapshots WHERE eid=? AND sequence<?", (exp["eid"], sequence))
+            row = self.store._one(
+                "SELECT MAX(sequence) AS n FROM hosted_file_snapshots WHERE eid=? AND sequence<?",
+                (exp["eid"], sequence),
+            )
             before_seq = row["n"] or 0
-            after = self.store._one("SELECT text FROM hosted_file_snapshots WHERE eid=? AND sequence=? AND path=?", (exp["eid"], sequence, relative))
+            after = self.store._one(
+                "SELECT text FROM hosted_file_snapshots WHERE eid=? AND sequence=? AND path=?",
+                (exp["eid"], sequence, relative),
+            )
             target = after["text"] if after else ""
         elif not actual.exists():
             target = ""
@@ -469,11 +692,18 @@ class ExperimentService:
             if actual.stat().st_size > 2 * 1024 * 1024:
                 return {"diff": "", "truncated": True}
             target = self.read_file(item, 2 * 1024 * 1024).decode("utf-8", errors="replace")
-        before = self.store._one("SELECT text FROM hosted_file_snapshots WHERE eid=? AND sequence=? AND path=?", (exp["eid"], before_seq, relative))
+        before = self.store._one(
+            "SELECT text FROM hosted_file_snapshots WHERE eid=? AND sequence=? AND path=?",
+            (exp["eid"], before_seq, relative),
+        )
         if target is None or before and before["text"] is None:
             return {"diff": "", "truncated": True}
         old = before["text"] if before else ""
-        diff = "".join(difflib.unified_diff(old.splitlines(keepends=True), target.splitlines(keepends=True), "a/" + relative, "b/" + relative))
+        diff = "".join(
+            difflib.unified_diff(
+                old.splitlines(keepends=True), target.splitlines(keepends=True), "a/" + relative, "b/" + relative
+            )
+        )
         return {"diff": diff, "truncated": False}
 
     def delta(self, exp, sequence):
@@ -481,9 +711,19 @@ class ExperimentService:
         for item in self.store.list_files(exp["worker"]):
             diff = self.file_diff(exp, item["path"], sequence)["diff"]
             if diff:
-                files.append({"path": self.virtual_path(item), "internal": False, "kind": "artifact",
-                              "additions": sum(line.startswith("+") and not line.startswith("+++") for line in diff.splitlines()),
-                              "deletions": sum(line.startswith("-") and not line.startswith("---") for line in diff.splitlines())})
+                files.append(
+                    {
+                        "path": self.virtual_path(item),
+                        "internal": False,
+                        "kind": "artifact",
+                        "additions": sum(
+                            line.startswith("+") and not line.startswith("+++") for line in diff.splitlines()
+                        ),
+                        "deletions": sum(
+                            line.startswith("-") and not line.startswith("---") for line in diff.splitlines()
+                        ),
+                    }
+                )
         return {"sequence": int(sequence), "status": "available", "files": files}
 
     def archive(self, exp, report):
@@ -512,30 +752,48 @@ class ExperimentService:
         revision = exp["eid"] + "-" + report["revision"]
         with self.store.connect() as db:
             if not db.execute("SELECT id FROM hosted_report_versions WHERE id=?", (revision,)).fetchone():
-                db.execute("INSERT INTO hosted_report_versions(id,eid,html,archive,label,created_at,entry) VALUES (?,?,?,?,?,?,?)",
-                           (revision, exp["eid"], report["data"], self.archive(exp, report), label, now(), report["entry"]))
+                db.execute(
+                    "INSERT INTO hosted_report_versions(id,eid,html,archive,label,created_at,entry) VALUES (?,?,?,?,?,?,?)",
+                    (revision, exp["eid"], report["data"], self.archive(exp, report), label, now(), report["entry"]),
+                )
         return revision
 
     def sharing(self, exp):
         row = self.store._one("SELECT * FROM hosted_report_sharing WHERE eid=?", (exp["eid"],))
         report = self.report(exp)
         current = exp["eid"] + "-" + report["revision"] if report else None
-        versions = self.store._all("SELECT id AS revision_id,label,created_at FROM hosted_report_versions WHERE eid=? ORDER BY created_at,rowid", (exp["eid"],))
+        versions = self.store._all(
+            "SELECT id AS revision_id,label,created_at FROM hosted_report_versions WHERE eid=? ORDER BY created_at,rowid",
+            (exp["eid"],),
+        )
         for number, version in enumerate(versions, 1):
             version["n"] = number
             version["active"] = version["revision_id"] == current
-            version["pinned"] = bool(row and row["visibility"] == "link" and version["revision_id"] == row["revision_id"])
-        return {"artifact_id": exp["eid"], "kind": "report", "visibility": row["visibility"] if row else "private",
-                "can_publish": bool(report), "publication": {"url": self.base_url + "/api/local-publications/" + row["pub_id"] + "/"} if row and row["pub_id"] and row["visibility"] == "link" else None,
-                "active_revision_id": report["revision"] if report else None,
-                "pinned_revision_id": row["revision_id"] if row else None, "diverged": bool(row and row["revision_id"] != current), "versions": versions}
+            version["pinned"] = bool(
+                row and row["visibility"] == "link" and version["revision_id"] == row["revision_id"]
+            )
+        return {
+            "artifact_id": exp["eid"],
+            "kind": "report",
+            "visibility": row["visibility"] if row else "private",
+            "can_publish": bool(report),
+            "publication": {"url": self.base_url + "/api/local-publications/" + row["pub_id"] + "/"}
+            if row and row["pub_id"] and row["visibility"] == "link"
+            else None,
+            "active_revision_id": report["revision"] if report else None,
+            "pinned_revision_id": row["revision_id"] if row else None,
+            "diverged": bool(row and row["revision_id"] != current),
+            "versions": versions,
+        }
 
     def set_sharing(self, exp, body):
         visibility = body.get("visibility", body.get("access", "private"))
         if visibility not in {"private", "org", "link"}:
             raise ValueError("Invalid visibility")
         revision = body.get("restore_revision_id") or body.get("revision_id")
-        if revision and not self.store._one("SELECT id FROM hosted_report_versions WHERE id=? AND eid=?", (revision, exp["eid"])):
+        if revision and not self.store._one(
+            "SELECT id FROM hosted_report_versions WHERE id=? AND eid=?", (revision, exp["eid"])
+        ):
             # Current viewer sends the app content hash, not the qualified stored id.
             report = self.report(exp)
             if not report or revision != report["revision"]:
@@ -548,35 +806,77 @@ class ExperimentService:
         existing = self.store._one("SELECT * FROM hosted_report_sharing WHERE eid=?", (exp["eid"],))
         pub_id = existing["pub_id"] if existing else "local_" + uuid.uuid4().hex
         with self.store.connect() as db:
-            db.execute("INSERT INTO hosted_report_sharing VALUES (?,?,?,?,?,?) ON CONFLICT(eid) DO UPDATE SET visibility=excluded.visibility,revision_id=excluded.revision_id,title=excluded.title,updated_at=excluded.updated_at",
-                       (exp["eid"], visibility, revision, pub_id, body.get("title") or exp["title"], now()))
+            db.execute(
+                "INSERT INTO hosted_report_sharing VALUES (?,?,?,?,?,?) ON CONFLICT(eid) DO UPDATE SET visibility=excluded.visibility,revision_id=excluded.revision_id,title=excluded.title,updated_at=excluded.updated_at",
+                (exp["eid"], visibility, revision, pub_id, body.get("title") or exp["title"], now()),
+            )
         return self.sharing(exp)
 
     def papers(self):
-        rows = self.store._all("SELECT s.*,e.parent,e.workspace FROM hosted_report_sharing s JOIN hosted_experiments e ON e.eid=s.eid WHERE e.deleted=0")
-        return [{"pub_id": row["pub_id"], "title": row["title"], "status": "published" if row["visibility"] == "link" else "draft",
-                 "owner_user_id": "local:dev", "updated_at": row["updated_at"], "access": row["visibility"],
-                 "published_version": next((v["n"] for v in self.sharing(self.get(row["eid"]))["versions"] if v["revision_id"] == row["revision_id"]), None), "has_unpublished_changes": self.sharing(self.get(row["eid"]))["diverged"],
-                 "publication_kind": "report", "fronted_artifact_kind": "report", "fronted_artifact_id": row["eid"],
-                 "url": "/api/local-publications/" + row["pub_id"] + "/"} for row in rows if not self.hosted.get_meta(self.get(row["eid"])["worker"]).get("report_deleted")]
+        rows = self.store._all(
+            "SELECT s.*,e.parent,e.workspace FROM hosted_report_sharing s JOIN hosted_experiments e ON e.eid=s.eid WHERE e.deleted=0"
+        )
+        return [
+            {
+                "pub_id": row["pub_id"],
+                "title": row["title"],
+                "status": "published" if row["visibility"] == "link" else "draft",
+                "owner_user_id": "local:dev",
+                "updated_at": row["updated_at"],
+                "access": row["visibility"],
+                "published_version": next(
+                    (
+                        v["n"]
+                        for v in self.sharing(self.get(row["eid"]))["versions"]
+                        if v["revision_id"] == row["revision_id"]
+                    ),
+                    None,
+                ),
+                "has_unpublished_changes": self.sharing(self.get(row["eid"]))["diverged"],
+                "publication_kind": "report",
+                "fronted_artifact_kind": "report",
+                "fronted_artifact_id": row["eid"],
+                "url": "/api/local-publications/" + row["pub_id"] + "/",
+            }
+            for row in rows
+            if not self.hosted.get_meta(self.get(row["eid"])["worker"]).get("report_deleted")
+        ]
 
     def library_artifact(self, exp):
         if not self.report(exp):
             return None
         sharing = self.sharing(exp)
         files = self.store.list_files(exp["worker"])
-        return {"artifact_id": exp["eid"], "kind": "report", "store_kind": "artifact", "title": exp["title"],
-                "owner_user_id": "local:dev", "updated_at": max((f["created_at"] for f in files), default=exp["created_at"]),
-                "visibility": sharing["visibility"], "workspace_id": exp["workspace"], "can_edit": True,
-                "created_from": {"kind": "experiment", "thread_id": exp["parent"], "eid": exp["eid"], "number": exp["display_label"]},
-                "sources": [], "tombstone": False}
+        return {
+            "artifact_id": exp["eid"],
+            "kind": "report",
+            "store_kind": "artifact",
+            "title": exp["title"],
+            "owner_user_id": "local:dev",
+            "updated_at": max((f["created_at"] for f in files), default=exp["created_at"]),
+            "visibility": sharing["visibility"],
+            "workspace_id": exp["workspace"],
+            "can_edit": True,
+            "created_from": {
+                "kind": "experiment",
+                "thread_id": exp["parent"],
+                "eid": exp["eid"],
+                "number": exp["display_label"],
+            },
+            "sources": [],
+            "tombstone": False,
+        }
 
     def worker_instructions(self, session=None):
         settings = getattr(self.hosted, "settings", None)
         custom = settings.instructions() if settings else ""
         forks = getattr(self.hosted, "forks", None)
         fork_context = forks.context(session) if forks and session else ""
-        return WORKER_INSTRUCTIONS + ("\n\nWorkspace custom instructions:\n" + custom if custom else "") + ("\n\n" + fork_context if fork_context else "")
+        return (
+            WORKER_INSTRUCTIONS
+            + ("\n\nWorkspace custom instructions:\n" + custom if custom else "")
+            + ("\n\n" + fork_context if fork_context else "")
+        )
 
     def _resume(self, exp, body):
         features = getattr(self.hosted, "thread_features", None)
@@ -586,7 +886,9 @@ class ExperimentService:
     def _resume_locked(self, exp, body):
         client_id = body.get("client_message_id")
         if client_id:
-            prior = self.store._one("SELECT run_id FROM hosted_worker_messages WHERE eid=? AND client_id=?", (exp["eid"], client_id))
+            prior = self.store._one(
+                "SELECT run_id FROM hosted_worker_messages WHERE eid=? AND client_id=?", (exp["eid"], client_id)
+            )
             if prior:
                 return {"ok": True, "run_id": prior["run_id"], "session_id": exp["worker"]}
         prompt = body.get("prompt", body.get("message"))
@@ -601,7 +903,12 @@ class ExperimentService:
             self.runner.cancel(active["id"])
             self.runner.wait(active["id"], timeout=10)
         thread = self.store.get_thread(exp["worker"])
-        run = self.runner.start(exp["worker"], prompt, model="" if thread["worker_model"] == "codex-default" else thread["worker_model"], instructions=self.worker_instructions(exp["worker"]))
+        run = self.runner.start(
+            exp["worker"],
+            prompt,
+            model="" if thread["worker_model"] == "codex-default" else thread["worker_model"],
+            instructions=self.worker_instructions(exp["worker"]),
+        )
         if client_id:
             self.hosted.set_meta(exp["worker"], **{"client:" + run["id"]: client_id})
             with self.store.connect() as db:
@@ -618,17 +925,34 @@ class ExperimentService:
         if not report:
             h.json(404, {"error": "Report document not found"})
             return True
+
         def failure(status, reason, message):
             h.json(status, {"detail": {"reason": reason, "message": message}})
+
         if path == "/api/docs/state" and method == "GET":
-            h.json(200, {"ref": ref, "content": report["data"].decode("utf-8", errors="replace"),
-                         "sha": hashlib.sha256(report["data"]).hexdigest(), "revision_id": report["revision"],
-                         "can_edit": True, "owner_user_id": "local:dev"})
+            h.json(
+                200,
+                {
+                    "ref": ref,
+                    "content": report["data"].decode("utf-8", errors="replace"),
+                    "sha": hashlib.sha256(report["data"]).hexdigest(),
+                    "revision_id": report["revision"],
+                    "can_edit": True,
+                    "owner_user_id": "local:dev",
+                },
+            )
         elif path == "/api/docs/turn-diff" and method == "GET":
             # There are no proprietary data-eid block anchors in local reports.
             # Full immutable versions remain available through report sharing.
-            h.json(200, {"etag": report["revision"], "hunks": [], "unavailable": True,
-                         "reason": "Inline block review is unavailable for local reports; inspect the report and saved versions."})
+            h.json(
+                200,
+                {
+                    "etag": report["revision"],
+                    "hunks": [],
+                    "unavailable": True,
+                    "reason": "Inline block review is unavailable for local reports; inspect the report and saved versions.",
+                },
+            )
         elif path == "/api/docs/turn-diff/resolve" and method == "POST":
             h.json(200, {"ok": True})
         elif path == "/api/docs/turn-diff/discard" and method == "POST":
@@ -654,7 +978,11 @@ class ExperimentService:
             elif body.get("base_sha") != hashlib.sha256(report["data"]).hexdigest():
                 failure(409, "stale_base", "The report changed since editing began.")
             elif not isinstance(body.get("content"), str):
-                failure(422, "structural", "Local reports support full-document text saves; block operations are unavailable.")
+                failure(
+                    422,
+                    "structural",
+                    "Local reports support full-document text saves; block operations are unavailable.",
+                )
             elif len(body["content"].encode()) > 5 * 1024 * 1024:
                 failure(413, "edit_failed", "Edited reports are limited to 5 MiB.")
             else:
@@ -670,8 +998,11 @@ class ExperimentService:
                 version = self.save_version(exp, "Direct edit")
                 revised = self.report(exp)
                 self.event(exp, "result_page_revised")
-                self.hosted.emit(exp["worker"], "direct-edit:" + revised["revision"],
-                                 {"type": "artifact_revision", "revision_id": revised["revision"], "artifact_id": exp["eid"]})
+                self.hosted.emit(
+                    exp["worker"],
+                    "direct-edit:" + revised["revision"],
+                    {"type": "artifact_revision", "revision_id": revised["revision"], "artifact_id": exp["eid"]},
+                )
                 h.json(200, {"sha": hashlib.sha256(revised["data"]).hexdigest(), "version": version})
         else:
             return False
@@ -708,8 +1039,10 @@ class ExperimentService:
         host = getattr(h, "headers", {}).get("Host", "")
         if re.fullmatch(r"(?:127\.0\.0\.1|localhost):\d+", host):
             self.base_url = "http://" + host
+
         def q(key, default=""):
             return query.get(key, [default])[0]
+
         if path.startswith("/api/docs/"):
             features = getattr(self.hosted, "thread_features", None)
             with features.lock if features else nullcontext(), self.lock:
@@ -767,7 +1100,11 @@ class ExperimentService:
                 h.json(200, {"ok": True})
             elif match[2] == "app":
                 publication = self.sharing(exp)["publication"]
-                url = publication["url"] if publication else f"/api/workspaces/{exp['workspace']}/experiments/{exp['eid']}/app/"
+                url = (
+                    publication["url"]
+                    if publication
+                    else f"/api/workspaces/{exp['workspace']}/experiments/{exp['eid']}/app/"
+                )
                 h.json(200, {"kind": "app", "url": url})
             else:
                 h.json(200, artifact)
@@ -776,12 +1113,30 @@ class ExperimentService:
         if match and method == "GET":
             thread = self.store.get_thread(match[1])
             experiments = self.store._all("SELECT * FROM hosted_experiments WHERE parent=? AND deleted=0", (match[1],))
-            h.json(200, [{"kind": "thread", "id": match[1], "label": thread["title"], "diagrams": [],
-                          "experiments": [{"eid": e["eid"], "number": e["display_label"], "exp_title": e["title"]} for e in experiments]}] if thread else [])
+            h.json(
+                200,
+                [
+                    {
+                        "kind": "thread",
+                        "id": match[1],
+                        "label": thread["title"],
+                        "diagrams": [],
+                        "experiments": [
+                            {"eid": e["eid"], "number": e["display_label"], "exp_title": e["title"]}
+                            for e in experiments
+                        ],
+                    }
+                ]
+                if thread
+                else [],
+            )
             return True
         match = re.fullmatch(r"/api/local-publications/([^/]+)(?:/(.*))?", path)
         if match and method in {"GET", "HEAD"}:
-            row = self.store._one("SELECT v.html,v.archive,v.entry FROM hosted_report_sharing s JOIN hosted_report_versions v ON v.id=s.revision_id JOIN hosted_experiments e ON e.eid=s.eid WHERE s.pub_id=? AND s.visibility='link' AND e.deleted=0", (match[1],))
+            row = self.store._one(
+                "SELECT v.html,v.archive,v.entry FROM hosted_report_sharing s JOIN hosted_report_versions v ON v.id=s.revision_id JOIN hosted_experiments e ON e.eid=s.eid WHERE s.pub_id=? AND s.visibility='link' AND e.deleted=0",
+                (match[1],),
+            )
             if not row:
                 h.json(404, {"error": "Publication not found"})
             else:
@@ -797,7 +1152,14 @@ class ExperimentService:
                         except KeyError as exc:
                             raise FileNotFoundError("Publication asset not found") from exc
                     media_type = mimetypes.guess_type(asset)[0] or "application/octet-stream"
-                self.send_bytes(h, data, media_type, {"Content-Security-Policy": "sandbox allow-scripts; default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'"})
+                self.send_bytes(
+                    h,
+                    data,
+                    media_type,
+                    {
+                        "Content-Security-Policy": "sandbox allow-scripts; default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'"
+                    },
+                )
             return True
         match = re.fullmatch(r"/api/papers/([^/]+)(?:/(publish|access))?", path)
         if match and method in {"POST", "DELETE"}:
@@ -814,7 +1176,16 @@ class ExperimentService:
             return True
         if path == "/api/experiments/recent" and method == "GET":
             rows = self.rows(q("workspace_id"))
-            h.json(200, {"ok": True, "experiments": rows, "running": [r for r in rows if r["worker_alive"]], "completed": [r for r in rows if not r["worker_alive"]], "has_more": False})
+            h.json(
+                200,
+                {
+                    "ok": True,
+                    "experiments": rows,
+                    "running": [r for r in rows if r["worker_alive"]],
+                    "completed": [r for r in rows if not r["worker_alive"]],
+                    "has_more": False,
+                },
+            )
             return True
         match = re.fullmatch(r"/api/artifact-sharing/([^/]+)", path)
         if match and method == "GET":
@@ -837,7 +1208,14 @@ class ExperimentService:
                 h.json(200, {"ok": True, "eid": exp["eid"], "display_label": exp["display_label"]})
             elif action == "experiments" and method == "GET":
                 rows = self.rows(ws)
-                h.json(200, {"ok": True, "running": [r for r in rows if r["worker_alive"]], "completed": [r for r in rows if not r["worker_alive"]]})
+                h.json(
+                    200,
+                    {
+                        "ok": True,
+                        "running": [r for r in rows if r["worker_alive"]],
+                        "completed": [r for r in rows if not r["worker_alive"]],
+                    },
+                )
             elif action == "experiment-preferences" and method == "GET":
                 h.json(200, {"ok": True, "preferences": {}, "archived_eids": []})
             else:
@@ -845,7 +1223,18 @@ class ExperimentService:
             return True
         match = re.fullmatch(r"/api/(?:slurm|wandb)/experiment/([^/]+)/([^/]+)/(jobs|metrics)", path)
         if match and method == "GET":
-            h.json(200, {"jobs": [], "discovered_jobs": 0} if match[3] == "jobs" else {"available": False, "runs": [], "reason": "This local workspace is not connected to W&B", "series": {}, "key_metrics": []})
+            h.json(
+                200,
+                {"jobs": [], "discovered_jobs": 0}
+                if match[3] == "jobs"
+                else {
+                    "available": False,
+                    "runs": [],
+                    "reason": "This local workspace is not connected to W&B",
+                    "series": {},
+                    "key_metrics": [],
+                },
+            )
             return True
         match = re.fullmatch(r"/api/worker/([^/]+)/([^/]+)/(.*)", path)
         if match:
@@ -856,7 +1245,13 @@ class ExperimentService:
             action = match[3]
             if action in {"feed", "transcript", "artifact-chat/transcript"} and method == "GET":
                 snap = self.hosted.snapshot(exp["worker"], int(q("offset", "0")))
-                snap.update(session_id=exp["worker"], source="buffer", alive=self.status(exp) == "running", mode="append", rewind_generation=0)
+                snap.update(
+                    session_id=exp["worker"],
+                    source="buffer",
+                    alive=self.status(exp) == "running",
+                    mode="append",
+                    rewind_generation=0,
+                )
                 h.json(200, snap)
             elif action in {"message", "artifact-chat/handoff"} and method == "POST":
                 if action == "artifact-chat/handoff" and body.get("kind") == "planning":
@@ -868,9 +1263,20 @@ class ExperimentService:
                 if not self.report(exp):
                     raise ValueError("This experiment has no report to review or edit yet")
                 meta = self.hosted.get_meta(exp["worker"])
-                self.hosted.set_meta(exp["worker"], artifact_chat_open=True, artifact_edit_mode=action == "edit-session")
-                h.json(200, {"ok": True, "session_id": exp["worker"], "artifact_id": exp["eid"], "repo": exp["workspace"],
-                             "doc_ref": f"report:{exp['workspace']}:{exp['eid']}", "reused": bool(meta.get("artifact_chat_open"))})
+                self.hosted.set_meta(
+                    exp["worker"], artifact_chat_open=True, artifact_edit_mode=action == "edit-session"
+                )
+                h.json(
+                    200,
+                    {
+                        "ok": True,
+                        "session_id": exp["worker"],
+                        "artifact_id": exp["eid"],
+                        "repo": exp["workspace"],
+                        "doc_ref": f"report:{exp['workspace']}:{exp['eid']}",
+                        "reused": bool(meta.get("artifact_chat_open")),
+                    },
+                )
             elif action == "edit-session" and method == "DELETE":
                 self.hosted.set_meta(exp["worker"], artifact_chat_open=False, artifact_edit_mode=False)
                 h.json(200, {"ok": True})
@@ -900,7 +1306,15 @@ class ExperimentService:
         if method == "GET" and action == "feed":
             points = self.checkpoints(exp)
             after = q("after")
-            h.json(200, {"feed": [p for p in points if not after or p["timestamp"] > after], "worker_alive": self.status(exp) == "running", "background_tasks": [], "fabric_id": "local"})
+            h.json(
+                200,
+                {
+                    "feed": [p for p in points if not after or p["timestamp"] > after],
+                    "worker_alive": self.status(exp) == "running",
+                    "background_tasks": [],
+                    "fabric_id": "local",
+                },
+            )
         elif method == "GET" and action == "latest-completion":
             h.json(200, next((p for p in reversed(self.checkpoints(exp)) if p["type"] == "completion"), {}))
         elif method == "GET" and action == "status":
@@ -915,13 +1329,25 @@ class ExperimentService:
             self.serve_report(h, exp, action[4:] if action.startswith("app/") else "")
         elif method in {"GET", "HEAD"} and action == "app-download":
             revision = q("revision_id")
-            saved = self.store._one("SELECT archive FROM hosted_report_versions WHERE eid=? AND (id=? OR id=?)", (exp["eid"], revision, exp["eid"] + "-" + revision)) if revision else None
+            saved = (
+                self.store._one(
+                    "SELECT archive FROM hosted_report_versions WHERE eid=? AND (id=? OR id=?)",
+                    (exp["eid"], revision, exp["eid"] + "-" + revision),
+                )
+                if revision
+                else None
+            )
             if revision and not saved:
                 raise ValueError("Unknown report revision")
             report = self.report(exp)
             if not saved and not report:
                 raise ValueError("No report produced yet")
-            self.send_bytes(h, saved["archive"] if saved else self.archive(exp, report), "application/zip", {"Content-Disposition": 'attachment; filename="research-report.zip"'})
+            self.send_bytes(
+                h,
+                saved["archive"] if saved else self.archive(exp, report),
+                "application/zip",
+                {"Content-Disposition": 'attachment; filename="research-report.zip"'},
+            )
         elif action == "artifacts/primary/sharing" and method in {"GET", "PUT"}:
             h.json(200, self.sharing(exp) if method == "GET" else self.set_sharing(exp, body))
         elif action == "artifacts/primary/versions" and method == "POST":
@@ -945,7 +1371,9 @@ class ExperimentService:
         elif action == "outcome" and method in {"POST", "PUT"}:
             # Local HTTP extension; observed original classification is an MCP tool.
             outcome = body.get("outcome")
-            if outcome is not None and (not isinstance(outcome, str) or outcome not in {"null", "signal", "partial_signal", "inconclusive"}):
+            if outcome is not None and (
+                not isinstance(outcome, str) or outcome not in {"null", "signal", "partial_signal", "inconclusive"}
+            ):
                 raise ValueError("Outcome must be null, signal, partial_signal, or inconclusive")
             with self.store.connect() as db:
                 db.execute("UPDATE hosted_experiments SET outcome=? WHERE eid=?", (outcome, exp["eid"]))

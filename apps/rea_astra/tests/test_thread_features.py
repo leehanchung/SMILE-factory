@@ -15,7 +15,7 @@ from backend.runner import RunManager
 from backend.store import Store
 from backend.thread_features import Service
 
-FIXTURE = r'''
+FIXTURE = r"""
 import json,pathlib,sys,time
 prompt=sys.stdin.read()
 time.sleep(.15)
@@ -25,20 +25,25 @@ if "Revise the existing" in prompt:
 pathlib.Path("result.txt").write_text("actual subprocess artifact")
 print(json.dumps({"type":"item.completed","item":{"type":"agent_message","id":"answer","text":"Actual fixture output: " + prompt[-500:]}}),flush=True)
 print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
-'''
+"""
 
 
 class Handler:
     body_bytes = b""
+
     def __init__(self):
         self.wfile = io.BytesIO()
         self.headers = {}
+
     def json(self, status, data):
         self.status, self.data = status, data
+
     def send_response(self, status):
         self.status = status
+
     def send_header(self, key, value):
         self.headers[key] = value
+
     def end_headers(self):
         pass
 
@@ -47,8 +52,9 @@ class ThreadFeatureTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.store = Store(Path(self.temp.name) / "data")
-        self.runner = RunManager(self.store, max_concurrent=1,
-                                 command_factory=lambda *_: [sys.executable, "-c", FIXTURE])
+        self.runner = RunManager(
+            self.store, max_concurrent=1, command_factory=lambda *_: [sys.executable, "-c", FIXTURE]
+        )
         self.hosted = HostedAPI(self.store, self.runner)
         # Parent integration may already create the service; keep one dispatcher.
         if hasattr(self.hosted, "thread_features"):
@@ -74,13 +80,20 @@ class ThreadFeatureTests(unittest.TestCase):
         return run
 
     def proposal(self):
-        self.hosted.set_meta(self.session, plan={"plan_id": "plan_test", "title": "Measure values", "body": "Compute actual arithmetic."}, plan_phase="review")
+        self.hosted.set_meta(
+            self.session,
+            plan={"plan_id": "plan_test", "title": "Measure values", "body": "Compute actual arithmetic."},
+            plan_phase="review",
+        )
 
     def test_durable_fifo_queue_and_idempotent_retries(self):
         first = self.service.send(self.session, {"message": "first", "client_message_id": "one"})
         second = self.service.send(self.session, {"message": "second", "client_message_id": "two"})
         self.assertTrue(second["queued"])
-        self.assertEqual(self.service.send(self.session, {"message": "second", "client_message_id": "two"})["queue_id"], second["queue_id"])
+        self.assertEqual(
+            self.service.send(self.session, {"message": "second", "client_message_id": "two"})["queue_id"],
+            second["queue_id"],
+        )
         self.service.close()
         self.service = Service(self.hosted, dispatch=False)
         self.finish(first["run_id"])
@@ -88,7 +101,10 @@ class ThreadFeatureTests(unittest.TestCase):
         rows = self.service.queue(self.session)
         self.assertEqual([row["state"] for row in rows], ["sent", "sent"])
         self.finish(rows[1]["run_id"])
-        self.assertEqual([row["content"] for row in self.store.list_messages(self.session) if row["role"] == "user"], ["first", "second"])
+        self.assertEqual(
+            [row["content"] for row in self.store.list_messages(self.session) if row["role"] == "user"],
+            ["first", "second"],
+        )
         self.assertFalse(self.service.send(self.session, {"message": "second", "client_message_id": "two"})["queued"])
         self.assertEqual(len(self.store.list_runs(self.session)), 2)
         with self.assertRaises(ValueError):
@@ -102,7 +118,9 @@ class ThreadFeatureTests(unittest.TestCase):
         self.finish(run["run_id"])
         self.service.drain()
         self.assertEqual(len(self.store.list_runs(self.session)), 1)
-        self.assertEqual(self.call("/api/plan/cancel-queued", {"session": self.session, "client_message_id": "unknown"}).status, 409)
+        self.assertEqual(
+            self.call("/api/plan/cancel-queued", {"session": self.session, "client_message_id": "unknown"}).status, 409
+        )
 
     def test_dispatcher_waits_for_global_capacity_and_drains_without_browser(self):
         other = self.hosted.start_session(self.workspace, "", "Other thread")
@@ -117,14 +135,16 @@ class ThreadFeatureTests(unittest.TestCase):
             row = self.service.queue(other)[0]
             if row["run_id"]:
                 break
-            time.sleep(.03)
+            time.sleep(0.03)
         self.assertEqual(row["state"], "sent", row)
         self.finish(row["run_id"])
         self.assertIn("wait for capacity", self.store.list_messages(other)[-1]["content"])
 
     def test_proposal_revision_is_a_real_run_and_rejection_does_not_run(self):
         self.proposal()
-        result = self.call("/api/plan/decide", {"session": self.session, "accept": False, "feedback": "Use the corrected measurement."})
+        result = self.call(
+            "/api/plan/decide", {"session": self.session, "accept": False, "feedback": "Use the corrected measurement."}
+        )
         self.finish(result.data["run_id"])
         plan = self.hosted.get_meta(self.session)["plan"]
         self.assertEqual(plan["title"], "Revised proposal")
@@ -133,7 +153,9 @@ class ThreadFeatureTests(unittest.TestCase):
         self.call("/api/plan/decide", {"session": self.session, "accept": False})
         self.assertIsNone(self.hosted.get_meta(self.session)["plan"])
         self.assertEqual(len(self.store.list_runs(self.session)), 1)
-        self.assertTrue(any(event["type"] == "plan_dismissed" for event in self.hosted.snapshot(self.session)["events"]))
+        self.assertTrue(
+            any(event["type"] == "plan_dismissed" for event in self.hosted.snapshot(self.session)["events"])
+        )
 
     def test_accept_launches_actual_worker_and_clear_plan(self):
         self.proposal()
@@ -180,7 +202,7 @@ class ThreadFeatureTests(unittest.TestCase):
             self.call(f"/api/workspaces/wrong/threads/{self.session}/story", method="GET")
 
     def test_story_uses_final_response_and_resolves_absolute_artifact_link(self):
-        script = r'''
+        script = r"""
 import json,pathlib,sys
 sys.stdin.read()
 path=pathlib.Path("report.md").resolve()
@@ -188,7 +210,7 @@ path.write_text("# Actual fixture report")
 for identifier,text in [("progress","Intermediate commentary should not appear in the story."),("final", "Final finding. [Read report]("+str(path)+")")]:
     print(json.dumps({"type":"item.completed","item":{"type":"agent_message","id":identifier,"text":text}}),flush=True)
 print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
-'''
+"""
         self.runner.command_factory = lambda *_: [sys.executable, "-c", script]
         run = self.service.send(self.session, {"message": "Write a report"})
         self.finish(run["run_id"])
@@ -202,7 +224,17 @@ print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
 
     def test_uncertain_dispatch_is_not_automatically_replayed(self):
         with self.store.connect() as db:
-            db.execute("INSERT INTO hosted_queue VALUES (?,?,?,?,?,?,NULL,NULL)", ("uncertain", self.session, "crash", json.dumps({"message": "might have run"}), "dispatching", "2026-11-10"))
+            db.execute(
+                "INSERT INTO hosted_queue VALUES (?,?,?,?,?,?,NULL,NULL)",
+                (
+                    "uncertain",
+                    self.session,
+                    "crash",
+                    json.dumps({"message": "might have run"}),
+                    "dispatching",
+                    "2026-11-10",
+                ),
+            )
         self.service.close()
         self.service = Service(self.hosted, dispatch=False)
         self.service.drain()
@@ -212,10 +244,12 @@ print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
     def test_completion_projection_reserves_thread_until_callback_finishes(self):
         entered, release = threading.Event(), threading.Event()
         original = self.runner.on_run_finished
+
         def completion(run):
             entered.set()
             release.wait(5)
             original(run)
+
         self.runner.on_run_finished = completion
         first = self.service.send(self.session, {"message": "first completion"})
         self.assertTrue(entered.wait(5))
@@ -249,7 +283,15 @@ print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
 
     def test_dispatch_start_is_idempotent_and_selected_codebase_is_persisted(self):
         first = self.service.send(self.session, {"message": "busy"})
-        result = self.service.send(self.session, {"message": "use selected repo", "base_repo": "https://github.com/example/repo", "base_ref": "branch", "client_message_id": "repo"})
+        result = self.service.send(
+            self.session,
+            {
+                "message": "use selected repo",
+                "base_repo": "https://github.com/example/repo",
+                "base_ref": "branch",
+                "client_message_id": "repo",
+            },
+        )
         row = self.store._one("SELECT body FROM hosted_queue WHERE id=?", (result["queue_id"],))
         self.assertEqual(json.loads(row["body"])["base_ref"], "branch")
         self.service.cancel_queued(self.session, "repo")
@@ -262,7 +304,7 @@ print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
     def test_two_finishing_planners_each_auto_launch_one_actual_worker(self):
         self.runner.max_concurrent = 2
         self.hosted.thread_features = self.service
-        script = r'''
+        script = r"""
 import json,pathlib,sys,time
 prompt=sys.stdin.read()
 if "You are the planner in a local research application" in prompt:
@@ -272,14 +314,16 @@ else:
 time.sleep(.1)
 print(json.dumps({"type":"item.completed","item":{"type":"agent_message","id":"final","text":"Actual subprocess completed."}}),flush=True)
 print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
-'''
+"""
         self.runner.command_factory = lambda *_: [sys.executable, "-c", script]
         barrier = threading.Barrier(2)
         callback = self.runner.on_run_finished
+
         def finish_together(run):
             if self.hosted.get_meta(run["thread_id"]).get("kind") == "planner":
                 barrier.wait(5)
             callback(run)
+
         self.runner.on_run_finished = finish_together
         parents = [self.session, self.hosted.start_session(self.workspace, "", "Second planner")]
         for parent in parents:
@@ -291,7 +335,7 @@ print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
             experiments = self.store._all("SELECT * FROM hosted_experiments")
             if len(experiments) == 2 and all(self.hosted.experiments.status(exp) == "completed" for exp in experiments):
                 break
-            time.sleep(.04)
+            time.sleep(0.04)
         self.assertEqual(len(experiments), 2)
         self.assertEqual({exp["parent"] for exp in experiments}, set(parents))
         for exp in experiments:
@@ -315,13 +359,19 @@ print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
         self.assertEqual(launched[0]["eid"], reserved["eid"])
         self.finish(self.store.list_runs(launched[0]["worker"])[0]["id"])
 
-        self.hosted.set_meta(self.session, plan={"plan_id":"gpu-plan","title":"Unavailable GPU", "body":"Requires a GPU", "max_gpus":1}, plan_phase="review")
+        self.hosted.set_meta(
+            self.session,
+            plan={"plan_id": "gpu-plan", "title": "Unavailable GPU", "body": "Requires a GPU", "max_gpus": 1},
+            plan_phase="review",
+        )
         self.assertEqual(self.service.launch_ready_plans(), [])
         error = self.hosted.get_meta(self.session)["auto_accept_error"]
         self.assertEqual(error["plan_id"], "gpu-plan")
         self.assertIn("GPU", error["message"])
         self.assertEqual(self.service.launch_ready_plans(), [])
-        events = self.store._all("SELECT source FROM hosted_events WHERE session=? AND source LIKE 'autoaccept-error:%'", (self.session,))
+        events = self.store._all(
+            "SELECT source FROM hosted_events WHERE session=? AND source LIKE 'autoaccept-error:%'", (self.session,)
+        )
         self.assertEqual(len(events), 1)
         self.assertEqual(self.hosted.get_meta(self.session)["plan"]["plan_id"], "gpu-plan")
 
@@ -330,14 +380,26 @@ print(json.dumps({"type":"turn.completed","usage":{}}),flush=True)
         self.assertEqual(self.service.launch_ready_plans(), [])
         self.hosted.set_meta(self.session, auto_accept=True)
         with self.store.connect() as db:
-            db.execute("INSERT INTO hosted_queue VALUES (?,?,?,?,?,?,NULL,NULL)", ("pending-review", self.session, "review", json.dumps({"message":"Wait, revise this plan"}), "pending", "2026-11-10"))
+            db.execute(
+                "INSERT INTO hosted_queue VALUES (?,?,?,?,?,?,NULL,NULL)",
+                (
+                    "pending-review",
+                    self.session,
+                    "review",
+                    json.dumps({"message": "Wait, revise this plan"}),
+                    "pending",
+                    "2026-11-10",
+                ),
+            )
         self.assertEqual(self.service.launch_ready_plans(), [])
         self.assertEqual(self.store._all("SELECT * FROM hosted_experiments"), [])
 
     def test_failed_revision_does_not_auto_approve_original_plan(self):
         self.proposal()
         self.hosted.set_meta(self.session, auto_accept=True)
-        result = self.service.revise(self.session, "Use the new source", context={"context_refs": ["invalid reference"]})
+        result = self.service.revise(
+            self.session, "Use the new source", context={"context_refs": ["invalid reference"]}
+        )
         self.assertFalse(result["ok"])
         self.assertEqual(self.hosted.get_meta(self.session)["auto_accept_error"]["plan_id"], "plan_test")
         self.assertEqual(self.service.launch_ready_plans(), [])

@@ -42,10 +42,16 @@ class Service:
         # known client/run associations, otherwise leave a visible failure.
         for row in self.store._all("SELECT * FROM hosted_queue WHERE state='dispatching'"):
             meta = hosted.get_meta(row["session"])
-            run_id = next((key[7:] for key, value in meta.items()
-                           if key.startswith("client:") and value == row["client_id"]), None)
-            self._update(row["id"], "sent" if run_id else "failed", run_id,
-                         None if run_id else "Dispatch was interrupted; inspect the conversation before resending.")
+            run_id = next(
+                (key[7:] for key, value in meta.items() if key.startswith("client:") and value == row["client_id"]),
+                None,
+            )
+            self._update(
+                row["id"],
+                "sent" if run_id else "failed",
+                run_id,
+                None if run_id else "Dispatch was interrupted; inspect the conversation before resending.",
+            )
         self.worker = None
         if dispatch:
             self.start()
@@ -77,12 +83,16 @@ class Service:
 
     def _update(self, identifier, state, run_id=None, error=None):
         with self.store.connect() as db:
-            db.execute("UPDATE hosted_queue SET state=?,run_id=?,error=? WHERE id=?",
-                       (state, run_id, error, identifier))
+            db.execute(
+                "UPDATE hosted_queue SET state=?,run_id=?,error=? WHERE id=?", (state, run_id, error, identifier)
+            )
 
     def queue(self, session):
         self._thread(session)
-        return self.store._all("SELECT id,client_id,state,created_at,run_id,error FROM hosted_queue WHERE session=? ORDER BY rowid", (session,))
+        return self.store._all(
+            "SELECT id,client_id,state,created_at,run_id,error FROM hosted_queue WHERE session=? ORDER BY rowid",
+            (session,),
+        )
 
     def send(self, session, body):
         """Durably accept once per client id, then start real inference when free."""
@@ -93,27 +103,44 @@ class Service:
         client_id = body.get("client_message_id") or "local_" + uuid.uuid4().hex
         if not isinstance(client_id, str) or len(client_id) > 200:
             raise ValueError("Invalid client message id")
-        allowed = {key: body[key] for key in ("message", "display_text", "context_refs", "surface_context", "base_repo", "base_ref") if key in body}
+        allowed = {
+            key: body[key]
+            for key in ("message", "display_text", "context_refs", "surface_context", "base_repo", "base_ref")
+            if key in body
+        }
         encoded = json.dumps(allowed, sort_keys=True)
         if len(encoded.encode()) > 200000:
             raise ValueError("Message context is too large")
         with self.lock, self.store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            row = db.execute("SELECT * FROM hosted_queue WHERE session=? AND client_id=?", (session, client_id)).fetchone()
+            row = db.execute(
+                "SELECT * FROM hosted_queue WHERE session=? AND client_id=?", (session, client_id)
+            ).fetchone()
             if row:
                 if row["body"] != encoded:
                     raise ValueError("Client message id was already used for different content")
             else:
-                count = db.execute("SELECT COUNT(*) FROM hosted_queue WHERE session=? AND state IN ('pending','dispatching')", (session,)).fetchone()[0]
+                count = db.execute(
+                    "SELECT COUNT(*) FROM hosted_queue WHERE session=? AND state IN ('pending','dispatching')",
+                    (session,),
+                ).fetchone()[0]
                 if count >= 32:
                     raise ValueError("Thread message queue is full")
                 identifier = "queue_" + uuid.uuid4().hex
-                db.execute("INSERT INTO hosted_queue VALUES (?,?,?,?,?,?,NULL,NULL)",
-                           (identifier, session, client_id, encoded, "pending", now()))
+                db.execute(
+                    "INSERT INTO hosted_queue VALUES (?,?,?,?,?,?,NULL,NULL)",
+                    (identifier, session, client_id, encoded, "pending", now()),
+                )
         self.drain(session)
         row = self.store._one("SELECT * FROM hosted_queue WHERE session=? AND client_id=?", (session, client_id))
-        return {"ok": row["state"] not in ("failed", "cancelled"), "queued": row["state"] in ("pending", "dispatching"),
-                "client_message_id": client_id, "run_id": row["run_id"], "error": row["error"], "queue_id": row["id"]}
+        return {
+            "ok": row["state"] not in ("failed", "cancelled"),
+            "queued": row["state"] in ("pending", "dispatching"),
+            "client_message_id": client_id,
+            "run_id": row["run_id"],
+            "error": row["error"],
+            "queue_id": row["id"],
+        }
 
     def drain(self, session=None):
         with self.lock:
@@ -127,7 +154,9 @@ class Service:
                 # atomic claim lets deletion observe dispatching before files or
                 # a provider process are touched, and skips vanished rows.
                 with self.store.connect() as db:
-                    claimed = db.execute("UPDATE hosted_queue SET state='dispatching' WHERE id=? AND state='pending'", (row["id"],)).rowcount
+                    claimed = db.execute(
+                        "UPDATE hosted_queue SET state='dispatching' WHERE id=? AND state='pending'", (row["id"],)
+                    ).rowcount
                 if not claimed:
                     continue
                 body = json.loads(row["body"])
@@ -149,8 +178,11 @@ class Service:
                     self._update(row["id"], "sent", run["id"])
                 updated = self.store._one("SELECT * FROM hosted_queue WHERE id=?", (row["id"],))
                 if updated and updated["state"] == "failed":
-                    self.hosted.emit(row["session"], "queue-error:" + row["id"],
-                                     {"type": "error", "text": updated["error"], "client_message_id": row["client_id"]})
+                    self.hosted.emit(
+                        row["session"],
+                        "queue-error:" + row["id"],
+                        {"type": "error", "text": updated["error"], "client_message_id": row["client_id"]},
+                    )
 
     def _recover_started(self, row, body, before):
         """Projection failure after start must not re-dispatch a delivered prompt."""
@@ -162,20 +194,30 @@ class Service:
             client = meta.get("client:" + run["id"])
             if client is not None and client != row["client_id"]:
                 continue
-            messages = [message for message in self.store.list_messages(row["session"])
-                        if message["run_id"] == run["id"] and message["role"] == "user"]
-            if client == row["client_id"] or any(message["content"] == body["message"] or message["content"].startswith(body["message"] + "\n\n") for message in messages):
+            messages = [
+                message
+                for message in self.store.list_messages(row["session"])
+                if message["run_id"] == run["id"] and message["role"] == "user"
+            ]
+            if client == row["client_id"] or any(
+                message["content"] == body["message"] or message["content"].startswith(body["message"] + "\n\n")
+                for message in messages
+            ):
                 candidates.append(run)
         if len(candidates) != 1:
             return False
         run = candidates[0]
         self.hosted.set_meta(row["session"], **{"client:" + run["id"]: row["client_id"]})
         self._update(row["id"], "sent", run["id"])
-        self.store.add_event(run["id"], "integration.warning", {"message": "Message delivered; conversation projection failed and will be retried on refresh."})
+        self.store.add_event(
+            run["id"],
+            "integration.warning",
+            {"message": "Message delivered; conversation projection failed and will be retried on refresh."},
+        )
         return True
 
     def _loop(self):
-        while not self.closed.wait(.4) and not self.hosted.closed.is_set():
+        while not self.closed.wait(0.4) and not self.hosted.closed.is_set():
             try:
                 self.drain()
                 self.launch_ready_plans()
@@ -194,7 +236,12 @@ class Service:
                 session = thread["id"]
                 meta = self.hosted.get_meta(session)
                 plan = meta.get("plan")
-                if meta.get("kind") != "planner" or meta.get("auto_accept") is not True or meta.get("plan_phase") != "review" or not isinstance(plan, dict):
+                if (
+                    meta.get("kind") != "planner"
+                    or meta.get("auto_accept") is not True
+                    or meta.get("plan_phase") != "review"
+                    or not isinstance(plan, dict)
+                ):
                     continue
                 plan_id = plan.get("plan_id")
                 if not plan_id or self._busy(session):
@@ -202,7 +249,9 @@ class Service:
                 prior_error = meta.get("auto_accept_error")
                 if isinstance(prior_error, dict) and prior_error.get("plan_id") == plan_id:
                     continue
-                pending = self.store._one("SELECT 1 FROM hosted_queue WHERE session=? AND state IN ('pending','dispatching')", (session,))
+                pending = self.store._one(
+                    "SELECT 1 FROM hosted_queue WHERE session=? AND state IN ('pending','dispatching')", (session,)
+                )
                 if pending:
                     continue
                 try:
@@ -213,9 +262,19 @@ class Service:
                         # a later tick resumes that reservation, never duplicates it.
                         continue
                     message = redact(str(error))[:1500] or type(error).__name__
-                    self.hosted.set_meta(session, auto_accept_error={"plan_id": plan_id, "message": message, "timestamp": now()})
-                    self.hosted.emit(session, "autoaccept-error:" + plan_id,
-                                     {"type": "text", "text": "Automatic launch could not start: " + message + ". The plan remains available for review."})
+                    self.hosted.set_meta(
+                        session, auto_accept_error={"plan_id": plan_id, "message": message, "timestamp": now()}
+                    )
+                    self.hosted.emit(
+                        session,
+                        "autoaccept-error:" + plan_id,
+                        {
+                            "type": "text",
+                            "text": "Automatic launch could not start: "
+                            + message
+                            + ". The plan remains available for review.",
+                        },
+                    )
                 else:
                     self.hosted.set_meta(session, auto_accept_error=None)
                     launched.append(result)
@@ -224,7 +283,9 @@ class Service:
     def cancel_queued(self, session, client_id=None):
         self._thread(session)
         with self.lock, self.store.connect() as db:
-            rows = db.execute("SELECT id,client_id FROM hosted_queue WHERE session=? AND state='pending'", (session,)).fetchall()
+            rows = db.execute(
+                "SELECT id,client_id FROM hosted_queue WHERE session=? AND state='pending'", (session,)
+            ).fetchall()
             selected = [row for row in rows if client_id is None or row["client_id"] == client_id]
             for row in selected:
                 db.execute("UPDATE hosted_queue SET state='cancelled' WHERE id=?", (row["id"],))
@@ -243,18 +304,40 @@ class Service:
             raise ValueError("No proposal is awaiting review")
         if not isinstance(feedback, str) or not feedback.strip():
             raise ValueError("Revision feedback is required")
-        message = ("Revise the existing research proposal in research-plan.json using this feedback. "
-                   "Write the revised proposal and explain the changes; do not execute the experiment yet.\n\n"
-                   + "Current proposal: " + plan["title"] + "\n" + plan["body"] + "\n\nFeedback:\n" + feedback)
+        message = (
+            "Revise the existing research proposal in research-plan.json using this feedback. "
+            "Write the revised proposal and explain the changes; do not execute the experiment yet.\n\n"
+            + "Current proposal: "
+            + plan["title"]
+            + "\n"
+            + plan["body"]
+            + "\n\nFeedback:\n"
+            + feedback
+        )
         result = self.send(session, {**(context or {}), "message": message, "client_message_id": client_id})
         if result["ok"]:
             self.hosted.set_meta(session, plan=None, plan_phase="writing")
-            self.hosted.emit(session, "revised:" + plan["plan_id"],
-                             {"type": "plan_ready", "plan_id": plan["plan_id"], "title": plan["title"], "plan": plan["body"], "revised": True})
+            self.hosted.emit(
+                session,
+                "revised:" + plan["plan_id"],
+                {
+                    "type": "plan_ready",
+                    "plan_id": plan["plan_id"],
+                    "title": plan["title"],
+                    "plan": plan["body"],
+                    "revised": True,
+                },
+            )
         else:
             # A failed revision request must not silently approve the old plan.
-            self.hosted.set_meta(session, auto_accept_error={"plan_id": plan["plan_id"],
-                                 "message": "Revision did not start: " + (result.get("error") or "message cancelled"), "timestamp": now()})
+            self.hosted.set_meta(
+                session,
+                auto_accept_error={
+                    "plan_id": plan["plan_id"],
+                    "message": "Revision did not start: " + (result.get("error") or "message cancelled"),
+                    "timestamp": now(),
+                },
+            )
         return result
 
     def decide(self, session, accept, feedback=""):
@@ -272,8 +355,11 @@ class Service:
             if feedback:
                 return self.revise(session, feedback)
             self.hosted.set_meta(session, plan=None, plan_phase=None)
-            self.hosted.emit(session, "dismissed:" + plan["plan_id"],
-                             {"type": "plan_dismissed", "plan_id": plan["plan_id"], "title": plan["title"]})
+            self.hosted.emit(
+                session,
+                "dismissed:" + plan["plan_id"],
+                {"type": "plan_dismissed", "plan_id": plan["plan_id"], "title": plan["title"]},
+            )
             return {"ok": True, "dismissed": True}
 
     def story(self, session):
@@ -299,17 +385,29 @@ class Service:
                             boundary = match.start()
                             break
                     text = text[:boundary].rstrip() + "…"
-                entry = {"id": run["id"], "ts": run["finished_at"] or run["created_at"],
-                         "text": run["status"].capitalize() + " · " + text, "refs": refs,
-                         "tone": "neutral" if run["status"] == "completed" else "bad",
-                         "source": "actual_run_output", "run_id": run["id"]}
-                db.execute("INSERT OR REPLACE INTO hosted_story VALUES (?,?,?)", (session, run["id"], json.dumps(entry)))
+                entry = {
+                    "id": run["id"],
+                    "ts": run["finished_at"] or run["created_at"],
+                    "text": run["status"].capitalize() + " · " + text,
+                    "refs": refs,
+                    "tone": "neutral" if run["status"] == "completed" else "bad",
+                    "source": "actual_run_output",
+                    "run_id": run["id"],
+                }
+                db.execute(
+                    "INSERT OR REPLACE INTO hosted_story VALUES (?,?,?)", (session, run["id"], json.dumps(entry))
+                )
             rows = db.execute("SELECT data FROM hosted_story WHERE session=?", (session,)).fetchall()
         entries = sorted((json.loads(row[0]) for row in rows), key=lambda item: (item["ts"], item["id"]))
         latest = entries[-1] if entries else None
-        return {"ok": True, "entries": entries, "now": latest["text"] if latest else "",
-                "brief": {"text": latest["text"], "updated_at": latest["ts"]} if latest else None,
-                "summary_method": "extractive_actual_run_output", "title": thread["title"]}
+        return {
+            "ok": True,
+            "entries": entries,
+            "now": latest["text"] if latest else "",
+            "brief": {"text": latest["text"], "updated_at": latest["ts"]} if latest else None,
+            "summary_method": "extractive_actual_run_output",
+            "title": thread["title"],
+        }
 
     def _final_output(self, run):
         """Use the final completed response, not concatenated progress messages."""
@@ -322,7 +420,11 @@ class Service:
                 cursor = event["id"]
                 payload = event["payload"]
                 item = payload.get("item", {})
-                if payload.get("type", event["kind"]) == "item.completed" and item.get("type") == "agent_message" and isinstance(item.get("text"), str):
+                if (
+                    payload.get("type", event["kind"]) == "item.completed"
+                    and item.get("type") == "agent_message"
+                    and isinstance(item.get("text"), str)
+                ):
                     result = item["text"]
             if len(events) < 1000:
                 break
@@ -331,13 +433,17 @@ class Service:
     def notes(self, session, entry_id=None, text=None):
         self._thread(session)
         if entry_id is not None:
-            if not isinstance(entry_id, str) or not any(entry["id"] == entry_id for entry in self.story(session)["entries"]):
+            if not isinstance(entry_id, str) or not any(
+                entry["id"] == entry_id for entry in self.story(session)["entries"]
+            ):
                 raise ValueError("Unknown story entry")
             if not isinstance(text, str) or len(text) > 20000:
                 raise ValueError("Note must contain at most 20000 characters")
             with self.store.connect() as db:
                 if text:
-                    db.execute("INSERT OR REPLACE INTO hosted_story_notes VALUES (?,?,?,?)", (session, entry_id, text, now()))
+                    db.execute(
+                        "INSERT OR REPLACE INTO hosted_story_notes VALUES (?,?,?,?)", (session, entry_id, text, now())
+                    )
                 else:
                     db.execute("DELETE FROM hosted_story_notes WHERE session=? AND entry_id=?", (session, entry_id))
         rows = self.store._all("SELECT entry_id,text FROM hosted_story_notes WHERE session=?", (session,))
@@ -346,13 +452,23 @@ class Service:
     def export(self, session):
         thread = self._thread(session)
         experiments = self.store._all("SELECT * FROM hosted_experiments WHERE parent=? AND deleted=0", (session,))
-        manifest = {"format": "rea-astra-thread-export-v1", "exported_at": now(), "thread": thread,
-                    "experiments": experiments, "story": self.story(session), "notes": self.notes(session)["notes"],
-                    "omitted": [], "threads": {}}
+        manifest = {
+            "format": "rea-astra-thread-export-v1",
+            "exported_at": now(),
+            "thread": thread,
+            "experiments": experiments,
+            "story": self.story(session),
+            "notes": self.notes(session)["notes"],
+            "omitted": [],
+            "threads": {},
+        }
         output, total = io.BytesIO(), 0
         with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
             for identifier in [session] + [exp["worker"] for exp in experiments]:
-                manifest["threads"][identifier] = {"messages": self.store.list_messages(identifier), "runs": self.store.list_runs(identifier)}
+                manifest["threads"][identifier] = {
+                    "messages": self.store.list_messages(identifier),
+                    "runs": self.store.list_runs(identifier),
+                }
                 for item in self.store.list_files(identifier):
                     path = item["path"]
                     reason = None
@@ -374,9 +490,12 @@ class Service:
                     if reason:
                         manifest["omitted"].append({"thread": identifier, "path": path, "reason": reason})
             archive.writestr("manifest.json", json.dumps(manifest, indent=2, ensure_ascii=False))
-            archive.writestr("README.txt", "Local research export. This ZIP is not the proprietary Silico .sil format.\n"
-                             "manifest.json contains actual conversations, run status, and experiment metadata.\n"
-                             "files/ contains registered working artifacts; uploads and oversized files are omitted.\n")
+            archive.writestr(
+                "README.txt",
+                "Local research export. This ZIP is not the proprietary Silico .sil format.\n"
+                "manifest.json contains actual conversations, run status, and experiment metadata.\n"
+                "files/ contains registered working artifacts; uploads and oversized files are omitted.\n",
+            )
         return output.getvalue()
 
     def route(self, h, method, path, body):
@@ -388,7 +507,15 @@ class Service:
         if path.startswith("/api/plan/") and method == "POST":
             session = body.get("session")
             action = path.removeprefix("/api/plan/")
-            if action not in ("send", "review-message", "decide", "cost-estimate", "cancel-queued", "interrupt", "answer"):
+            if action not in (
+                "send",
+                "review-message",
+                "decide",
+                "cost-estimate",
+                "cancel-queued",
+                "interrupt",
+                "answer",
+            ):
                 return False
             self._thread(session)
             if action == "send":
@@ -402,7 +529,13 @@ class Service:
             elif action == "decide":
                 reply(self.decide(session, body.get("accept"), body.get("feedback", "")))
             elif action == "cost-estimate":
-                reply({"ok": False, "estimate": None, "reason": "Local Codex billing and runtime estimates are unavailable; no Research Unit estimate is fabricated."})
+                reply(
+                    {
+                        "ok": False,
+                        "estimate": None,
+                        "reason": "Local Codex billing and runtime estimates are unavailable; no Research Unit estimate is fabricated.",
+                    }
+                )
             elif action == "cancel-queued":
                 if not body.get("client_message_id"):
                     raise ValueError("client_message_id is required")
@@ -416,14 +549,26 @@ class Service:
                             self.runner.cancel(run["id"])
                 reply({"ok": True, "cancelled_queued": cancelled})
             else:
-                reply({"ok": False, "error": "This Codex executor has no pending interactive question. Send your answer as a normal message."}, 409)
+                reply(
+                    {
+                        "ok": False,
+                        "error": "This Codex executor has no pending interactive question. Send your answer as a normal message.",
+                    },
+                    409,
+                )
             return True
         match = re.fullmatch(r"/api/workspaces/([^/]+)/threads/([^/]+)/(story|story-notes|story-backfill|rewind)", path)
         if match:
             workspace, session, action = match.groups()
             self._thread(session, workspace)
             if action == "rewind" and method == "POST":
-                reply({"ok": False, "error": "Exact provider-history rewind is unavailable in Codex exec. Start a new thread to branch the research; existing files were not changed."}, 501)
+                reply(
+                    {
+                        "ok": False,
+                        "error": "Exact provider-history rewind is unavailable in Codex exec. Start a new thread to branch the research; existing files were not changed.",
+                    },
+                    501,
+                )
             elif action == "story" and method == "GET":
                 reply(self.story(session))
             elif action == "story-backfill" and method == "POST":
@@ -460,7 +605,13 @@ class Service:
                 self.hosted.set_meta(session, private=True)
                 reply({"ok": True, "org_access": "closed", "local_only": True})
             elif (action == "org-access" and method == "PATCH") or (action == "shared" and method == "POST"):
-                reply({"ok": False, "error": "Team and public thread sharing require a remote service. This application is loopback-only; use Download a copy for a real local export."}, 501)
+                reply(
+                    {
+                        "ok": False,
+                        "error": "Team and public thread sharing require a remote service. This application is loopback-only; use Download a copy for a real local export.",
+                    },
+                    501,
+                )
             else:
                 return False
             return True

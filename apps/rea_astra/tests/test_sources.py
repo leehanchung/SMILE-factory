@@ -1,4 +1,5 @@
 """Real local file/contract tests; public network is supplied by bounded fixtures."""
+
 import json
 import os
 import tempfile
@@ -52,7 +53,7 @@ class SourceCase(unittest.TestCase):
     def fetch(self, url, limit):
         self.requests.append((url, limit))
         if "export.arxiv.org" in url:
-            return b'''<feed xmlns="http://www.w3.org/2005/Atom"><entry><id>http://arxiv.org/abs/1706.03762v7</id><title>Attention Is All You Need</title><summary>Actual fixture abstract</summary><author><name>Author</name></author><published>2017-06-12</published><category term="cs.CL"/></entry></feed>'''
+            return b"""<feed xmlns="http://www.w3.org/2005/Atom"><entry><id>http://arxiv.org/abs/1706.03762v7</id><title>Attention Is All You Need</title><summary>Actual fixture abstract</summary><author><name>Author</name></author><published>2017-06-12</published><category term="cs.CL"/></entry></feed>"""
         if "arxiv.org/pdf/" in url:
             return b"%PDF-1.4 fixture bytes"
         if "search/repositories" in url:
@@ -84,8 +85,18 @@ class SourceCase(unittest.TestCase):
         parts = [("thread_id", self.thread["id"])] if thread else [("project", self.workspace["id"])]
         raw = b""
         for name, value in parts:
-            raw += ('--boundary\r\nContent-Disposition: form-data; name="' + name + '"\r\n\r\n' + value + '\r\n').encode()
-        raw += ('--boundary\r\nContent-Disposition: form-data; name="file"; filename="' + filename + '"\r\nContent-Type: application/octet-stream\r\n\r\n').encode() + content + b"\r\n--boundary--\r\n"
+            raw += (
+                '--boundary\r\nContent-Disposition: form-data; name="' + name + '"\r\n\r\n' + value + "\r\n"
+            ).encode()
+        raw += (
+            (
+                '--boundary\r\nContent-Disposition: form-data; name="file"; filename="'
+                + filename
+                + '"\r\nContent-Type: application/octet-stream\r\n\r\n'
+            ).encode()
+            + content
+            + b"\r\n--boundary--\r\n"
+        )
         return Handler("/api/upload", raw, "multipart/form-data; boundary=boundary")
 
     def test_upload_preserves_binary_bytes_and_registers_real_file(self):
@@ -111,13 +122,17 @@ class SourceCase(unittest.TestCase):
 
     def test_artifact_chat_upload_resolves_experiment_to_worker(self):
         worker = self.store.create_thread(self.workspace["id"])
+
         class Experiments:
             def get(self, eid, workspace=None):
                 return {"worker": worker["id"]} if eid == "exp_fixture" else None
+
         self.hosted.experiments = Experiments()
         for field in ("experiment_eid", "artifact_id"):
             handler = self.multipart()
-            handler.body_bytes = ('--boundary\r\nContent-Disposition: form-data; name="' + field + '"\r\n\r\nexp_fixture\r\n').encode() + handler.body_bytes
+            handler.body_bytes = (
+                '--boundary\r\nContent-Disposition: form-data; name="' + field + '"\r\n\r\nexp_fixture\r\n'
+            ).encode() + handler.body_bytes
             item = self.service.upload(handler)
             self.assertTrue(Path(item["path"]).is_relative_to(self.store.thread_path(worker["id"])))
         self.assertEqual(len(self.store.list_files(worker["id"])), 2)
@@ -157,7 +172,10 @@ class SourceCase(unittest.TestCase):
         files = self.store.list_files(self.thread["id"])
         context = next(f for f in files if f["path"].endswith("context.json"))
         snapshot = json.loads(self.store.file_path(self.thread["id"], context["path"]).read_text())
-        self.assertEqual([m["content"] for m in snapshot["conversations"][0]["messages"]], ["Measure the fixture", "Measured value is 3"])
+        self.assertEqual(
+            [m["content"] for m in snapshot["conversations"][0]["messages"]],
+            ["Measure the fixture", "Measured value is 3"],
+        )
         copied = Path(snapshot["artifacts"][0]["local_path"])
         self.assertNotEqual(str(copied), source_file["path"])
         self.assertEqual(copied.read_bytes(), b"value\n3\n")
@@ -165,18 +183,29 @@ class SourceCase(unittest.TestCase):
         self.store.add_message(source["id"], "assistant", "New result: 4")
         self.service.prepare_inputs(self.thread["id"], body)
         latest = self.hosted.get_meta(self.thread["id"])["source_inputs"][source["id"]][0]
-        self.assertEqual(json.loads(Path(latest).read_text())["conversations"][0]["messages"][-1]["content"], "New result: 4")
+        self.assertEqual(
+            json.loads(Path(latest).read_text())["conversations"][0]["messages"][-1]["content"], "New result: 4"
+        )
         self.assertEqual(self.requests, [])
 
     def test_selected_experiment_context_uses_worker_plan_results_and_scope(self):
         worker = self.store.create_thread(self.workspace["id"], "Experiment worker")
         self.store.add_message(worker["id"], "assistant", "Experiment measured 12")
         self.service.save(worker["id"], "report.html", b"<h1>Measured 12</h1>", kind="artifact")
-        exp = {"eid": "exp_fixture", "workspace": self.workspace["id"], "worker": worker["id"],
-               "parent": self.thread["id"], "title": "Actual experiment", "body": "Measure fixture", "display_label": 1}
+        exp = {
+            "eid": "exp_fixture",
+            "workspace": self.workspace["id"],
+            "worker": worker["id"],
+            "parent": self.thread["id"],
+            "title": "Actual experiment",
+            "body": "Measure fixture",
+            "display_label": 1,
+        }
+
         class Experiments:
             def get(self, eid, workspace=None):
                 return exp if eid == exp["eid"] and workspace in (None, exp["workspace"]) else None
+
         self.hosted.experiments = Experiments()
         self.service.prepare_inputs(self.thread["id"], {"context_refs": [{"type": "experiment", "value": exp["eid"]}]})
         path = self.hosted.get_meta(self.thread["id"])["source_inputs"][exp["eid"]][0]
@@ -185,7 +214,9 @@ class SourceCase(unittest.TestCase):
         self.assertEqual(snapshot["conversations"][0]["messages"][0]["content"], "Experiment measured 12")
         self.assertEqual(Path(snapshot["artifacts"][0]["local_path"]).read_bytes(), b"<h1>Measured 12</h1>")
         with self.assertRaisesRegex(ValueError, "source not found"):
-            self.service.prepare_inputs(self.thread["id"], {"context_refs": [{"type": "experiment", "value": exp["eid"], "workspace": "other"}]})
+            self.service.prepare_inputs(
+                self.thread["id"], {"context_refs": [{"type": "experiment", "value": exp["eid"], "workspace": "other"}]}
+            )
 
     def test_upload_rejects_bad_boundary_and_symlink_destination(self):
         handler = self.multipart()
@@ -218,7 +249,14 @@ class SourceCase(unittest.TestCase):
         self.assertEqual(resource["checkout_status"], "ok")
         self.assertTrue((Path(resource["checkout_path"]) / "src/main.py").is_file())
         self.assertEqual(self.route(path)[1]["resources"][0]["id"], resource["id"])
-        context = self.service.prepare_inputs(self.thread["id"], {"context_refs": [{"value": resource["checkout_path"], "resourceUrl": resource["url"], "resourceType": "github_repo"}]})
+        context = self.service.prepare_inputs(
+            self.thread["id"],
+            {
+                "context_refs": [
+                    {"value": resource["checkout_path"], "resourceUrl": resource["url"], "resourceType": "github_repo"}
+                ]
+            },
+        )
         copied = next(self.store.thread_path(self.thread["id"]).glob("source-*"))
         self.assertTrue((copied / "src/main.py").is_file())
         self.assertFalse((copied / ".git").exists())
@@ -240,9 +278,13 @@ class SourceCase(unittest.TestCase):
         self.assertIsInstance(self.route("/api/huggingface/search?type=model&query=test")[1], list)
         self.assertTrue(self.route("/api/huggingface/check?type=model&id=owner/model")[1]["accessible"])
         self.assertFalse(self.route("/api/huggingface/status")[1]["token_set"])
-        self.service.prepare_inputs(self.thread["id"], {"context_refs": [{"value": "hf://owner/model", "attachmentKind": "model"}]})
+        self.service.prepare_inputs(
+            self.thread["id"], {"context_refs": [{"value": "hf://owner/model", "attachmentKind": "model"}]}
+        )
         item = self.store.list_files(self.thread["id"])[0]
-        self.assertEqual(json.loads(self.store.file_path(self.thread["id"], item["path"]).read_text())["id"], "owner/model")
+        self.assertEqual(
+            json.loads(self.store.file_path(self.thread["id"], item["path"]).read_text())["id"], "owner/model"
+        )
 
     def test_credentials_and_arbitrary_urls_are_not_silently_accepted(self):
         self.assertEqual(self.route("/api/team/github/connect", "POST")[0], 501)
@@ -251,10 +293,20 @@ class SourceCase(unittest.TestCase):
         self.service.route(handler, "GET", "/api/huggingface/search", {})
         self.assertEqual(handler.response[0], 501)
         self.assertFalse(self.requests)
-        for value in ["https://evil.example/owner/repo", "https://github.com@127.0.0.1/a/b", "--upload-pack=bad", "owner/../secret"]:
+        for value in [
+            "https://evil.example/owner/repo",
+            "https://github.com@127.0.0.1/a/b",
+            "--upload-pack=bad",
+            "owner/../secret",
+        ]:
             with self.assertRaises(ValueError):
                 repo_name(value)
-        for url in ["http://api.github.com/", "https://localhost/", "https://api.github.com:8443/", "https://a:b@api.github.com/"]:
+        for url in [
+            "http://api.github.com/",
+            "https://localhost/",
+            "https://api.github.com:8443/",
+            "https://a:b@api.github.com/",
+        ]:
             with self.assertRaises(ValueError):
                 public_fetch(url)
         with self.assertRaisesRegex(ValueError, "outside"):
@@ -281,8 +333,13 @@ class SourceCase(unittest.TestCase):
     def test_acquisition_failure_does_not_claim_checkout_success(self):
         def fail(*args):
             raise ValueError("Download failed")
+
         self.service.clone = fail
-        status, body = self.route("/api/team/resources?workspace_id=" + self.workspace["id"], "POST", {"type": "github_repo", "url": "https://github.com/owner/repo"})
+        status, body = self.route(
+            "/api/team/resources?workspace_id=" + self.workspace["id"],
+            "POST",
+            {"type": "github_repo", "url": "https://github.com/owner/repo"},
+        )
         self.assertEqual(status, 400)
         self.assertIn("Download failed", body["error"])
         self.assertEqual(self.service.resources(self.workspace["id"]), [])

@@ -7,6 +7,7 @@ browser profiles, speculative sourcemap URLs, or external assets are used.
 The selected entry must be a static SPA shell, not a server-rendered data page.
 Every saved artifact receives its SHA-256, byte count and reference provenance.
 """
+
 import argparse
 import hashlib
 import json
@@ -18,8 +19,8 @@ from urllib.parse import unquote, urljoin, urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 EXTENSIONS = r"(?:js|css|svg|png|jpg|jpeg|ico|webp|gif|woff2?|ttf|otf|map)"
-LITERAL = re.compile(r'''["'`]((?:/|\./|assets/|fonts/)[^"'`\s<>?{}]+\.''' + EXTENSIONS + r''')["'`]''')
-CSS_URL = re.compile(r'''url\(\s*["']?([^"')\s?{}]+\.''' + EXTENSIONS + r''')["']?\s*\)''')
+LITERAL = re.compile(r"""["'`]((?:/|\./|assets/|fonts/)[^"'`\s<>?{}]+\.""" + EXTENSIONS + r""")["'`]""")
+CSS_URL = re.compile(r"""url\(\s*["']?([^"')\s?{}]+\.""" + EXTENSIONS + r""")["']?\s*\)""")
 MAP_URL = re.compile(r"sourceMappingURL=([^\s]+)")
 
 
@@ -39,7 +40,9 @@ class EntryParser(HTMLParser):
         attrs = dict(attrs)
         if tag == "script":
             self.static_entry |= attrs.get("type") == "module" and bool(attrs.get("src"))
-            self.hydration |= attrs.get("type") in {"application/json", "application/ld+json"} or attrs.get("id") == "__NEXT_DATA__"
+            self.hydration |= (
+                attrs.get("type") in {"application/json", "application/ld+json"} or attrs.get("id") == "__NEXT_DATA__"
+            )
         for key in ("src", "href"):
             value = attrs.get(key, "")
             if re.search(r"\." + EXTENSIONS + r"$", value):
@@ -68,7 +71,13 @@ def acquire(entry_url, output):
     if not entry.static_entry or entry.hydration:
         raise ValueError("Entry is not a plain static module shell; no HTML saved")
     (output / "entry.html").write_bytes(data)
-    entry_record = {"request_path": parsed.path, "path": "entry.html", "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "content_type": content_type}
+    entry_record = {
+        "request_path": parsed.path,
+        "path": "entry.html",
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "bytes": len(data),
+        "content_type": content_type,
+    }
     queue = deque([(parsed.path, data.decode("utf-8"), ".html", entry.refs)])
     known, errors = {}, []
     total = len(data)
@@ -100,7 +109,14 @@ def acquire(entry_url, output):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes(data)
                 total += len(data)
-                known[target.path] = {"path": str(relative), "request_path": target.path, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "content_type": content_type, "referenced_by": parent}
+                known[target.path] = {
+                    "path": str(relative),
+                    "request_path": target.path,
+                    "sha256": hashlib.sha256(data).hexdigest(),
+                    "bytes": len(data),
+                    "content_type": content_type,
+                    "referenced_by": parent,
+                }
                 if relative.suffix in {".js", ".css", ".map"}:
                     queue.append((target.path, data.decode("utf-8", errors="replace"), relative.suffix, []))
             except Exception as exc:
