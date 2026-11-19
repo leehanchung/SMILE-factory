@@ -1,6 +1,9 @@
 .PHONY: help sync sync-dev check lint fmt test image run
 
-SLIME_IMAGE ?= slimerl/slime:latest
+# Pinned by digest to the newest stable release, v0.4.0 (CUDA 13.0 build, 2026-10-09).
+# Previously the floating `latest` tag (a nightly). Bump tag + digest together; override with
+# `make run SLIME_IMAGE=...` to try another build.
+SLIME_IMAGE ?= slimerl/slime:v0.4.0-cu130@sha256:18a84672ca67ddcf611528399c2cda2c2520b52c31c82256597c056af4ee6411
 
 help:
 	@echo "Targets:"
