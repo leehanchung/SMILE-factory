@@ -3,11 +3,13 @@
 #
 # slime is the engine (Docker image); this script only assembles the three arg
 # blocks (Megatron / SGLang / slime) and points slime at OUR plugin functions.
-# Hyperparameters come from configs/ — keep them there, not here.
+# NOTE: the arg blocks below are currently HARDCODED. configs/base.yaml and
+# configs/experiments/*.yaml document the intended hyperparameters, but nothing
+# renders them into this script yet (there is no EXPERIMENT= switch). Keep the
+# values below in sync with configs/ by hand until that rendering exists.
 #
 # Usage:
-#   bash launch/run.sh                       # uses configs/base.yaml
-#   EXPERIMENT=grpo_glm_8b bash launch/run.sh
+#   bash launch/run.sh
 #
 # Expected to run INSIDE the slimerl/slime container with this recipe mounted at
 # /workspace and the search_server reachable at $TOOL_SERVER_URL.
