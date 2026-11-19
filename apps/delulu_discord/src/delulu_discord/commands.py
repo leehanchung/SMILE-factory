@@ -15,12 +15,19 @@ Five commands ship in Phase 3:
   Autocomplete-fed remove from the allowlist.
 - ``/admin_listrepos`` — admin only. Show the current allowlist.
 
-All admin commands are gated via
-``@app_commands.default_permissions(manage_guild=True)``, which
-Discord enforces server-side: unprivileged users don't even see
-these commands in the autocomplete list, and even if they tried
-to invoke them via a raw interaction, Discord would reject before
-the handler runs.
+All admin commands are gated twice:
+
+1. ``@app_commands.default_permissions(manage_guild=True)`` hides
+   them from unprivileged users by default. This is only a
+   *default*: guild admins can override it per role/channel under
+   Server Settings → Integrations, so it is UX, not authorization.
+2. ``@admin_only()`` — an ``app_commands.check`` that runs in the
+   bot before the handler and requires the invoking member to hold
+   ``Manage Server`` (``guild_permissions.manage_guild``) and the
+   interaction to come from a guild. Denials raise
+   ``AdminCheckFailure``, which the tree error handler installed by
+   ``register_slash_commands`` turns into an ephemeral reply. This
+   is the actual authorization boundary.
 
 **Why a sandbox-side Modal function instead of an HTTP probe from
 the bot?** Validating private repos requires the ``github-pat``
@@ -70,6 +77,77 @@ AUTOCOMPLETE_CHOICE_LIMIT = 25
 OWNER_REPO_RE = re.compile(r"^[A-Za-z0-9_-][A-Za-z0-9._-]*/[A-Za-z0-9_-][A-Za-z0-9._-]*$")
 
 
+class AdminCheckFailure(app_commands.CheckFailure):
+    """Raised by ``admin_only`` when the invoker may not run an admin command.
+
+    Carries the user-facing denial text so the tree error handler
+    can reply without re-deriving why the check failed.
+    """
+
+    def __init__(self, user_message: str) -> None:
+        super().__init__(user_message)
+        self.user_message = user_message
+
+
+def _require_manage_guild(interaction: discord.Interaction) -> bool:
+    """``app_commands.check`` predicate: guild-only + Manage Server.
+
+    Does not trust ``default_permissions`` (which guild admins can
+    override); re-checks the member's guild-level permissions on
+    every invocation. Fails closed: a DM, a non-``Member`` user, or
+    a missing permissions object all deny.
+    """
+    if interaction.guild_id is None or interaction.guild is None:
+        raise AdminCheckFailure("❌ This command can only be used in a server.")
+    perms = getattr(interaction.user, "guild_permissions", None)
+    if perms is None or not perms.manage_guild:
+        raise AdminCheckFailure("❌ You need the **Manage Server** permission to use this command.")
+    return True
+
+
+def _is_guild_admin(interaction: discord.Interaction) -> bool:
+    """Non-raising form of :func:`_require_manage_guild`.
+
+    discord.py does not run ``app_commands.check`` predicates for
+    autocomplete callbacks, so admin autocompletes call this directly.
+    """
+    try:
+        return _require_manage_guild(interaction)
+    except AdminCheckFailure:
+        return False
+
+
+def admin_only():
+    """Decorator gating an app command on ``Manage Server`` (see module docstring)."""
+    return app_commands.check(_require_manage_guild)
+
+
+async def _send_ephemeral(interaction: discord.Interaction, content: str) -> None:
+    """Reply ephemerally whether or not the interaction was already responded to."""
+    if interaction.response.is_done():
+        await interaction.followup.send(content, ephemeral=True)
+    else:
+        await interaction.response.send_message(content, ephemeral=True)
+
+
+async def handle_app_command_error(
+    interaction: discord.Interaction,
+    error: app_commands.AppCommandError,
+) -> bool:
+    """Handle errors this module knows about. Returns True if handled."""
+    if isinstance(error, AdminCheckFailure):
+        command = interaction.command.qualified_name if interaction.command else None
+        logger.warning(
+            "commands.admin_denied",
+            command=command,
+            user_id=getattr(interaction.user, "id", None),
+            guild_id=interaction.guild_id,
+        )
+        await _send_ephemeral(interaction, error.user_message)
+        return True
+    return False
+
+
 def register_slash_commands(
     tree: app_commands.CommandTree,
     *,
@@ -93,6 +171,17 @@ def register_slash_commands(
     session (for ``thread_id`` and the implicit repo binding) and
     then dispatch the commit to the sandbox.
     """
+
+    # Route admin-check denials to an ephemeral reply; defer every
+    # other error to discord.py's default handler (which logs it).
+    @tree.error
+    async def on_app_command_error(
+        interaction: discord.Interaction,
+        error: app_commands.AppCommandError,
+    ) -> None:
+        if await handle_app_command_error(interaction, error):
+            return
+        await app_commands.CommandTree.on_error(tree, interaction, error)
 
     # ── /setrepo ────────────────────────────────────────────
     @tree.command(
@@ -189,6 +278,7 @@ def register_slash_commands(
         description="Add a GitHub repo to this server's allowlist (admin only)",
     )
     @app_commands.default_permissions(manage_guild=True)
+    @admin_only()
     @app_commands.describe(repo="Repository in owner/repo format")
     async def admin_addrepo(interaction: discord.Interaction, repo: str) -> None:
         if interaction.guild_id is None:
@@ -258,6 +348,7 @@ def register_slash_commands(
         description="Remove a repo from this server's allowlist (admin only)",
     )
     @app_commands.default_permissions(manage_guild=True)
+    @admin_only()
     @app_commands.describe(repo="Repository to remove")
     async def admin_removerepo(interaction: discord.Interaction, repo: str) -> None:
         if interaction.guild_id is None:
@@ -288,7 +379,9 @@ def register_slash_commands(
         interaction: discord.Interaction,
         current: str,
     ) -> list[app_commands.Choice[str]]:
-        if interaction.guild_id is None:
+        # Autocomplete bypasses admin_only(), so gate it here or any
+        # member could enumerate the allowlist by typing the command.
+        if not _is_guild_admin(interaction):
             return []
         return _build_autocomplete_choices(
             await repo_allowlist.get(interaction.guild_id),
@@ -301,6 +394,7 @@ def register_slash_commands(
         description="Show this server's allowed repos (admin only)",
     )
     @app_commands.default_permissions(manage_guild=True)
+    @admin_only()
     async def admin_listrepos(interaction: discord.Interaction) -> None:
         if interaction.guild_id is None:
             await interaction.response.send_message(
