@@ -97,7 +97,9 @@ AGENT_ENV_KEYS = frozenset(
         # match) so unrelated provider secrets such as OPENAI_WEBHOOK_SECRET or admin
         # keys never reach the agent.
         "CODEX_HOME",
+        "CODEX_SQLITE_HOME",
         "CODEX_API_KEY",
+        "CODEX_ACCESS_TOKEN",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "OPENAI_ORG_ID",
