@@ -1,22 +1,22 @@
 """SQLite state and confined files for a single-user research application."""
 
-from contextlib import contextmanager
-from datetime import datetime, timezone
 import hashlib
 import json
 import mimetypes
 import os
-from pathlib import Path
 import re
 import sqlite3
 import uuid
+from contextlib import contextmanager
+from datetime import UTC, datetime
+from pathlib import Path
 
 TERMINAL = {"completed", "failed", "cancelled", "interrupted"}
 IDENTIFIER = re.compile(r"^[a-zA-Z0-9_-]{1,100}$")
 
 
 def now():
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def identifier(value):
@@ -115,7 +115,9 @@ class Store:
     def list_folders(self):
         return self._all("SELECT * FROM folders ORDER BY created_at")
 
-    def create_thread(self, workspace_id=None, title="New research", planner_model="", worker_model="", folder_id=None, thread_id=None):
+    def create_thread(
+        self, workspace_id=None, title="New research", planner_model="", worker_model="", folder_id=None, thread_id=None
+    ):
         if workspace_id is None:
             workspaces = self.list_workspaces()
             workspace_id = (workspaces[0] if workspaces else self.create_workspace())["id"]
@@ -126,20 +128,32 @@ class Store:
         for value in (title, planner_model, worker_model):
             if not isinstance(value, str):
                 raise ValueError("Thread fields must be strings")
-        item = {"id": thread_id, "workspace_id": workspace_id, "folder_id": folder_id,
-                "title": title.strip()[:200] or "New research", "planner_model": planner_model[:100],
-                "worker_model": worker_model[:100], "provider_thread_id": None,
-                "created_at": now(), "updated_at": now()}
+        item = {
+            "id": thread_id,
+            "workspace_id": workspace_id,
+            "folder_id": folder_id,
+            "title": title.strip()[:200] or "New research",
+            "planner_model": planner_model[:100],
+            "worker_model": worker_model[:100],
+            "provider_thread_id": None,
+            "created_at": now(),
+            "updated_at": now(),
+        }
         with self.connect() as db:
-            db.execute("""INSERT INTO threads VALUES
+            db.execute(
+                """INSERT INTO threads VALUES
                 (:id,:workspace_id,:folder_id,:title,:planner_model,:worker_model,
-                 :provider_thread_id,:created_at,:updated_at)""", item)
+                 :provider_thread_id,:created_at,:updated_at)""",
+                item,
+            )
         self.thread_path(thread_id).mkdir(mode=0o700, parents=True, exist_ok=True)
         return item
 
     def list_threads(self, workspace_id=None):
         if workspace_id:
-            return self._all("SELECT * FROM threads WHERE workspace_id=? ORDER BY updated_at DESC", (identifier(workspace_id),))
+            return self._all(
+                "SELECT * FROM threads WHERE workspace_id=? ORDER BY updated_at DESC", (identifier(workspace_id),)
+            )
         return self._all("SELECT * FROM threads ORDER BY updated_at DESC")
 
     def get_thread(self, thread_id):
@@ -157,13 +171,18 @@ class Store:
             raise ValueError("Title must not be empty")
         updates["updated_at"] = now()
         with self.connect() as db:
-            db.execute("UPDATE threads SET " + ",".join(f"{key}=?" for key in updates) + " WHERE id=?", (*updates.values(), identifier(thread_id)))
+            db.execute(
+                "UPDATE threads SET " + ",".join(f"{key}=?" for key in updates) + " WHERE id=?",
+                (*updates.values(), identifier(thread_id)),
+            )
         return self.get_thread(thread_id)
 
     def delete_thread(self, thread_id):
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            if db.execute("SELECT id FROM runs WHERE thread_id=? AND status IN ('queued','running')", (identifier(thread_id),)).fetchone():
+            if db.execute(
+                "SELECT id FROM runs WHERE thread_id=? AND status IN ('queued','running')", (identifier(thread_id),)
+            ).fetchone():
                 raise ValueError("Cannot delete a running thread")
             db.execute("DELETE FROM threads WHERE id=?", (thread_id,))
         # Deliberately retain workspace files; deleting chat history must not destroy research data.
@@ -197,8 +216,14 @@ class Store:
     def add_message(self, thread_id, role, content, run_id=None):
         if role not in {"user", "assistant", "system"} or not isinstance(content, str):
             raise ValueError("Invalid message")
-        item = {"id": str(uuid.uuid4()), "thread_id": identifier(thread_id), "run_id": run_id,
-                "role": role, "content": content, "created_at": now()}
+        item = {
+            "id": str(uuid.uuid4()),
+            "thread_id": identifier(thread_id),
+            "run_id": run_id,
+            "role": role,
+            "content": content,
+            "created_at": now(),
+        }
         with self.connect() as db:
             db.execute("INSERT INTO messages VALUES (:id,:thread_id,:run_id,:role,:content,:created_at)", item)
         return item
@@ -215,6 +240,7 @@ class Store:
                 descriptor = child
             file_descriptor = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=descriptor)
             import stat
+
             if not stat.S_ISREG(os.fstat(file_descriptor).st_mode):
                 os.close(file_descriptor)
                 raise ValueError("Only ordinary files can be served")
@@ -235,7 +261,9 @@ class Store:
                 pass
             directory = os.open("uploads", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root)
             try:
-                descriptor = os.open(parts[1], os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory)
+                descriptor = os.open(
+                    parts[1], os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory
+                )
                 with os.fdopen(descriptor, "wb") as stream:
                     stream.write(content)
             finally:
@@ -255,10 +283,16 @@ class Store:
             if not db.execute("SELECT id FROM threads WHERE id=?", (identifier(thread_id),)).fetchone():
                 raise ValueError("Thread not found")
             try:
-                db.execute("INSERT INTO runs(id,thread_id,status,model,auto_research,created_at) VALUES (?,?,?,?,?,?)", (run_id, thread_id, "queued", model, int(bool(auto_research)), timestamp))
+                db.execute(
+                    "INSERT INTO runs(id,thread_id,status,model,auto_research,created_at) VALUES (?,?,?,?,?,?)",
+                    (run_id, thread_id, "queued", model, int(bool(auto_research)), timestamp),
+                )
             except sqlite3.IntegrityError as exc:
                 raise ValueError("A run is already active for this thread") from exc
-            db.execute("INSERT INTO messages VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), thread_id, run_id, "user", prompt, timestamp))
+            db.execute(
+                "INSERT INTO messages VALUES (?,?,?,?,?,?)",
+                (str(uuid.uuid4()), thread_id, run_id, "user", prompt, timestamp),
+            )
             db.execute("UPDATE threads SET updated_at=? WHERE id=?", (timestamp, thread_id))
         return self.get_run(run_id)
 
@@ -272,11 +306,25 @@ class Store:
         return self._all("SELECT * FROM runs WHERE thread_id=? ORDER BY created_at", (identifier(thread_id),))
 
     def update_run(self, run_id, **changes):
-        allowed = {"status", "started_at", "finished_at", "return_code", "final_text", "usage_json", "error", "provider_thread_id"}
+        allowed = {
+            "status",
+            "started_at",
+            "finished_at",
+            "return_code",
+            "final_text",
+            "usage_json",
+            "error",
+            "provider_thread_id",
+        }
         updates = {key: value for key, value in changes.items() if key in allowed}
         if updates:
             with self.connect() as db:
-                db.execute("UPDATE runs SET " + ",".join(f"{key}=?" for key in updates) + " WHERE id=? AND status NOT IN ('completed','failed','cancelled','interrupted')", (*updates.values(), identifier(run_id)))
+                db.execute(
+                    "UPDATE runs SET "
+                    + ",".join(f"{key}=?" for key in updates)
+                    + " WHERE id=? AND status NOT IN ('completed','failed','cancelled','interrupted')",
+                    (*updates.values(), identifier(run_id)),
+                )
         return self.get_run(run_id)
 
     def finish_run(self, run_id, status, final_text="", error=None, return_code=None, usage=None):
@@ -287,19 +335,31 @@ class Store:
             run = db.execute("SELECT * FROM runs WHERE id=?", (identifier(run_id),)).fetchone()
             if not run or run["status"] in TERMINAL:
                 return False
-            db.execute("UPDATE runs SET status=?,finished_at=?,return_code=?,final_text=?,error=?,usage_json=? WHERE id=?", (status, now(), return_code, final_text, error, json.dumps(usage) if usage else None, run_id))
+            db.execute(
+                "UPDATE runs SET status=?,finished_at=?,return_code=?,final_text=?,error=?,usage_json=? WHERE id=?",
+                (status, now(), return_code, final_text, error, json.dumps(usage) if usage else None, run_id),
+            )
             if final_text:
-                db.execute("INSERT INTO messages VALUES (?,?,?,?,?,?)", (str(uuid.uuid4()), run["thread_id"], run_id, "assistant", final_text, now()))
+                db.execute(
+                    "INSERT INTO messages VALUES (?,?,?,?,?,?)",
+                    (str(uuid.uuid4()), run["thread_id"], run_id, "assistant", final_text, now()),
+                )
             db.execute("UPDATE threads SET updated_at=? WHERE id=?", (now(), run["thread_id"]))
         return True
 
     def add_event(self, run_id, kind, payload):
         with self.connect() as db:
-            cur = db.execute("INSERT INTO run_events(run_id,kind,payload_json,created_at) VALUES (?,?,?,?)", (identifier(run_id), kind, json.dumps(payload, ensure_ascii=False), now()))
+            cur = db.execute(
+                "INSERT INTO run_events(run_id,kind,payload_json,created_at) VALUES (?,?,?,?)",
+                (identifier(run_id), kind, json.dumps(payload, ensure_ascii=False), now()),
+            )
             return cur.lastrowid
 
     def list_events(self, run_id, after=0, limit=500):
-        rows = self._all("SELECT * FROM run_events WHERE run_id=? AND id>? ORDER BY id LIMIT ?", (identifier(run_id), max(0, int(after)), min(1000, max(1, int(limit)))))
+        rows = self._all(
+            "SELECT * FROM run_events WHERE run_id=? AND id>? ORDER BY id LIMIT ?",
+            (identifier(run_id), max(0, int(after)), min(1000, max(1, int(limit)))),
+        )
         for row in rows:
             row["payload"] = json.loads(row.pop("payload_json"))
         return rows
@@ -321,13 +381,24 @@ class Store:
         with self.open_file(thread_id, relative) as stream:
             digest = hashlib.file_digest(stream, "sha256").hexdigest()
         existing = self._one("SELECT id FROM files WHERE thread_id=? AND path=?", (thread_id, relative))
-        item = {"id": existing["id"] if existing else str(uuid.uuid4()), "thread_id": thread_id,
-                "run_id": run_id, "path": relative, "size": size, "sha256": digest,
-                "media_type": mimetypes.guess_type(path.name)[0] or "application/octet-stream", "kind": kind, "created_at": now()}
+        item = {
+            "id": existing["id"] if existing else str(uuid.uuid4()),
+            "thread_id": thread_id,
+            "run_id": run_id,
+            "path": relative,
+            "size": size,
+            "sha256": digest,
+            "media_type": mimetypes.guess_type(path.name)[0] or "application/octet-stream",
+            "kind": kind,
+            "created_at": now(),
+        }
         with self.connect() as db:
-            db.execute("""INSERT INTO files VALUES (:id,:thread_id,:run_id,:path,:size,:sha256,:media_type,:kind,:created_at)
+            db.execute(
+                """INSERT INTO files VALUES (:id,:thread_id,:run_id,:path,:size,:sha256,:media_type,:kind,:created_at)
                 ON CONFLICT(thread_id,path) DO UPDATE SET run_id=excluded.run_id,size=excluded.size,
-                sha256=excluded.sha256,media_type=excluded.media_type,kind=excluded.kind,created_at=excluded.created_at""", item)
+                sha256=excluded.sha256,media_type=excluded.media_type,kind=excluded.kind,created_at=excluded.created_at""",
+                item,
+            )
         return item
 
     def list_files(self, thread_id):
@@ -339,5 +410,7 @@ class Store:
     def thread_detail(self, thread_id):
         thread = self.get_thread(thread_id)
         if thread:
-            thread.update(messages=self.list_messages(thread_id), runs=self.list_runs(thread_id), files=self.list_files(thread_id))
+            thread.update(
+                messages=self.list_messages(thread_id), runs=self.list_runs(thread_id), files=self.list_files(thread_id)
+            )
         return thread
