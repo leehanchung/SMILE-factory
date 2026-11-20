@@ -37,6 +37,9 @@ concurrency:
   group: auto-resolve-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
+# Deny-all default; each job grants exactly what it needs.
+permissions: {}
+
 jobs:
   resolve:
     name: Resolve bot's prior threads

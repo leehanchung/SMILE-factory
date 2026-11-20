@@ -62,6 +62,9 @@ concurrency:
   group: codex-auth
   cancel-in-progress: false
 
+# Deny-all default; the job below grants exactly what it needs.
+permissions: {}
+
 jobs:
   review:
     name: Codex PR review
@@ -81,9 +84,14 @@ jobs:
       AUTH_JSON_PATH: ${{ github.workspace }}/.codex-home/auth.json
       DROPLET_AUTH_PATH: /root/.codex-ci/auth.json
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          # Don't leave the GITHUB_TOKEN on disk: Codex runs on
+          # untrusted PR content (prompt-injection surface) in this
+          # workspace. The repo is public, so the pre-fetch below
+          # works anonymously.
+          persist-credentials: false
 
       - name: Pre-fetch base and head refs
         env:
@@ -119,6 +127,7 @@ jobs:
         env:
           DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
           DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
           # No `set -x` anywhere in this job — leaks would echo the
@@ -129,11 +138,15 @@ jobs:
           printf '%s\n' "$DROPLET_SSH_KEY" > ~/.ssh/codex_droplet
           chmod 600 ~/.ssh/codex_droplet
 
-          # Trust the droplet's host key on first contact. Without
-          # this, scp/ssh would refuse the connection on a fresh
-          # runner. ssh-keyscan is read-only so it's safe to do
-          # unconditionally.
-          ssh-keyscan -H "$DROPLET_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # Pin the droplet host key when DROPLET_KNOWN_HOSTS is set (the
+          # output of `ssh-keyscan -H <host>`, verified out of band);
+          # otherwise fall back to trust-on-first-use via ssh-keyscan.
+          if [ -n "${DROPLET_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$DROPLET_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          else
+            echo "::warning::DROPLET_KNOWN_HOSTS not set; trusting droplet host key on first use"
+            ssh-keyscan -H "$DROPLET_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
 
       - name: Restore auth.json (droplet → fallback to secret seed)
         if: steps.auth_mode.outputs.mode == 'chatgpt'
@@ -472,11 +485,17 @@ jobs:
         # an action that handles a long-lived signing key). The
         # trailing comment records the human-readable version we
         # resolved from. Bump deliberately when reviewing the
-        # action's changelog. SHA below is `v1` as of 2026-05-06.
-        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547  # v1
+        # action's changelog. SHA below is `v3.3.0` as of 2026-11-17.
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
         with:
+          # `app-id` is deprecated in v3 in favour of `client-id`, but
+          # still works; switching needs a CODEX_APP_CLIENT_ID secret.
           app-id: ${{ secrets.CODEX_APP_ID }}
           private-key: ${{ secrets.CODEX_APP_PRIVATE_KEY }}
+          # Least privilege: the token only posts the review and
+          # resolves review threads, so scope it down from the App's
+          # full installation permissions.
+          permission-pull-requests: write
 
       - name: Snapshot bot's existing unresolved review threads
         # Captures the IDs of currently-unresolved threads authored
@@ -499,6 +518,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
           BOT_LOGIN: ${{ steps.app_token.outputs.app-slug }}[bot]
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
@@ -524,9 +546,9 @@ jobs:
                 }
               }
             }' \
-            -F owner="${{ github.repository_owner }}" \
-            -F repo="${{ github.event.repository.name }}" \
-            -F pr=${{ github.event.pull_request.number }} \
+            -F owner="$OWNER" \
+            -F repo="$REPO" \
+            -F pr="$PR_NUMBER" \
             | jq -r --arg bot "$BOT_LOGIN" '
               .data.repository.pullRequest.reviewThreads.nodes[]
               | select(.isResolved == false)
@@ -569,6 +591,8 @@ jobs:
           # the review posts under the App's bot identity. See the
           # Mint step above for the rationale.
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
@@ -606,7 +630,7 @@ jobs:
           # warned about this exact pattern in an earlier review).
           PAYLOAD=$(mktemp -p "$RUNNER_TEMP" review.XXXXXX.json)
           echo "$CLEAN" \
-            | jq --arg sha "${{ github.event.pull_request.head.sha }}" \
+            | jq --arg sha "$HEAD_SHA" \
                 '{commit_id: $sha, event: .event, body: .body, comments: (.comments // [])}' \
             > "$PAYLOAD"
 
@@ -627,7 +651,7 @@ jobs:
           echo "Posting $EVENT review with $NUM_COMMENTS inline comment(s)"
 
           gh api \
-            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+            "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/reviews" \
             --method POST \
             --input "$PAYLOAD" \
             --jq '.html_url'
