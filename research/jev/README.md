@@ -34,7 +34,7 @@ make notebook                      # optional local JupyterLab; no global kernel
 
 Always use `sh scripts/uv.sh` (or these Make targets) for project commands, including `add`, `sync`, and `run`. Plain `uv` or directly activating `.venv` does not set all model/library cache paths. The wrapper works from other directories when invoked with its absolute path.
 
-Included: PyTorch, GLiNER2 training support, Transformers, Datasets, Accelerate, PEFT, tokenization/serialization libraries, NumPy, SciPy, scikit-learn, pandas/Arrow, and plotting tools. Ruff and pytest are development dependencies; notebooks are optional. GLiNER2 package version 2.0.0 is distinct from GLiNER2.5 model checkpoints. The planned first checkpoint remains `fastino/gliner2-base-v1`.
+Included: PyTorch, GLiNER2 training support, Transformers, Datasets, Accelerate, PEFT, tokenization/serialization libraries, NumPy, SciPy, scikit-learn, pandas/Arrow, and plotting tools. Ruff and pytest are development dependencies; notebooks are optional. GLiNER2 package version 2.1.0 is distinct from GLiNER2.5 model checkpoints. The planned first checkpoint remains `fastino/gliner2-base-v1`.
 
 Python 3.12 is downloaded into `.cache/python`; `.venv` uses that private runtime. Hugging Face, Torch, matplotlib, and notebook caches are project-local. Store datasets in `data/`, model weights in `checkpoints/`, and experiment outputs in `runs/` or `artifacts/`; these paths are ignored. Put reusable Python code in `src/jev_research/`.
 
