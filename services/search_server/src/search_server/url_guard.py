@@ -15,6 +15,8 @@ URL on the model's behalf MUST go through `validate_url` / `safe_fetch`:
   ``MAX_REDIRECTS``;
 - one overall deadline (``DEFAULT_TOTAL_TIMEOUT``) covers DNS, every redirect
   hop and body streaming, on top of HTTPX's per-operation timeouts;
+- DNS lookups run on a dedicated, bounded thread pool (``MAX_DNS_WORKERS``),
+  so stuck lookups cannot exhaust the default executor;
 - the body is read raw and gzip/deflate is decoded here with a bounded decoder,
   so neither the wire bytes nor the decoded bytes can exceed ``max_bytes`` (no
   decompression bombs); any other content-encoding is rejected.
@@ -35,7 +37,9 @@ import asyncio
 import ipaddress
 import os
 import socket
+import threading
 import zlib
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit
 
@@ -48,6 +52,15 @@ MAX_RESPONSE_BYTES = 5 * 1024 * 1024
 DEFAULT_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 # Wall-clock budget for a whole fetch: DNS + every redirect hop + body.
 DEFAULT_TOTAL_TIMEOUT = 30.0
+# Upper bound on concatenated gzip members in one body: empty members decode to
+# nothing, so the byte budgets alone would not bound the per-member work.
+MAX_GZIP_MEMBERS = 16
+# DNS lookups run on their own small pool. A blocking `getaddrinfo` cannot be
+# cancelled, so a lookup that outlives its caller's deadline keeps its thread
+# until the resolver gives up; the pool and the slot count bound how many such
+# lookups can be outstanding, and the default executor is never used.
+MAX_DNS_WORKERS = 8
+DEFAULT_DNS_TIMEOUT = 10.0
 # Only encodings we can decode with a hard output bound.
 ACCEPT_ENCODING = "gzip, deflate"
 
@@ -153,7 +166,7 @@ def validate_url(url: str) -> str:
 
     Checks the canonical ASCII host; fetch `canonical_url(url)` so the validated
     and the connected names are identical (`safe_fetch` does this).
-    Performs a blocking DNS lookup; call via `asyncio.to_thread` from async code.
+    Performs a blocking DNS lookup; from async code use `validate_url_async`.
     """
     host, port = check_url_syntax(url)
     # Allowlist matching ignores the trailing dot (both forms name the host the
@@ -177,6 +190,39 @@ def validate_url(url: str) -> str:
     return url
 
 
+_DNS_EXECUTOR = ThreadPoolExecutor(max_workers=MAX_DNS_WORKERS, thread_name_prefix="search-dns")
+_DNS_SLOTS = threading.BoundedSemaphore(MAX_DNS_WORKERS)
+
+
+def _validate_in_slot(url: str) -> str:
+    try:
+        return validate_url(url)
+    finally:
+        _DNS_SLOTS.release()
+
+
+async def validate_url_async(url: str, *, timeout: float = DEFAULT_DNS_TIMEOUT) -> str:
+    """`validate_url` on the dedicated DNS pool, bounded by `timeout` seconds.
+
+    At most ``MAX_DNS_WORKERS`` lookups are outstanding at once, including ones
+    whose caller already timed out (a thread running `getaddrinfo` cannot be
+    cancelled; its slot is freed when the resolver returns). Waiting for a free
+    slot counts against `timeout`.
+    """
+    try:
+        async with asyncio.timeout(timeout):
+            while not _DNS_SLOTS.acquire(blocking=False):
+                await asyncio.sleep(0.01)
+            try:
+                fut = _DNS_EXECUTOR.submit(_validate_in_slot, url)
+            except BaseException:
+                _DNS_SLOTS.release()
+                raise
+            return await asyncio.wrap_future(fut)
+    except TimeoutError:
+        raise UnsafeURLError("DNS lookup exceeded its deadline") from None
+
+
 class _BoundedDecoder:
     """Decode a gzip/deflate/identity body without ever exceeding `max_bytes`.
 
@@ -196,6 +242,7 @@ class _BoundedDecoder:
         # Bytes fed to the current decoder (gzip: current member). An empty body,
         # or nothing after a complete gzip member, is not truncation.
         self._member_fed = False
+        self._members = 0  # gzip members started
         self._raw_fallback = encoding == "deflate"
         # Compressed input seen while the zlib-vs-raw-deflate choice is still
         # open; replayed into a raw decoder if the zlib header turns out bad.
@@ -223,6 +270,10 @@ class _BoundedDecoder:
         if self._raw_fallback:
             self._seen.extend(data)
         while buf and not self.eof:
+            if self._gzip and not self._member_fed:
+                self._members += 1
+                if self._members > MAX_GZIP_MEMBERS:
+                    raise UnsafeURLError("too many gzip members")
             self._member_fed = True
             try:
                 out = self._d.decompress(buf, self.max_bytes - self.size + 1)
@@ -293,7 +344,7 @@ async def _fetch(
 ) -> FetchResult:
     current = url
     for _ in range(max_redirects + 1):
-        await asyncio.to_thread(validate_url, current)
+        await validate_url_async(current)
         current = canonical_url(current)  # fetch exactly the host we validated
         async with client.stream(
             "GET",

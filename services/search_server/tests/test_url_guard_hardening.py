@@ -370,3 +370,75 @@ async def test_safe_fetch_does_not_follow_300_with_location():
     async with _client(handler) as c:
         res = await safe_fetch("http://public.example/", client=c)
     assert res.status_code == 300 and calls == ["http://public.example/"]
+
+
+async def test_safe_fetch_caps_gzip_member_count():
+    # Empty members decode to nothing, so only a member cap bounds the work.
+    body_ = gzip.compress(b"") * (url_guard.MAX_GZIP_MEMBERS + 1)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=Body(body_), headers={"content-encoding": "gzip"})
+
+    async with _client(handler) as c:
+        with pytest.raises(UnsafeURLError, match="too many gzip members"):
+            await safe_fetch("http://public.example/", client=c)
+
+
+async def test_safe_fetch_allows_gzip_members_up_to_cap():
+    body_ = gzip.compress(b"ab") * url_guard.MAX_GZIP_MEMBERS
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, stream=Body(body_, chunk=1), headers={"content-encoding": "gzip"}
+        )
+
+    async with _client(handler) as c:
+        res = await safe_fetch("http://public.example/", client=c)
+    assert res.content == b"ab" * url_guard.MAX_GZIP_MEMBERS
+
+
+@pytest.fixture
+def stuck_dns(monkeypatch):
+    """A resolver that blocks until released; records peak concurrent lookups."""
+    import threading
+
+    release = threading.Event()
+    state = {"active": 0, "peak": 0}
+    lock = threading.Lock()
+    base = url_guard.socket.getaddrinfo
+
+    def resolver(host, port, *args, **kwargs):
+        if not host.startswith("stuck"):
+            return base(host, port, *args, **kwargs)
+        with lock:
+            state["active"] += 1
+            state["peak"] = max(state["peak"], state["active"])
+        try:
+            release.wait(10)
+            return base("public.example", port, *args, **kwargs)
+        finally:
+            with lock:
+                state["active"] -= 1
+
+    monkeypatch.setattr(url_guard.socket, "getaddrinfo", resolver)
+    yield state
+    release.set()
+
+
+async def test_stuck_dns_times_out_and_is_bounded(stuck_dns):
+    n = url_guard.MAX_DNS_WORKERS * 2
+    results = await asyncio.gather(
+        *(url_guard.validate_url_async(f"http://stuck{i}.example/", timeout=0.3) for i in range(n)),
+        return_exceptions=True,
+    )
+    assert all(isinstance(r, UnsafeURLError) for r in results)
+    assert stuck_dns["peak"] <= url_guard.MAX_DNS_WORKERS
+    # The default executor is untouched by the stuck lookups.
+    assert await asyncio.wait_for(asyncio.to_thread(lambda: 42), 1) == 42
+
+
+async def test_validate_url_async_ok_and_unsafe():
+    url = "http://public.example/"
+    assert await url_guard.validate_url_async(url) == url
+    with pytest.raises(UnsafeURLError, match="non-public"):
+        await url_guard.validate_url_async("http://internal.example/")

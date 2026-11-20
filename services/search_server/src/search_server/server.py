@@ -11,7 +11,8 @@ require any change in the agent or the trainer.
 Security:
 - Optional shared secret: when ``SEARCH_SERVER_TOKEN`` is set, every endpoint
   except ``/health`` requires ``Authorization: Bearer <token>``.
-- Request bodies over ``MAX_REQUEST_BYTES`` are refused (413) by an ASGI
+- Request bodies over ``MAX_REQUEST_BYTES`` are refused (413), and bodies not
+  fully received within ``REQUEST_BODY_TIMEOUT`` seconds get 408, by an ASGI
   middleware before routing, auth or JSON parsing.
 - ``/visit`` URLs are model-chosen; they are SSRF-checked (``url_guard``) before
   any fetch, and the implementation must fetch via ``url_guard.safe_fetch``.
@@ -30,12 +31,16 @@ from search_server.url_guard import (
     MAX_URL_LENGTH,
     UnsafeURLError,
     check_url_syntax,
-    validate_url,
+    validate_url_async,
 )
 
 MAX_QUERY_LENGTH = 2048
 MAX_TOP_K = 100
 MAX_REQUEST_BYTES = 64 * 1024
+# Wall-clock budget for receiving a whole request body. The bearer-token check
+# runs only after the body is in, so without this an unauthenticated client
+# could trickle (or never finish) a body and hold the connection open.
+REQUEST_BODY_TIMEOUT = 10.0
 
 TOKEN_ENV = "SEARCH_SERVER_TOKEN"
 
@@ -64,11 +69,14 @@ class BodySizeLimitMiddleware:
     dependency or the Pydantic field bounds could reject it. A declared
     ``Content-Length`` over the limit is refused without reading anything; a
     chunked body is buffered only up to the limit, then replayed to the app.
+    The whole body must arrive within `body_timeout` seconds or the request gets
+    408, so a slow or stalled upload cannot hold a task open before auth runs.
     """
 
-    def __init__(self, app, max_bytes: int) -> None:
+    def __init__(self, app, max_bytes: int, body_timeout: float = REQUEST_BODY_TIMEOUT) -> None:
         self.app = app
         self.max_bytes = max_bytes
+        self.body_timeout = body_timeout
 
     async def __call__(self, scope, receive, send) -> None:
         if scope["type"] != "http":
@@ -85,16 +93,21 @@ class BodySizeLimitMiddleware:
                     await self._reject(send, 413, b"request body too large")
                     return
         body = bytearray()
-        while True:
-            message = await receive()
-            if message["type"] != "http.request":  # client disconnected
-                return
-            body.extend(message.get("body", b""))
-            if len(body) > self.max_bytes:
-                await self._reject(send, 413, b"request body too large")
-                return
-            if not message.get("more_body", False):
-                break
+        try:
+            async with asyncio.timeout(self.body_timeout):
+                while True:
+                    message = await receive()
+                    if message["type"] != "http.request":  # client disconnected
+                        return
+                    body.extend(message.get("body", b""))
+                    if len(body) > self.max_bytes:
+                        await self._reject(send, 413, b"request body too large")
+                        return
+                    if not message.get("more_body", False):
+                        break
+        except TimeoutError:
+            await self._reject(send, 408, b"request body not received in time")
+            return
         replayed = False
 
         async def replay():
@@ -169,7 +182,7 @@ async def retrieve(req: SearchRequest) -> dict:
 @api.post("/visit")
 async def visit(req: VisitRequest) -> dict:
     try:
-        await asyncio.to_thread(validate_url, req.url)
+        await validate_url_async(req.url)
     except UnsafeURLError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from None
     # TODO: fetch via `url_guard.safe_fetch(req.url)` (re-validates redirects,

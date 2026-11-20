@@ -122,3 +122,48 @@ def test_small_chunked_body_still_reaches_handler(client):
 
     r = client.post("/search", content=gen(), headers={"content-type": "application/json"})
     assert r.status_code == 500  # stub reached
+
+
+async def _run_middleware(receive_messages, delay: float, timeout: float = 0.2):
+    """Drive BodySizeLimitMiddleware with a receive() that sleeps `delay` per call."""
+    import asyncio
+
+    from search_server.server import BodySizeLimitMiddleware
+
+    reached = []
+
+    async def app(scope, receive, send):
+        reached.append(await receive())
+
+    msgs = iter(receive_messages)
+
+    async def receive():
+        await asyncio.sleep(delay)
+        return next(msgs)
+
+    sent = []
+
+    async def send(message):
+        sent.append(message)
+
+    mw = BodySizeLimitMiddleware(app, max_bytes=1024, body_timeout=timeout)
+    await mw({"type": "http", "headers": []}, receive, send)
+    return reached, sent
+
+
+async def test_stalled_body_gets_408():
+    # Never completes: more_body stays True and each chunk trickles in.
+    msgs = [{"type": "http.request", "body": b"x", "more_body": True}] * 1000
+    reached, sent = await _run_middleware(msgs, delay=0.05)
+    assert not reached
+    assert sent[0]["status"] == 408
+
+
+async def test_prompt_body_passes_deadline():
+    msgs = [
+        {"type": "http.request", "body": b"ab", "more_body": True},
+        {"type": "http.request", "body": b"cd", "more_body": False},
+    ]
+    reached, sent = await _run_middleware(msgs, delay=0.0)
+    assert reached == [{"type": "http.request", "body": b"abcd", "more_body": False}]
+    assert not sent
