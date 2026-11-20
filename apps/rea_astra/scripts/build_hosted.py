@@ -3,9 +3,9 @@
 
 import hashlib
 import json
-from pathlib import Path
 import re
 import shutil
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -68,20 +68,24 @@ def build(root=ROOT):
             patched_assets[str(path.relative_to(target))] = changes
     html = (source / "entry.html").read_text()
     # Local UI uses bundled fonts; do not contact font/telemetry services on load.
-    html = re.sub(r'<link\b[^>]*href="https?://[^\"]*"[^>]*>', '', html)
+    html = re.sub(r'<link\b[^>]*href="https?://[^\"]*"[^>]*>', "", html)
     # The hosted share launcher targets the installed production app. Local
     # publications must stay inside this independently implemented local service.
-    html = re.sub(r'<script id="silico-share-handoff">[\s\S]*?</script>', '', html)
-    html = html.replace('<title>Silico</title>', '<title>Silico · REA Astra local</title>')
+    html = re.sub(r'<script id="silico-share-handoff">[\s\S]*?</script>', "", html)
+    html = html.replace("<title>Silico</title>", "<title>Silico · REA Astra local</title>")
     # Hide the original GitHub glyph on this one local entry button.
-    html = html.replace('</head>', '<style>[data-testid="auth-github-login"] svg{display:none}</style></head>')
+    html = html.replace("</head>", '<style>[data-testid="auth-github-login"] svg{display:none}</style></head>')
     (target / "index.html").write_text(html)
     manifest = []
     for path in sorted(target.rglob("*")):
         if path.is_file() and path.name != "build-manifest.json":
             relative = str(path.relative_to(target))
             original = source / ("entry.html" if relative == "index.html" else relative)
-            row = {"path": relative, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "bytes": path.stat().st_size}
+            row = {
+                "path": relative,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "bytes": path.stat().st_size,
+            }
             if original.is_file():
                 row["source_sha256"] = hashlib.sha256(original.read_bytes()).hexdigest()
             if relative in patched_assets:

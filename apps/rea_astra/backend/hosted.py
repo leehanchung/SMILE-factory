@@ -9,8 +9,8 @@ import json
 import re
 import threading
 import time
-from urllib.parse import parse_qs, quote, unquote, urlsplit
 import uuid
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .store import now
 
@@ -52,14 +52,19 @@ class HostedAPI:
                     session TEXT PRIMARY KEY, seen_at TEXT NOT NULL);
             """)
         from .experiments import ExperimentService
+
         self.experiments = ExperimentService(self)
         from .sources import SourceService
+
         self.sources = SourceService(self)
         from .settings import Service as SettingsService
+
         self.settings = SettingsService(self)
         from .thread_features import Service as ThreadService
+
         self.thread_features = ThreadService(self, dispatch=False)
         from .forks import ForkService
+
         self.forks = ForkService(self)
         runner.on_run_finished = self.on_finish
         self.thread_features.start()
@@ -78,13 +83,19 @@ class HostedAPI:
             row = db.execute("SELECT data FROM hosted_meta WHERE session=?", (session,)).fetchone()
             data = json.loads(row[0]) if row else {}
             data.update(fields)
-            db.execute("INSERT INTO hosted_meta VALUES (?,?) ON CONFLICT(session) DO UPDATE SET data=excluded.data", (session, json.dumps(data)))
+            db.execute(
+                "INSERT INTO hosted_meta VALUES (?,?) ON CONFLICT(session) DO UPDATE SET data=excluded.data",
+                (session, json.dumps(data)),
+            )
         return data
 
     def emit(self, session, key, event):
         event = {"timestamp": now(), **event}
         with self.store.connect() as db:
-            db.execute("INSERT OR IGNORE INTO hosted_events(session,source,data) VALUES (?,?,?)", (session, key, json.dumps(event)))
+            db.execute(
+                "INSERT OR IGNORE INTO hosted_events(session,source,data) VALUES (?,?,?)",
+                (session, key, json.dumps(event)),
+            )
 
     def render_text(self, session, value):
         if not isinstance(value, str):
@@ -100,10 +111,12 @@ class HostedAPI:
             url = "/api/feed/file?path=" + quote(self.experiments.virtual_path(item), safe="")
             paths[item["path"]] = url
             paths[str(actual)] = url
+
         def replace(match):
             destination = match[2]
             clean = re.sub(r":\d+(?::\d+)?$", "", destination)
             return "[" + match[1] + "](" + paths.get(clean, destination) + ")"
+
         return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", replace, value)
 
     def start_session(self, workspace, prompt, title, session_id=None, kind="planner", **options):
@@ -117,20 +130,32 @@ class HostedAPI:
             raise ValueError("Session does not belong to this workspace")
         client_id = options.get("client_message_id")
         if existing and client_id:
-            queued = self.store._one("SELECT body FROM hosted_queue WHERE session=? AND client_id=?", (session, client_id))
+            queued = self.store._one(
+                "SELECT body FROM hosted_queue WHERE session=? AND client_id=?", (session, client_id)
+            )
             if queued:
                 result = self.thread_features.send(session, {**options, "message": prompt})
                 if not result["ok"]:
                     raise ValueError(result.get("error") or "The original request did not start")
                 return session
         if not existing:
-            self.store.create_thread(workspace, title or "New research", planner_model=options.get("model", MODEL), thread_id=session)
+            self.store.create_thread(
+                workspace, title or "New research", planner_model=options.get("model", MODEL), thread_id=session
+            )
         elif prompt:
             self.store.update_thread(session, title=title or prompt[:80])
         if options.get("role_models"):
             roles = options["role_models"]
-            self.store.update_thread(session, **{role + "_model": roles[role] for role in ("planner", "worker") if roles.get(role)})
-        self.set_meta(session, kind=kind, auto_accept=bool(options.get("auto_accept", False)), private=bool(options.get("private", False)), role_models=options.get("role_models", {}))
+            self.store.update_thread(
+                session, **{role + "_model": roles[role] for role in ("planner", "worker") if roles.get(role)}
+            )
+        self.set_meta(
+            session,
+            kind=kind,
+            auto_accept=bool(options.get("auto_accept", False)),
+            private=bool(options.get("private", False)),
+            role_models=options.get("role_models", {}),
+        )
         if prompt:
             result = self.thread_features.send(session, {**options, "message": prompt})
             if not result["ok"]:
@@ -156,9 +181,17 @@ class HostedAPI:
                 prompt += "\n\n" + fork_context
         model = thread["planner_model"]
         from .experiments import WORKER_INSTRUCTIONS
+
         worker = meta.get("kind") == "worker"
-        run = self.runner.start(session, prompt, model="" if model == MODEL else model,
-                                auto_research=True if worker else meta.get("auto_accept", False), instructions=(WORKER_INSTRUCTIONS if worker else PLANNER_INSTRUCTIONS) + "\n\n" + self.settings.instructions())
+        run = self.runner.start(
+            session,
+            prompt,
+            model="" if model == MODEL else model,
+            auto_research=True if worker else meta.get("auto_accept", False),
+            instructions=(WORKER_INSTRUCTIONS if worker else PLANNER_INSTRUCTIONS)
+            + "\n\n"
+            + self.settings.instructions(),
+        )
         if client_id:
             self.set_meta(session, **{"client:" + run["id"]: client_id})
         self.set_meta(session, **{"display:" + run["id"]: display_prompt})
@@ -172,7 +205,17 @@ class HostedAPI:
             for run in self.store.list_runs(session):
                 for message in self.store.list_messages(session):
                     if message["role"] == "user" and message["run_id"] == run["id"]:
-                        self.emit(session, "message:" + message["id"], {"type": "user_text", "text": meta.get("display:" + run["id"], message["content"]), "turn_id": run["id"], "client_message_id": meta.get("client:" + run["id"]), "timestamp": message["created_at"]})
+                        self.emit(
+                            session,
+                            "message:" + message["id"],
+                            {
+                                "type": "user_text",
+                                "text": meta.get("display:" + run["id"], message["content"]),
+                                "turn_id": run["id"],
+                                "client_message_id": meta.get("client:" + run["id"]),
+                                "timestamp": message["created_at"],
+                            },
+                        )
                 cursor, has_text = 0, False
                 while True:
                     rows = self.store.list_events(run["id"], after=cursor, limit=1000)
@@ -187,23 +230,67 @@ class HostedAPI:
                         key = "provider:" + str(row["id"])
                         if kind == "item.completed" and item.get("type") == "agent_message":
                             has_text = True
-                            event = {"type": "text", "text": self.render_text(session, item.get("text", "")), "turn_id": run["id"]}
-                        elif kind in ("item.started", "item.completed") and item.get("type") in ("command_execution", "mcp_tool_call", "web_search", "file_change"):
+                            event = {
+                                "type": "text",
+                                "text": self.render_text(session, item.get("text", "")),
+                                "turn_id": run["id"],
+                            }
+                        elif kind in ("item.started", "item.completed") and item.get("type") in (
+                            "command_execution",
+                            "mcp_tool_call",
+                            "web_search",
+                            "file_change",
+                        ):
                             item_id = run["id"] + ":" + item.get("id", str(row["id"]))
-                            tool = {"command_execution": "Bash", "web_search": "WebSearch", "file_change": "Edit"}.get(item.get("type"), item.get("tool", "Tool"))
-                            tool_input = {"command": item["command"]} if "command" in item else {k: v for k, v in item.items() if k not in ("aggregated_output", "result")}
-                            self.emit(session, "tool:start:" + item_id, {"type": "tool_use", "tool": tool, "tool_use_id": item_id, "input": tool_input, "turn_id": run["id"]})
+                            tool = {"command_execution": "Bash", "web_search": "WebSearch", "file_change": "Edit"}.get(
+                                item.get("type"), item.get("tool", "Tool")
+                            )
+                            tool_input = (
+                                {"command": item["command"]}
+                                if "command" in item
+                                else {k: v for k, v in item.items() if k not in ("aggregated_output", "result")}
+                            )
+                            self.emit(
+                                session,
+                                "tool:start:" + item_id,
+                                {
+                                    "type": "tool_use",
+                                    "tool": tool,
+                                    "tool_use_id": item_id,
+                                    "input": tool_input,
+                                    "turn_id": run["id"],
+                                },
+                            )
                             if kind == "item.completed":
-                                event = {"type": "tool_result", "tool_use_id": item_id, "output": item.get("aggregated_output", item.get("result", json.dumps(item))), "is_error": item.get("status") == "failed" or item.get("exit_code", 0) not in (0, None), "turn_id": run["id"]}
+                                event = {
+                                    "type": "tool_result",
+                                    "tool_use_id": item_id,
+                                    "output": item.get("aggregated_output", item.get("result", json.dumps(item))),
+                                    "is_error": item.get("status") == "failed"
+                                    or item.get("exit_code", 0) not in (0, None),
+                                    "turn_id": run["id"],
+                                }
                         if event:
                             self.emit(session, key, {"timestamp": row["created_at"], **event})
                     if len(rows) < 1000:
                         break
                 if run["status"] in ("completed", "failed", "cancelled", "interrupted"):
                     if run.get("final_text") and not has_text:
-                        self.emit(session, "final:" + run["id"], {"type": "text", "text": self.render_text(session, run["final_text"]), "turn_id": run["id"]})
+                        self.emit(
+                            session,
+                            "final:" + run["id"],
+                            {
+                                "type": "text",
+                                "text": self.render_text(session, run["final_text"]),
+                                "turn_id": run["id"],
+                            },
+                        )
                     if run.get("error"):
-                        self.emit(session, "error:" + run["id"], {"type": "text", "text": "Execution failed: " + run["error"], "turn_id": run["id"]})
+                        self.emit(
+                            session,
+                            "error:" + run["id"],
+                            {"type": "text", "text": "Execution failed: " + run["error"], "turn_id": run["id"]},
+                        )
 
     def on_finish(self, run):
         with self.thread_features.lock:
@@ -221,20 +308,48 @@ class HostedAPI:
             if len(raw) > 100000:
                 raise ValueError("Generated plan exceeds 100 KB")
             plan = json.loads(raw)
-            if not isinstance(plan, dict) or not isinstance(plan.get("title"), str) or not isinstance(plan.get("body"), str):
+            if (
+                not isinstance(plan, dict)
+                or not isinstance(plan.get("title"), str)
+                or not isinstance(plan.get("body"), str)
+            ):
                 raise ValueError("Generated plan needs string title and body")
         except FileNotFoundError:
             return
         except (ValueError, OSError) as error:
-            self.emit(session, "plan-error:" + run["id"], {"type": "text", "text": "Could not load the generated research plan: " + str(error)})
+            self.emit(
+                session,
+                "plan-error:" + run["id"],
+                {"type": "text", "text": "Could not load the generated research plan: " + str(error)},
+            )
             return
         import hashlib
+
         digest = hashlib.sha256(raw).hexdigest()
         if self.get_meta(session).get("last_plan_digest") == digest:
             return
-        plan = {"plan_id": "plan_" + run["id"], "title": plan["title"], "body": plan["body"], "file_path": "research-plan.json", "kind": "experiment", "check_in_steps": plan.get("check_in_steps"), "max_gpus": plan.get("max_gpus", 0)}
+        plan = {
+            "plan_id": "plan_" + run["id"],
+            "title": plan["title"],
+            "body": plan["body"],
+            "file_path": "research-plan.json",
+            "kind": "experiment",
+            "check_in_steps": plan.get("check_in_steps"),
+            "max_gpus": plan.get("max_gpus", 0),
+        }
         self.set_meta(session, plan=plan, plan_phase="review", last_plan_digest=digest)
-        self.emit(session, plan["plan_id"], {"type": "plan_ready", "plan_id": plan["plan_id"], "title": plan["title"], "plan": plan["body"], "plan_file_path": plan["file_path"], "kind": "experiment"})
+        self.emit(
+            session,
+            plan["plan_id"],
+            {
+                "type": "plan_ready",
+                "plan_id": plan["plan_id"],
+                "title": plan["title"],
+                "plan": plan["body"],
+                "plan_file_path": plan["file_path"],
+                "kind": "experiment",
+            },
+        )
         # The durable dispatcher launches auto-accepted plans after this run's
         # completion callback releases its executor reservation. This prevents
         # two simultaneous planner completions from exhausting worker capacity.
@@ -249,15 +364,31 @@ class HostedAPI:
         meta = self.get_meta(session)
         busy = any(r["status"] in ("queued", "running") for r in self.store.list_runs(session))
         states = self.experiments.states(session)
-        events = [json.loads(r[0]) for r in rows[max(0, offset):]]
+        events = [json.loads(r[0]) for r in rows[max(0, offset) :]]
         for event in events:
             if event.get("type") in ("text", "text_snapshot", "text_delta"):
                 exp = self.experiments.get(event.get("experiment_eid")) if event.get("experiment_eid") else None
                 event["text"] = self.render_text(exp["worker"] if exp else session, event.get("text", ""))
-        return {"ok": True, "mode": "live", "events": events, "offset": len(rows), "durable_cursor": len(rows), "busy": busy, "has_pending_question": False,
-                "inflight_subagents": sum(s["worker_alive"] for s in states.values()), "inflight_workflows": 0, "plan": meta.get("plan"), "plan_phase": meta.get("plan_phase"),
-                "auto_accept_deadline": None, "auto_accept_paused": False, "auto_continue_deadline": None, "warning": None,
-                "provider": "codex", "model": thread["planner_model"] or MODEL, "experiment_states": states}
+        return {
+            "ok": True,
+            "mode": "live",
+            "events": events,
+            "offset": len(rows),
+            "durable_cursor": len(rows),
+            "busy": busy,
+            "has_pending_question": False,
+            "inflight_subagents": sum(s["worker_alive"] for s in states.values()),
+            "inflight_workflows": 0,
+            "plan": meta.get("plan"),
+            "plan_phase": meta.get("plan_phase"),
+            "auto_accept_deadline": None,
+            "auto_accept_paused": False,
+            "auto_continue_deadline": None,
+            "warning": None,
+            "provider": "codex",
+            "model": thread["planner_model"] or MODEL,
+            "experiment_states": states,
+        }
 
     def stream(self, h, session, offset=0):
         h.send_response(200)
@@ -274,7 +405,7 @@ class HostedAPI:
                     offset += 1
                 h.wfile.write(f"event: state\ndata: {json.dumps(snapshot)}\n\n".encode())
                 h.wfile.flush()
-                self.closed.wait(.3 if snapshot["busy"] else 2)
+                self.closed.wait(0.3 if snapshot["busy"] else 2)
         except (BrokenPipeError, ConnectionResetError, OSError):
             pass
         h.close_connection = True
@@ -284,20 +415,61 @@ class HostedAPI:
         meta = self.get_meta(session)
         busy = any(r["status"] in ("queued", "running") for r in self.store.list_runs(session))
         experiments = [e for e in self.experiments.rows(thread["workspace_id"]) if e["thread_id"] == session]
-        return {"session": session, "session_uuid": session, "session_id": session, "workspace_id": thread["workspace_id"], "project": thread["workspace_id"],
-                "label": thread["title"], "created_at": thread["created_at"], "last_activity_at": thread["updated_at"], "last_user_message_at": thread["updated_at"],
-                "has_pending_question": False, "awaiting_input": bool(meta.get("plan")), "busy": busy, "running": busy,
-                "status": "archived" if meta.get("archived") else "active", "archived": bool(meta.get("archived")), "private": bool(meta.get("private")),
-                "experiments": experiments, "next_thread_label": max((e["display_label"] for e in experiments), default=0) + 1, "can_write": True, "can_delete": not busy, "folder_id": thread["folder_id"],
-                "pinned": meta.get("pinned", False), "pin_rank": meta.get("pin_rank", 0), "unread": False, "provider": "codex", "model": thread["planner_model"] or MODEL}
+        return {
+            "session": session,
+            "session_uuid": session,
+            "session_id": session,
+            "workspace_id": thread["workspace_id"],
+            "project": thread["workspace_id"],
+            "label": thread["title"],
+            "created_at": thread["created_at"],
+            "last_activity_at": thread["updated_at"],
+            "last_user_message_at": thread["updated_at"],
+            "has_pending_question": False,
+            "awaiting_input": bool(meta.get("plan")),
+            "busy": busy,
+            "running": busy,
+            "status": "archived" if meta.get("archived") else "active",
+            "archived": bool(meta.get("archived")),
+            "private": bool(meta.get("private")),
+            "experiments": experiments,
+            "next_thread_label": max((e["display_label"] for e in experiments), default=0) + 1,
+            "can_write": True,
+            "can_delete": not busy,
+            "folder_id": thread["folder_id"],
+            "pinned": meta.get("pinned", False),
+            "pin_rank": meta.get("pin_rank", 0),
+            "unread": False,
+            "provider": "codex",
+            "model": thread["planner_model"] or MODEL,
+        }
 
     def workspace_rows(self):
-        return [{**w, "workspace_id": w["id"], "display_name": w["name"], **self.settings.workspace_meta(w["id"]), "organization_id": "local", "can_write": True} for w in self.store.list_workspaces()]
+        return [
+            {
+                **w,
+                "workspace_id": w["id"],
+                "display_name": w["name"],
+                **self.settings.workspace_meta(w["id"]),
+                "organization_id": "local",
+                "can_write": True,
+            }
+            for w in self.store.list_workspaces()
+        ]
 
     def folder_rows(self):
-        return [{**w, "folder_id": w["workspace_id"], "owner_user_id": "local:dev", "owned": True,
-                 "shared": False, "org_shared": False, "is_default": index == 0}
-                for index, w in enumerate(self.workspace_rows())]
+        return [
+            {
+                **w,
+                "folder_id": w["workspace_id"],
+                "owner_user_id": "local:dev",
+                "owned": True,
+                "shared": False,
+                "org_shared": False,
+                "is_default": index == 0,
+            }
+            for index, w in enumerate(self.workspace_rows())
+        ]
 
     def route(self, h, method, path, body):
         body = body if isinstance(body, dict) else {}
@@ -322,16 +494,55 @@ class HostedAPI:
         if self.sources.route(h, method, path, body):
             return True
         if method == "GET" and path == "/api/config":
-            reply({"local_dev": True, "artifact_store_configured": True, "reporting_enabled": True, "zero_data_retention": False, "cluster_id": "rea-astra-local", "deployment_id": "rea-astra-local", "lab_login": "dev", "sentry_dsn": None, "sentry_environment": "local"})
+            reply(
+                {
+                    "local_dev": True,
+                    "artifact_store_configured": True,
+                    "reporting_enabled": True,
+                    "zero_data_retention": False,
+                    "cluster_id": "rea-astra-local",
+                    "deployment_id": "rea-astra-local",
+                    "lab_login": "dev",
+                    "sentry_dsn": None,
+                    "sentry_environment": "local",
+                }
+            )
         elif method == "GET" and path == "/api/auth/config":
-            reply({"auth_required": False, "auth_url": "", "auth_origins": [], "tenant_id": "local", "pinned_login": None, "user_id": "local:dev", "username": "dev", "avatar_url": ""})
+            reply(
+                {
+                    "auth_required": False,
+                    "auth_url": "",
+                    "auth_origins": [],
+                    "tenant_id": "local",
+                    "pinned_login": None,
+                    "user_id": "local:dev",
+                    "username": "dev",
+                    "avatar_url": "",
+                }
+            )
         elif method == "GET" and path == "/api/feature-flags":
             models = [{"value": MODEL, "label": "Codex · configured model", "provider": "codex"}]
-            reply({"flags": {}, "capabilities": {}, "providers": {"codex": True, "claude": False, "modal": False, "byo-model": False}, "models": models, "default_model": MODEL, "roles": ["planner", "worker"], "role_models": models, "role_defaults": {"planner": MODEL, "worker": MODEL}})
+            reply(
+                {
+                    "flags": {},
+                    "capabilities": {},
+                    "providers": {"codex": True, "claude": False, "modal": False, "byo-model": False},
+                    "models": models,
+                    "default_model": MODEL,
+                    "roles": ["planner", "worker"],
+                    "role_models": models,
+                    "role_defaults": {"planner": MODEL, "worker": MODEL},
+                }
+            )
         elif path == "/api/feed/session" and method == "POST":
             reply({"ok": True})
         elif path == "/api/orgs" and method == "GET":
-            reply({"orgs_active": True, "orgs": [{"organization_id": "local", "name": self.settings.org_name(), "role": "owner"}]})
+            reply(
+                {
+                    "orgs_active": True,
+                    "orgs": [{"organization_id": "local", "name": self.settings.org_name(), "role": "owner"}],
+                }
+            )
         elif path == "/api/workspaces" and method == "GET":
             reply({"workspaces": self.workspace_rows()})
         elif path == "/api/workspaces" and method == "POST":
@@ -344,19 +555,61 @@ class HostedAPI:
             reply({"display_names": {}, "skills": []})
         elif re.fullmatch(r"/api/orgs/[^/]+/sidebar", path) and method == "GET":
             folders = self.folder_rows()
-            rows = [self.thread_row(t) for t in self.store.list_threads() if self.get_meta(t["id"]).get("kind", "planner") == "planner"]
-            reply({"folders": folders, "threads": rows, "folder_threads": {f["id"]: [t for t in rows if t["workspace_id"] == f["id"] and not t["archived"]] for f in folders}, "folder_archived_threads": {f["id"]: [t for t in rows if t["workspace_id"] == f["id"] and t["archived"]] for f in folders}, "folder_publications": {}})
+            rows = [
+                self.thread_row(t)
+                for t in self.store.list_threads()
+                if self.get_meta(t["id"]).get("kind", "planner") == "planner"
+            ]
+            reply(
+                {
+                    "folders": folders,
+                    "threads": rows,
+                    "folder_threads": {
+                        f["id"]: [t for t in rows if t["workspace_id"] == f["id"] and not t["archived"]]
+                        for f in folders
+                    },
+                    "folder_archived_threads": {
+                        f["id"]: [t for t in rows if t["workspace_id"] == f["id"] and t["archived"]] for f in folders
+                    },
+                    "folder_publications": {},
+                }
+            )
         elif re.fullmatch(r"/api/orgs/[^/]+/folders", path) and method == "GET":
             reply({"folders": self.folder_rows()})
         elif re.fullmatch(r"/api/orgs/[^/]+/folders", path) and method == "POST":
             folder = self.store.create_workspace(body.get("name", "New folder"))
             reply({"ok": True, **folder, "folder_id": folder["id"], "workspace_id": folder["id"]})
         elif path == "/api/plan/sessions" and method == "GET":
-            reply([self.thread_row(t) for t in self.store.list_threads() if self.get_meta(t["id"]).get("kind", "planner") == "planner"])
+            reply(
+                [
+                    self.thread_row(t)
+                    for t in self.store.list_threads()
+                    if self.get_meta(t["id"]).get("kind", "planner") == "planner"
+                ]
+            )
         elif (match := re.fullmatch(r"/api/workspaces/([^/]+)/plan/(start|reserve-thread)", path)) and method == "POST":
             title = body.get("label") or body.get("message", "New research")[:80]
-            session = self.start_session(match[1], body.get("message", "") if match[2] == "start" else "", title,
-                                         session_id=body.get("session_uuid"), **{k: v for k, v in body.items() if k in ("model", "role_models", "auto_accept", "private", "client_message_id", "context_refs", "base_repo", "base_ref")})
+            session = self.start_session(
+                match[1],
+                body.get("message", "") if match[2] == "start" else "",
+                title,
+                session_id=body.get("session_uuid"),
+                **{
+                    k: v
+                    for k, v in body.items()
+                    if k
+                    in (
+                        "model",
+                        "role_models",
+                        "auto_accept",
+                        "private",
+                        "client_message_id",
+                        "context_refs",
+                        "base_repo",
+                        "base_ref",
+                    )
+                },
+            )
             reply({"ok": True, "session_uuid": session, "session_id": session, "provider": "codex", "model": MODEL})
         elif path in ("/api/plan/send", "/api/plan/review-message") and method == "POST":
             run = self.send(body.get("session"), body.get("message", ""), body.get("client_message_id"), body)
@@ -365,11 +618,27 @@ class HostedAPI:
             self.stream(h, q("session"), int(q("offset", "0")))
         elif (match := re.fullmatch(r"/api/agent/([^/]+)/stream", path)) and method == "GET":
             self.stream(h, match[1], int(q("offset", "0")))
-        elif path in ("/api/plan/poll", "/api/plan/thread-snapshot", "/api/plan/resume", "/api/plan/transcript", "/api/plan/events", "/api/plan/session-info"):
+        elif path in (
+            "/api/plan/poll",
+            "/api/plan/thread-snapshot",
+            "/api/plan/resume",
+            "/api/plan/transcript",
+            "/api/plan/events",
+            "/api/plan/session-info",
+        ):
             session = body.get("session") or q("session")
             snapshot = self.snapshot(session, int(q("offset", "0")))
             if path.endswith("/resume"):
-                reply({"ok": True, "mode": "live", "provider": "codex", "model": snapshot["model"], "snapshot": snapshot if body.get("include_snapshot", True) else None, "experiment_states": snapshot["experiment_states"]})
+                reply(
+                    {
+                        "ok": True,
+                        "mode": "live",
+                        "provider": "codex",
+                        "model": snapshot["model"],
+                        "snapshot": snapshot if body.get("include_snapshot", True) else None,
+                        "experiment_states": snapshot["experiment_states"],
+                    }
+                )
             elif path.endswith("/transcript"):
                 reply({**snapshot, "next_offset": snapshot["offset"]})
             else:
@@ -387,17 +656,32 @@ class HostedAPI:
                         db.execute("INSERT OR REPLACE INTO hosted_seen VALUES (?,?)", (session, now()))
             reply({"ok": True})
         elif (match := re.fullmatch(r"/api/workspaces/([^/]+)/threads", path)) and method == "GET":
-            reply({"ok": True, "threads": [self.thread_row(t) for t in self.store.list_threads(match[1]) if self.get_meta(t["id"]).get("kind", "planner") == "planner"]})
-        elif (match := re.fullmatch(r"/api/workspaces/([^/]+)/threads/([^/]+)(?:/([^/]+))?", path)):
+            reply(
+                {
+                    "ok": True,
+                    "threads": [
+                        self.thread_row(t)
+                        for t in self.store.list_threads(match[1])
+                        if self.get_meta(t["id"]).get("kind", "planner") == "planner"
+                    ],
+                }
+            )
+        elif match := re.fullmatch(r"/api/workspaces/([^/]+)/threads/([^/]+)(?:/([^/]+))?", path):
             ws, session, action = match.groups()
             thread = self.store.get_thread(session)
             if not thread or thread["workspace_id"] != ws:
                 reply({"ok": False, "error": "Thread not found"}, 404)
             elif method == "DELETE" and action is None:
                 with self.thread_features.lock:
-                    children = self.store._all("SELECT worker FROM hosted_experiments WHERE parent=? AND deleted=0", (session,))
+                    children = self.store._all(
+                        "SELECT worker FROM hosted_experiments WHERE parent=? AND deleted=0", (session,)
+                    )
                     sessions = [session] + [row["worker"] for row in children]
-                    if any(self.runner.is_active(item) or any(r["status"] in ("queued", "running") for r in self.store.list_runs(item)) for item in sessions):
+                    if any(
+                        self.runner.is_active(item)
+                        or any(r["status"] in ("queued", "running") for r in self.store.list_runs(item))
+                        for item in sessions
+                    ):
                         raise ValueError("Stop running research before deleting this thread")
                     self.store.delete_thread(session)
                     with self.store.connect() as db:
@@ -412,7 +696,15 @@ class HostedAPI:
                     self.store.update_thread(session, **{role + "_model": body.get("model") or MODEL})
                 thread = self.store.get_thread(session)
                 models = {"planner": thread["planner_model"] or MODEL, "worker": thread["worker_model"] or MODEL}
-                reply({"ok": True, "model": models["planner"], "provider": "codex", "role_models": models, "effective_role_models": models})
+                reply(
+                    {
+                        "ok": True,
+                        "model": models["planner"],
+                        "provider": "codex",
+                        "role_models": models,
+                        "effective_role_models": models,
+                    }
+                )
             elif action == "auto-accept":
                 if method == "POST":
                     self.set_meta(session, auto_accept=bool(body.get("enabled")))
