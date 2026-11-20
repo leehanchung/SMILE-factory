@@ -1,0 +1,99 @@
+name: main post-merge checks
+
+# Runs lint + unit tests on main after every merge, for each project the
+# merge touched.
+#
+# Why this exists: branch protection on main does NOT require PRs to be
+# up to date with main before merging (strict status checks are off), so
+# merging one PR no longer forces every other open PR to update and
+# re-run its LLM reviews. The trade-off is that two PRs that each pass on
+# their own can break when combined. This workflow catches that after the
+# fact: if it goes red, the commit it ran on names the PR to fix or
+# revert.
+#
+# Integration tests are excluded by each project's pytest addopts
+# (`-m 'not integration'`); they run in delulu-e2e.yaml instead.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.changed.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: changed
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          # uv projects with a standard `make check` + pytest layout.
+          ALL="apps/delulu_discord apps/delulu_sandbox_modal libs/dr_agent services/search_server data/datagen training/rl_deepresearch"
+
+          if [ "$EVENT" = "workflow_dispatch" ] \
+             || [ -z "$BEFORE" ] \
+             || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            files="__all__"
+          else
+            files=$(git diff --name-only "$BEFORE" "$SHA")
+          fi
+          echo "Changed files:"; echo "$files"
+
+          selected=""
+          for p in $ALL; do
+            if [ "$files" = "__all__" ] \
+               || echo "$files" | grep -q "^$p/" \
+               || echo "$files" | grep -qx ".github/workflows/main-post-merge.yml"; then
+              selected="$selected $p"
+            fi
+          done
+          # rl_deepresearch depends on libs/dr_agent via a path dependency.
+          if echo "$selected" | grep -q "libs/dr_agent" \
+             && ! echo "$selected" | grep -q "training/rl_deepresearch"; then
+            selected="$selected training/rl_deepresearch"
+          fi
+
+          json=$(printf '%s\n' $selected | jq -R . | jq -cs 'map(select(length > 0))')
+          echo "Selected: $json"
+          echo "projects=$json" >> "$GITHUB_OUTPUT"
+
+  check:
+    needs: detect
+    if: needs.detect.outputs.projects != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.detect.outputs.projects) }}
+    name: check (${{ matrix.project }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: lint + format check
+        run: make -C "${{ matrix.project }}" check
+
+      - name: unit tests
+        working-directory: ${{ matrix.project }}
+        run: |
+          if [ -d tests ]; then
+            uv run pytest -q
+          else
+            echo "no tests/ directory; skipping"
+          fi
