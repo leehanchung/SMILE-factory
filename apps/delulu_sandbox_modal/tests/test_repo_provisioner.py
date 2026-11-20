@@ -430,14 +430,52 @@ class TestAskpassEnv:
             # so it must not be world-readable.
             mode = os.stat(askpass_path).st_mode & 0o777
             assert mode == 0o700
+            assert env["DELULU_GIT_ASKPASS_TOKEN"] == "ghp_test_token_12345"
             with open(askpass_path) as f:
                 contents = f.read()
-            assert "ghp_test_token_12345" in contents
-            assert "echo 'git'" in contents
+            # The token travels only via the subprocess env — never
+            # interpolated into (or written to disk in) the script.
+            assert "ghp_test_token_12345" not in contents
+            assert "$DELULU_GIT_ASKPASS_TOKEN" in contents
 
         # After context exit, the script is removed so the PAT
         # doesn't outlive the operation.
         assert not os.path.exists(askpass_path)
+
+    @pytest.mark.parametrize(
+        "token",
+        [
+            "ghp_it's'quoted",
+            'tok$(touch /tmp/pwned)`id`$HOME\\n"x"; rm -rf /',
+            "  leading and trailing spaces  ",
+            "-n",
+        ],
+    )
+    def test_script_returns_token_verbatim_with_special_chars(self, token):
+        import subprocess
+
+        from delulu_sandbox_modal.repo_provisioner import _askpass_env
+
+        with _askpass_env(token) as env:
+            askpass_path = env["GIT_ASKPASS"]
+            with open(askpass_path) as f:
+                assert token not in f.read()
+            password = subprocess.run(
+                [askpass_path, "Password for 'https://github.com': "],
+                env=env,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+            username = subprocess.run(
+                [askpass_path, "Username for 'https://github.com': "],
+                env=env,
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        assert password == token + "\n"
+        assert username == "git\n"
 
     def test_cleanup_runs_even_on_exception(self):
         from delulu_sandbox_modal.repo_provisioner import _askpass_env
@@ -452,6 +490,59 @@ class TestAskpassEnv:
 
         assert captured_path is not None
         assert not os.path.exists(captured_path)
+
+
+class TestAskpassTokenHandling:
+    """The PAT must reach git only via env and be scrubbed from errors."""
+
+    TOKEN = "ghp_a'b\"c$d`e"
+
+    def test_push_passes_token_via_env_and_scrubs_errors(self, monkeypatch):
+        import subprocess
+
+        from delulu_sandbox_modal import repo_provisioner
+
+        seen = {}
+
+        def fake_run(cmd, **kwargs):
+            if "config" in cmd:
+                return subprocess.CompletedProcess(cmd, 0, stdout="https://github.com/o/r\n")
+            env = kwargs["env"]
+            with open(env["GIT_ASKPASS"]) as f:
+                seen["script"] = f.read()
+            seen["mode"] = os.stat(env["GIT_ASKPASS"]).st_mode & 0o777
+            seen["path"] = env["GIT_ASKPASS"]
+            seen["env_token"] = env["DELULU_GIT_ASKPASS_TOKEN"]
+            raise subprocess.CalledProcessError(
+                128, cmd, output="", stderr=f"fatal: auth failed for {self.TOKEN}"
+            )
+
+        monkeypatch.setattr(repo_provisioner.subprocess, "run", fake_run)
+        with pytest.raises(RuntimeError) as excinfo:
+            repo_provisioner._push_with_askpass("/ws", "feat/x", self.TOKEN)
+
+        assert seen["env_token"] == self.TOKEN
+        assert self.TOKEN not in seen["script"]
+        assert seen["mode"] == 0o700
+        assert not os.path.exists(seen["path"])
+        assert self.TOKEN not in str(excinfo.value)
+        assert "***PAT***" in str(excinfo.value)
+
+    def test_run_git_scrubs_token_from_errors(self, monkeypatch):
+        import subprocess
+
+        from delulu_sandbox_modal import repo_provisioner
+
+        def fake_run(cmd, **kwargs):
+            assert kwargs["env"]["DELULU_GIT_ASKPASS_TOKEN"] == self.TOKEN
+            raise subprocess.CalledProcessError(
+                128, cmd, output=self.TOKEN, stderr=f"bad creds {self.TOKEN}"
+            )
+
+        monkeypatch.setattr(repo_provisioner.subprocess, "run", fake_run)
+        with pytest.raises(RuntimeError) as excinfo:
+            repo_provisioner._run_git(["fetch"], github_token=self.TOKEN)
+        assert self.TOKEN not in str(excinfo.value)
 
 
 class TestValidateRepoAccess:

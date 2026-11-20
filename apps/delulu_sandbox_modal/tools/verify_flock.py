@@ -82,11 +82,12 @@ TOLERANCE_SECONDS = 0.2
 POLL_INTERVAL_SECONDS = 0.05
 
 scout_image = (
-    # Python 3.12 keeps the scout buildable on the default Modal image
-    # builder (2023.12). The production sandbox uses 3.14 but the
-    # filesystem semantics we're testing are kernel-level, not
-    # language-level, so the Python version is irrelevant.
-    modal.Image.debian_slim(python_version="3.12")
+    # Matches the production sandbox's Python 3.14. Requires Modal Image
+    # Builder 2025.06 or newer (the Makefile pins it for deploys; for
+    # `modal run` set it with `modal config set image_builder_version
+    # 2025.06`). The filesystem semantics under test are kernel-level, so
+    # nothing here depends on a specific Python version.
+    modal.Image.debian_slim(python_version="3.14")
 )
 
 
