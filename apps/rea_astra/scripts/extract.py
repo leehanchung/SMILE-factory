@@ -4,9 +4,9 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path, PurePosixPath
 import plistlib
 import struct
+from pathlib import Path, PurePosixPath
 
 
 def sha256(data):
@@ -23,7 +23,7 @@ def read_asar(path):
     base = 8 + header_size
     if json_size > header_size - 8 or base > len(data):
         raise ValueError("ASAR header exceeds archive")
-    header = json.loads(data[16:16 + json_size])
+    header = json.loads(data[16 : 16 + json_size])
     entries = []
 
     def visit(files, parent=PurePosixPath()):
@@ -42,14 +42,12 @@ def read_asar(path):
             offset, length = int(node["offset"]), node["size"]
             if offset < 0 or not isinstance(length, int) or length < 0 or base + offset + length > len(data):
                 raise ValueError(f"ASAR member outside archive: {relative}")
-            content = data[base + offset:base + offset + length]
+            content = data[base + offset : base + offset + length]
             digest = sha256(content)
             integrity = node.get("integrity")
-            if integrity:
-                if integrity.get("algorithm") != "SHA256" or integrity.get("hash") != digest:
-                    raise ValueError(f"ASAR integrity mismatch: {relative}")
-            item.update(kind="file", size=length, offset=offset,
-                        sha256=digest, integrity_verified=bool(integrity))
+            if integrity and (integrity.get("algorithm") != "SHA256" or integrity.get("hash") != digest):
+                raise ValueError(f"ASAR integrity mismatch: {relative}")
+            item.update(kind="file", size=length, offset=offset, sha256=digest, integrity_verified=bool(integrity))
             entries.append(item)
 
     visit(header["files"])
@@ -72,7 +70,7 @@ def extract(app, output):
             target = sources / item["path"]
             target.parent.mkdir(parents=True, exist_ok=True)
             start = base + item["offset"]
-            target.write_bytes(data[start:start + item["size"]])
+            target.write_bytes(data[start : start + item["size"]])
     manifest = {
         "schema_version": 1,
         "source": str(archive),
