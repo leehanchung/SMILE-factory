@@ -9,12 +9,11 @@
 ## 启动
 
 ```bash
-cd editor
-npx serve .
-# 或 python3 -m http.server 55173
+node scripts/serve.mjs            # 在 skill 根目录运行，仅绑定 127.0.0.1，默认端口 55173
+# 或 cd editor && python3 -m http.server 55173 --bind 127.0.0.1
 ```
 
-浏览器打开根路径即可（不要用 file://）。仓库内也可用 `npx open-kimi-ppt-skill serve`。
+浏览器打开根路径即可（不要用 file://）。上游 npm 包 `open-kimi-ppt-skill` 已下架，`npx open-kimi-ppt-skill serve` 会 404，请改用 `scripts/serve.mjs`。
 
 ## 使用
 

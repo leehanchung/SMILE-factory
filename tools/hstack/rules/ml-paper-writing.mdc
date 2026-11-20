@@ -46,7 +46,7 @@ AI-generated citations have a **~40% error rate**. Never generate BibTeX from me
 Always tell the scientist: "I've marked [X] citations as placeholders that need verification."
 
 **For paper search, use:**
-- Exa MCP (if available): `claude mcp add exa -- npx -y mcp-remote "https://mcp.exa.ai/mcp"`
+- Exa MCP (if available): `claude mcp add exa -- npx -y mcp-remote@0.16.6 "https://mcp.exa.ai/mcp"`
 - Web search for paper titles/authors
 - Verify with Semantic Scholar API, then fetch BibTeX via DOI
 

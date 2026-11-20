@@ -586,6 +586,86 @@ async function loadWasmExporter(wasmPath) {
   return { exportPPTDToPPTXBytes };
 }
 
+// ---------- input guard ----------
+// The vendored pptd WASM links quick-xml 0.38.4, whose duplicate-attribute
+// check is quadratic in the number of attributes on one tag
+// (RUSTSEC-2026-0194, fixed in 0.41.0; no rebuilt WASM exists). Rich-text
+// HTML in the deck reaches that parser, so refuse pathological tags before
+// handing the deck to the WASM writer.
+export const MAX_ATTRS_PER_TAG = 256;
+
+const isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r' || c === '\f';
+
+// Count attributes on every start tag in `s`, skipping quoted values so a
+// `>` inside `title=">"` does not end the tag early (quick-xml honours quotes
+// too). One forward pass: each index is visited a bounded number of times.
+// An unterminated quote runs to the end of the string, which only over-counts.
+function oversizedTagIn(s, max) {
+  const n = s.length;
+  let i = s.indexOf('<');
+  while (i !== -1 && i < n) {
+    const start = i;
+    i += 1;
+    // quick-xml treats every `<` not followed by `/`, `!` or `?` as a start
+    // tag (even `<1x` or `< b`), so do the same rather than XML name rules.
+    if (i >= n || s[i] === '/' || s[i] === '!' || s[i] === '?') {
+      i = s.indexOf('<', i);
+      continue;
+    }
+    while (i < n && !isSpace(s[i]) && s[i] !== '>' && s[i] !== '/') i += 1; // tag name
+    let attrs = 0;
+    while (i < n && s[i] !== '>') {
+      const c = s[i];
+      if (isSpace(c) || c === '/') {
+        i += 1;
+      } else if (c === '"' || c === "'") {
+        const close = s.indexOf(c, i + 1);
+        i = close === -1 ? n : close + 1;
+      } else {
+        attrs += 1;
+        while (i < n && !isSpace(s[i]) && s[i] !== '=' && s[i] !== '>' && s[i] !== '/') i += 1;
+        while (i < n && isSpace(s[i])) i += 1;
+        if (s[i] === '=') {
+          i += 1;
+          while (i < n && isSpace(s[i])) i += 1;
+          const q = s[i];
+          if (q === '"' || q === "'") {
+            const close = s.indexOf(q, i + 1);
+            i = close === -1 ? n : close + 1;
+          } else {
+            while (i < n && !isSpace(s[i]) && s[i] !== '>') i += 1;
+          }
+        }
+      }
+    }
+    // Only a tag closed by `>` reaches quick-xml's attribute parser; an
+    // unterminated `<` (stray text, open quote) is a parse error there.
+    if (i < n && attrs > max) return { attrs, preview: s.slice(start + 1, start + 81) };
+    i = i < n ? s.indexOf('<', i + 1) : -1;
+  }
+  return null;
+}
+
+export function findOversizedTag(value, max = MAX_ATTRS_PER_TAG) {
+  const stack = [value];
+  const seen = new Set(); // YAML anchors can make objects self-referential
+  while (stack.length) {
+    const v = stack.pop();
+    if (v && typeof v === 'object') {
+      if (seen.has(v)) continue;
+      seen.add(v);
+    }
+    if (typeof v === 'string') {
+      if (!v.includes('<')) continue;
+      const hit = oversizedTagIn(v, max);
+      if (hit) return hit;
+    } else if (v && typeof v === 'object') {
+      for (const child of Object.values(v)) stack.push(child);
+    }
+  }
+  return null;
+}
+
 // ---------- main ----------
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -620,6 +700,14 @@ Env: KIMI_COOKIE, KIMI_ORIGIN`);
   pptd = JSON.parse(JSON.stringify(pptd));
   const images = await resolveImages(pptd, projectRoot);
   console.log(`      ${Object.keys(images).length} image(s)`);
+
+  const oversized = findOversizedTag(pptd);
+  if (oversized) {
+    throw new Error(
+      `rich-text tag has ${oversized.attrs} attributes (limit ${MAX_ATTRS_PER_TAG}); ` +
+        `refusing to export (quick-xml RUSTSEC-2026-0194): <${oversized.preview}`,
+    );
+  }
 
   console.log('[3/5] signature');
   let signature = '';
@@ -682,7 +770,10 @@ Env: KIMI_COOKIE, KIMI_ORIGIN`);
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Run only when executed directly, so tests can import the helpers.
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

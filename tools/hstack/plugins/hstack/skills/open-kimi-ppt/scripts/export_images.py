@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.9"
-# dependencies = ["pyyaml", "pillow", "websocket-client"]
+# requires-python = ">=3.11"
+# dependencies = ["pyyaml>=6.0.2", "pillow>=13.0", "websocket-client>=1.9"]
 # ///
 """Export a PPTD project as page images through the local neo-ppt mirror for visual QA.
 
@@ -81,7 +81,14 @@ ACTIVE_FORMAT_JS = """
 
 
 def ensure_pillow() -> Tuple[Any, Any, Any]:
-    ensure_module("PIL", "pillow", "stitching the page overview image")
+    if sys.version_info < (3, 11):
+        # Pillow 13+ (the first release without known advisories) needs 3.11.
+        raise ExportError(
+            "image QA needs Python 3.11+ (for Pillow 13+); found "
+            f"{sys.version.split()[0]}. Run it under uv instead, which fetches a "
+            f"suitable interpreter: uv run {Path(__file__).name} ..."
+        )
+    ensure_module("PIL", "pillow>=13.0", "stitching the page overview image")
     from PIL import Image, ImageDraw, ImageFont
 
     return Image, ImageDraw, ImageFont
@@ -175,7 +182,7 @@ def stitch_overview(
 
 
 def ensure_websocket() -> Any:
-    return ensure_module("websocket", "websocket-client", "driving the export dialog")
+    return ensure_module("websocket", "websocket-client>=1.9", "driving the export dialog")
 
 
 def browser_cdp_url(browser: BrowserSession) -> str:

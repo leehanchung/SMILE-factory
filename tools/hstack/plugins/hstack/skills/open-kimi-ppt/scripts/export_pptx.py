@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml>=6.0.2"]
 # ///
 """Export a PPTD project to PPTX.
 
@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import base64
 import importlib
+import importlib.metadata
 import json
 import mimetypes
 import os
@@ -66,6 +67,14 @@ FADE_TRANSITION_XML = (
     '<p:transition spd="fast" advClick="1"><p:fade/></p:transition>'
 )
 MIN_AGENT_BROWSER_VERSION = (0, 33, 2)
+# Exact version installed when no suitable agent-browser is found. Pinned (not
+# @latest) so a compromised or broken new release is never pulled in silently;
+# bump deliberately after checking the release.
+AGENT_BROWSER_PIN = "0.43.0"
+# Minimum versions requested when a Python package has to be installed on
+# demand; they exclude releases with known advisories. Keep them in sync with
+# the PEP 723 `dependencies` blocks at the top of export_pptx.py/export_images.py.
+PYYAML_REQUIREMENT = "pyyaml>=6.0.2"
 MIN_NODE_MAJOR = 18
 NODE_INSTALL_HINT = "Install Node.js 18+ from https://nodejs.org, then retry."
 EDITOR_MISSING_HINT = (
@@ -159,6 +168,8 @@ def default_downloads_dir() -> Path:
 
 
 FALLBACK_ENV = Path.home() / ".cache" / "open-kimi-ppt" / "py"
+# Private npm prefix for agent-browser, so we never `npm install -g`.
+AGENT_BROWSER_PREFIX = Path.home() / ".cache" / "open-kimi-ppt" / "node"
 
 
 def _refresh_import_paths() -> None:
@@ -204,31 +215,150 @@ def _fallback_env_site_packages() -> Optional[Path]:
     return Path(result.stdout.strip()) if result.stdout.strip() else None
 
 
+def _requirement_floor(package: str) -> Tuple[str, Optional[Tuple[int, ...]]]:
+    """Split "pillow>=13.0" into ("pillow", (13, 0)); no ">=" means no floor."""
+    name, sep, floor = package.partition(">=")
+    if not sep:
+        return package.strip(), None
+    return name.strip(), _version_tuple(floor.split(",")[0])
+
+
+def _version_tuple(version: str) -> Tuple[int, ...]:
+    """Leading numeric release segments: "6.0.2rc1" -> (6, 0, 2)."""
+    parts: List[int] = []
+    for piece in version.strip().split("."):
+        match = re.match(r"\d+", piece)
+        if not match:
+            break
+        parts.append(int(match.group()))
+        if match.end() != len(piece):
+            break
+    return tuple(parts)
+
+
+# PEP 440 pre/dev markers: a release carrying one sorts *before* its bare
+# release number ("6.0.2rc1" < "6.0.2"); post releases sort after it.
+_PRERELEASE = re.compile(r"(?:a|b|c|rc|alpha|beta|pre|preview|dev)(?:\d|$|[.\-_+])", re.I)
+
+
+def _is_prerelease(version: str) -> bool:
+    local_dropped = version.strip().lower().split("+", 1)[0]
+    return bool(_PRERELEASE.search(re.sub(r"^v?[\d.]+", "", local_dropped)))
+
+
+def _version_at_least(version: str, floor: Tuple[int, ...]) -> bool:
+    """PEP 440 `version >= floor` for a final-release `floor`."""
+    release = _version_tuple(version.lstrip("vV"))
+    width = max(len(release), len(floor))
+    padded = release + (0,) * (width - len(release))
+    floor_padded = floor + (0,) * (width - len(floor))
+    if padded != floor_padded:
+        return padded > floor_padded
+    return not _is_prerelease(version)
+
+
+def _meets_floor(dist: str, floor: Optional[Tuple[int, ...]]) -> bool:
+    """True when the installed `dist` satisfies `floor` (or there is no floor)."""
+    if floor is None:
+        return True
+    try:
+        installed = importlib.metadata.version(dist)
+    except importlib.metadata.PackageNotFoundError:
+        return False  # importable but unversioned: reinstall to be sure
+    return _version_at_least(installed, floor)
+
+
+def _imported_from_dist(module: Any, dist: str) -> Optional[bool]:
+    """Whether `module` was loaded from `dist`'s own files (None: can't tell)."""
+    origin = getattr(module, "__file__", None)
+    if not origin:
+        return None
+    try:
+        distribution = importlib.metadata.distribution(dist)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    files = distribution.files
+    if not files:
+        return None
+    target = Path(origin).resolve()
+    for entry in files:
+        try:
+            if Path(distribution.locate_file(entry)).resolve() == target:
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def _module_meets_floor(module: Any, dist: str, floor: Optional[Tuple[int, ...]]) -> bool:
+    """True when the module *actually imported* satisfies `floor`.
+
+    Distribution metadata alone is not enough: an older copy earlier on
+    sys.path can shadow a patched install. So also reject a module whose own
+    ``__version__`` is below the floor, or whose file is not one of `dist`'s.
+    """
+    if floor is None:
+        return True
+    if not _meets_floor(dist, floor):
+        return False
+    reported = getattr(module, "__version__", None)
+    if isinstance(reported, str) and _version_tuple(reported.lstrip("vV")):
+        if not _version_at_least(reported, floor):
+            return False
+    return _imported_from_dist(module, dist) is not False
+
+
+def _import_fresh(import_name: str) -> Any:
+    """Import `import_name`, dropping any copy loaded before an upgrade."""
+    for name in [m for m in sys.modules if m == import_name or m.startswith(import_name + ".")]:
+        del sys.modules[name]
+    importlib.invalidate_caches()
+    return importlib.import_module(import_name)
+
+
 def ensure_module(import_name: str, package: str, purpose: str) -> Any:
     """Import `import_name`, installing `package` on demand.
 
-    Tries, in order: uv (fast, no system mutation), `pip --user`, `pip --user
-    --break-system-packages` (PEP 668 hosts such as Homebrew/Debian python), and
-    finally a private venv under ~/.cache/open-kimi-ppt/py. Every strategy is
-    followed by an import-path refresh so the running process picks the package up.
+    `package` is a pip requirement (e.g. "pillow>=13.0"). Tries, in order: uv
+    (fast), `pip --user`, and finally a private venv under ~/.cache/open-kimi-ppt/py
+    (used on PEP 668 "externally managed" hosts such as Homebrew/Debian python;
+    we never pass --break-system-packages). Every strategy is followed by an
+    import-path refresh so the running process picks the package up.
     """
+    dist, floor = _requirement_floor(package)
     try:
-        return importlib.import_module(import_name)
+        module = importlib.import_module(import_name)
     except ImportError:
-        pass
+        log(f"{package} is required for {purpose}; installing it now")
+    else:
+        # An older copy may still carry the advisories the floor excludes.
+        if _module_meets_floor(module, dist, floor):
+            return module
+        log(
+            f"imported {import_name} is older than {package} or shadows the installed "
+            f"{dist} (needed for {purpose}); upgrading it"
+        )
 
-    log(f"{package} is required for {purpose}; installing it now")
+    def _load(label: str) -> Optional[Any]:
+        try:
+            module = _import_fresh(import_name)
+        except ImportError:
+            failures.append(f"[{label}] installed, but {import_name} is still not importable")
+            return None
+        if not _module_meets_floor(module, dist, floor):
+            failures.append(
+                f"[{label}] installed, but the imported {import_name} "
+                f"({getattr(module, '__file__', '?')}) is an older copy on sys.path "
+                f"that shadows {package}; remove it"
+            )
+            return None
+        return module
+
     attempts: List[Tuple[str, List[str]]] = []
     uv = shutil.which("uv")
     if uv:
         attempts.append(("uv", [uv, "pip", "install", "--python", sys.executable, package]))
     attempts.append(("pip --user", [sys.executable, "-m", "pip", "install", "--user", package]))
-    attempts.append(
-        (
-            "pip --user --break-system-packages",
-            [sys.executable, "-m", "pip", "install", "--user", "--break-system-packages", package],
-        )
-    )
 
     failures: List[str] = []
     for label, command in attempts:
@@ -237,10 +367,9 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
             failures.append(f"[{label}] {process.stdout[-800:]}")
             continue
         _refresh_import_paths()
-        try:
-            return importlib.import_module(import_name)
-        except ImportError:
-            failures.append(f"[{label}] installed, but {import_name} is still not importable")
+        module = _load(label)
+        if module is not None:
+            return module
 
     purelib = _fallback_env_site_packages()
     if purelib is not None:
@@ -248,29 +377,29 @@ def ensure_module(import_name: str, package: str, purpose: str) -> Any:
             [str(_fallback_env_python()), "-m", "pip", "install", package], timeout=300
         )
         if process.returncode == 0:
-            if str(purelib) not in sys.path:
-                sys.path.append(str(purelib))
-            importlib.invalidate_caches()
-            try:
-                return importlib.import_module(import_name)
-            except ImportError:
-                failures.append(f"[venv] installed into {purelib}, but import still failed")
+            # Ahead of the other site dirs, so it wins over an outdated copy.
+            if str(purelib) in sys.path:
+                sys.path.remove(str(purelib))
+            sys.path.insert(0, str(purelib))
+            module = _load("venv")
+            if module is not None:
+                return module
         else:
             failures.append(f"[venv] {process.stdout[-800:]}")
 
     raise ExportError(
         f"failed to install {package} (needed for {purpose}). Tried uv, pip --user, "
-        f"pip --break-system-packages, and a private venv.\n"
+        f"and a private venv.\n"
         + "\n".join(failures)
-        + f"\n\nInstall it manually, e.g.: uv pip install --python {sys.executable} {package}"
-        f"\n            or: {sys.executable} -m pip install --user {package}"
+        + f"\n\nInstall it manually, e.g.: uv pip install --python {sys.executable} '{package}'"
+        f"\n            or: {sys.executable} -m pip install --user '{package}'"
         f"\nOr run the script under uv, which resolves dependencies automatically:"
-        f"\n            uv run --with {package} {Path(__file__).name} ..."
+        f"\n            uv run --with '{package}' {Path(__file__).name} ..."
     )
 
 
 def ensure_pyyaml() -> Any:
-    return ensure_module("yaml", "pyyaml", "reading .pptd / .page YAML")
+    return ensure_module("yaml", PYYAML_REQUIREMENT, "reading .pptd / .page YAML")
 
 
 yaml = ensure_pyyaml()
@@ -324,7 +453,18 @@ def ensure_nodejs() -> str:
     return executable
 
 
+def _private_agent_browser() -> Path:
+    bindir = AGENT_BROWSER_PREFIX / "node_modules" / ".bin"
+    return bindir / ("agent-browser.cmd" if os.name == "nt" else "agent-browser")
+
+
 def ensure_agent_browser() -> str:
+    """Return an agent-browser executable at or above MIN_AGENT_BROWSER_VERSION.
+
+    Uses one on PATH if it is new enough, else a previously installed private
+    copy, else installs agent-browser@AGENT_BROWSER_PIN into a private npm
+    prefix under ~/.cache/open-kimi-ppt/node (never a global `npm install -g`).
+    """
     ensure_nodejs()
 
     executable = shutil.which("agent-browser")
@@ -333,35 +473,46 @@ def ensure_agent_browser() -> str:
         log(f"agent-browser version: {'.'.join(map(str, version))}")
         return executable
 
+    private = _private_agent_browser()
+    if private.is_file():
+        private_version = read_agent_browser_version(str(private))
+        if private_version >= MIN_AGENT_BROWSER_VERSION:
+            log(f"agent-browser version: {'.'.join(map(str, private_version))} ({private})")
+            return str(private)
+
+    spec = f"agent-browser@{AGENT_BROWSER_PIN}"
     npm = shutil.which("npm")
     if not npm:
         reason = "not installed" if version is None else ".".join(map(str, version))
         raise ExportError(
-            f"agent-browser {reason}; npm is required to install agent-browser@latest. "
+            f"agent-browser {reason}; npm is required to install {spec}. "
             f"npm ships with Node.js. {NODE_INSTALL_HINT}"
         )
 
     current = "not installed" if version is None else ".".join(map(str, version))
     minimum = ".".join(map(str, MIN_AGENT_BROWSER_VERSION))
-    log(f"agent-browser {current} is below {minimum}; installing agent-browser@latest")
+    log(
+        f"agent-browser {current} is below {minimum}; installing {spec} "
+        f"into {AGENT_BROWSER_PREFIX}"
+    )
+    AGENT_BROWSER_PREFIX.mkdir(parents=True, exist_ok=True)
     process = run_command(
-        [npm, "install", "-g", "agent-browser@latest"],
+        [npm, "install", "--prefix", str(AGENT_BROWSER_PREFIX), "--no-save", spec],
         timeout=300,
     )
     if process.returncode != 0:
-        raise ExportError(f"failed to install agent-browser@latest:\n{process.stdout[-4000:]}")
+        raise ExportError(f"failed to install {spec}:\n{process.stdout[-4000:]}")
 
-    executable = shutil.which("agent-browser")
-    if not executable:
-        raise ExportError("agent-browser@latest installed, but executable is not on PATH")
-    version = read_agent_browser_version(executable)
+    if not private.is_file():
+        raise ExportError(f"{spec} installed, but {private} was not created")
+    version = read_agent_browser_version(str(private))
     if version < MIN_AGENT_BROWSER_VERSION:
         raise ExportError(
-            "agent-browser@latest is still below the required version "
+            f"{spec} is still below the required version "
             f"{minimum}: {'.'.join(map(str, version))}"
         )
-    log(f"agent-browser upgraded to {'.'.join(map(str, version))}")
-    return executable
+    log(f"agent-browser installed: {'.'.join(map(str, version))} ({private})")
+    return str(private)
 
 
 DEBUG_CHROME_PORT = 9337
@@ -510,6 +661,94 @@ def build_image_map(root: Path) -> Dict[str, str]:
     return image_map
 
 
+# The vendored pptd WASM links quick-xml 0.38.4, whose duplicate-attribute check
+# is quadratic in the attributes on one tag (RUSTSEC-2026-0194). The browser
+# export and image QA hand the deck to that WASM inside the editor, so refuse
+# pathological rich-text tags here. Port of findOversizedTag() in
+# local-export/export-pptd.mjs; keep the two in sync (tests/selftest.sh).
+MAX_ATTRS_PER_TAG = 256
+_TAG_SPACE = " \t\n\r\f"
+
+
+def _skip_quoted(text: str, i: int) -> int:
+    close = text.find(text[i], i + 1)
+    return len(text) if close == -1 else close + 1
+
+
+def _oversized_tag_in(text: str, limit: int) -> Optional[Tuple[int, str]]:
+    n = len(text)
+    i = text.find("<")
+    while i != -1 and i < n:
+        start = i
+        i += 1
+        # quick-xml treats every `<` not followed by `/`, `!` or `?` as a start
+        # tag (even `<1x` or `< b`), so do the same rather than XML name rules.
+        if i >= n or text[i] in "/!?":
+            i = text.find("<", i)
+            continue
+        while i < n and text[i] not in _TAG_SPACE and text[i] not in ">/":
+            i += 1
+        attrs = 0
+        while i < n and text[i] != ">":
+            c = text[i]
+            if c in _TAG_SPACE or c == "/":
+                i += 1
+            elif c in "\"'":
+                i = _skip_quoted(text, i)
+            else:
+                attrs += 1
+                while i < n and text[i] not in _TAG_SPACE and text[i] not in "=>/":
+                    i += 1
+                while i < n and text[i] in _TAG_SPACE:
+                    i += 1
+                if i < n and text[i] == "=":
+                    i += 1
+                    while i < n and text[i] in _TAG_SPACE:
+                        i += 1
+                    if i < n and text[i] in "\"'":
+                        i = _skip_quoted(text, i)
+                    else:
+                        while i < n and text[i] not in _TAG_SPACE and text[i] != ">":
+                            i += 1
+        # Only a tag closed by `>` reaches quick-xml's attribute parser; an
+        # unterminated `<` (stray text, open quote) is a parse error there.
+        if i < n and attrs > limit:
+            return attrs, text[start + 1 : start + 81]
+        i = text.find("<", i + 1) if i < n else -1
+    return None
+
+
+def find_oversized_tag(value: Any, limit: int = MAX_ATTRS_PER_TAG) -> Optional[Tuple[int, str]]:
+    """First (attribute count, preview) of a tag with more than `limit` attributes."""
+    stack = [value]
+    seen: set = set()  # YAML anchors can make containers self-referential
+    while stack:
+        item = stack.pop()
+        if isinstance(item, (dict, list, tuple)):
+            if id(item) in seen:
+                continue
+            seen.add(id(item))
+        if isinstance(item, str):
+            if "<" in item:
+                hit = _oversized_tag_in(item, limit)
+                if hit:
+                    return hit
+        elif isinstance(item, dict):
+            stack.extend(item.values())
+        elif isinstance(item, (list, tuple)):
+            stack.extend(item)
+    return None
+
+
+def reject_oversized_tags(value: Any, where: str) -> None:
+    hit = find_oversized_tag(value)
+    if hit:
+        raise ExportError(
+            f"{where}: rich-text tag has {hit[0]} attributes (limit {MAX_ATTRS_PER_TAG}); "
+            f"refusing to export (quick-xml RUSTSEC-2026-0194): <{hit[1]}"
+        )
+
+
 def build_payload(manifest: Path) -> Dict[str, Any]:
     manifest_text, manifest_data = read_yaml_mapping(manifest)
     if manifest_data.get("version") != "v2":
@@ -518,6 +757,7 @@ def build_payload(manifest: Path) -> Dict[str, Any]:
     if not isinstance(page_paths, list) or not page_paths:
         raise ExportError("PPTD manifest must contain a non-empty pages list")
 
+    reject_oversized_tags(manifest_data, manifest.name)
     root = manifest.parent.resolve()
     pages: List[Dict[str, str]] = []
     for entry in page_paths:
@@ -527,6 +767,7 @@ def build_payload(manifest: Path) -> Dict[str, Any]:
         page_text, page_data = read_yaml_mapping(page_path)
         if not isinstance(page_data.get("elements"), list):
             raise ExportError(f"page elements must be an array: {entry}")
+        reject_oversized_tags(page_data, str(entry))
         pages.append({"path": str(entry), "content": page_text})
 
     title = str(manifest_data.get("title") or manifest.stem)

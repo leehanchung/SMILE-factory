@@ -42,8 +42,8 @@ Dependency removal:
    without a `--wasm` flag and without a duplicated copy of the binary.
 7. `ensure_module()` added to `scripts/export_pptx.py`, replacing three separate
    `pip install --user` call sites (PyYAML, Pillow, websocket-client). It tries uv,
-   then `pip --user`, then `pip --break-system-packages` (PEP 668 hosts), then a
-   private venv under `~/.cache/open-kimi-ppt/py`, and refreshes `sys.path` after
+   then `pip --user`, then (e.g. on PEP 668 hosts) a private venv under
+   `~/.cache/open-kimi-ppt/py`, and refreshes `sys.path` after
    each attempt. **Upstream's version could not succeed on a first run**: `site.py`
    only records site-packages directories that existed at interpreter start, so the
    freshly installed package stayed unimportable and the script died.
@@ -69,8 +69,72 @@ Additions:
     Python and Chromium optional) and to state that `npx open-kimi-ppt-skill` is dead.
     Step5.6 now leads with the Node-only export command.
 
+Supply-chain hardening:
+
+13. Python requirements carry lower bounds that exclude releases with known
+    advisories (`pyyaml>=6.0.2`, `pillow>=13.0`, `websocket-client>=1.9`), both in
+    the PEP 723 blocks and in the on-demand installs; `export_images.py` therefore
+    needs Python 3.11+. The `pip --break-system-packages` fallback is gone.
+    agent-browser is installed as a pinned version (`AGENT_BROWSER_PIN`) into a
+    private npm prefix under `~/.cache/open-kimi-ppt/node` instead of
+    `npm install -g agent-browser@latest`. `editor/README.md` points at
+    `scripts/serve.mjs` instead of `npx serve` / the unpublished package.
+
+14. **Vulnerable JS libraries in the prebuilt editor replaced.** `editor/neo-ppt/` is
+    a minified Vite/rolldown build of Kimi's closed-source neo-ppt frontend; upstream
+    ships only the build output (no `src/`, `vite.config`, lockfile or `Cargo.toml`
+    at the vendored commit), so it cannot be rebuilt. Dexie and KaTeX were emitted as
+    their own chunks whose only export is the library's default object under the
+    binding `t`, so those chunks were regenerated from the official npm dist files,
+    keeping filenames and the export shape (no other chunk was edited):
+
+    | Chunk | Was | Now | Advisory fixed |
+    |---|---|---|---|
+    | `dexie-HNSdyusO.js`, `dexie-legacy-MWmb6YS4.js` | Dexie 3.0.3 | 3.2.7 (`dist/dexie.mjs` / `dist/dexie.js`) | GHSA-3xgx-r9j4-qw9w / CVE-2022-21189 (prototype pollution) |
+    | `katex-BotMgawn.js`, `katex-legacy-COlBCYAe.js`, `katex-Cg8Rrj4S.css` | KaTeX 0.16.45 | 0.18.11 (`dist/katex.mjs` / `dist/katex.js` / `dist/katex.min.css`) | GHSA-238p-pmpm-9mq7 |
+
+    The ESM chunks are the dist module with its `export {...}` line rewritten to
+    `export { <default> as t }`; the `-legacy` chunks wrap the UMD build in
+    `System.register` (the KaTeX one also injects the CSS, as vite-plugin-legacy did).
+    KaTeX font files are byte-identical between 0.16.45 and 0.18.11, so the CSS points
+    at the existing hashed font assets (Size3 woff2 stays an inline data URI). The app
+    only calls `renderToString` (`output: html` / `mathml`) and checks for
+    `katex-error`; its own CSS targets `.katex`, `.katex>math` and `.mfrac`, none of
+    which KaTeX 0.18's class prefixing renamed. The app subclasses Dexie and uses
+    `version().stores()`, unchanged in 3.2.x; its existing IndexedDB opens as before.
+    `tests/selftest.sh` fails if the chunks regress to the old versions.
+
+15. **The Rust/WASM modules cannot be rebuilt; their advisories were triaged
+    against the binaries** (analysis 2026-11-18). No newer build exists: upstream
+    has no commits, tags or releases after `07eeaad`, its npm package is unpublished,
+    and no other npm package ships `pptd_wasm`. `index_bg-Blvrv-U2.wasm` is
+    byte-identical (sha256 `22bf6e9f…2d70`) to `@resvg/resvg-wasm@2.6.2`, the latest
+    stable release (only `2.7.0-alpha.*` prereleases are newer).
+    `pptd_wasm_bg-DPPWdROu.wasm` (sha256 `f62500af…e746`) has no name section, so
+    the evidence is the panic `Location` records in its data segment (file path plus
+    line, emitted for every compiled-in panic site) and the crates' string literals,
+    matched against each crate's source at the embedded version. Its imports are
+    JS-value helpers only (no filesystem or network), and its one entry point,
+    `exportPPTDToPPTXBytes(pptd, options, signature)`, takes the deck as a JS object
+    plus raw image bytes and returns PPTX bytes; nothing passes it a ZIP.
+
+    | Crate (binary) | Advisory | Verdict and evidence |
+    |---|---|---|
+    | zip 4.6.1 (pptd) | GHSA-m665-v7pm-7grj / RUSTSEC-2026-0548 (critical), GHSA-8hxf-qr8p-62x4 / RUSTSEC-2026-0545, GHSA-q7v9-x93c-xqv3 / RUSTSEC-2026-0429, RUSTSEC-2026-0367, -0368, -0369 | **Not affected.** All six are in the reader: `ZipStreamReader`, `ZipArchive::extract` symlink and permission handling, AES/HMAC read. Panic sites exist only in `write.rs`, `types.rs` (`local_block`/`block` header serialisation) and `zipcrypto.rs` (`ZipCryptoWriter::finish`). None are in `read.rs`, `read/stream.rs`, `spec.rs` or `aes.rs`. Reader-only literals (`Could not find EOCD`, `Invalid local file header`, `Invalid Central Directory header`, symlink and extraction errors, `Invalid file path`, the AES authentication message) are absent. The only `read.rs` code present is `parse_single_extra_field`, which `write.rs` calls to validate extra fields. No inflate code is linked (zlib-rs deflate and zopfli only). GHSA-9hj8 and GHSA-hjqx do not cover 4.6.1. |
+    | quick-xml 0.38.4 (pptd) | RUSTSEC-2026-0195 (`NsReader` namespace allocation) | **Not affected.** `name.rs` has a single panic site, `QName::local_name` (line 111). There is no `NamespaceResolver` site and no `reader/ns_reader.rs` code. |
+    | quick-xml 0.38.4 (pptd) | RUSTSEC-2026-0194 (quadratic duplicate-attribute check) | **Present and reachable; low impact, no fix available.** `IterState::check_for_duplicates` (`events/attributes.rs:827`) is compiled in and runs when the deck's rich-text HTML (`<p>`, `<span style=…>`, see `references/pptd.md`) is parsed by `pptd/rust/richtext.rs`. A deck with a huge number of attributes on one tag can stall the export, a CPU-only DoS of the local process, with no memory corruption or data exposure. The input is the user's own deck. **Partly mitigated.** The scripted paths refuse any deck whose rich-text tags carry more than `MAX_ATTRS_PER_TAG` (256) attributes before the WASM sees it: `export-pptd.mjs` (`findOversizedTag`) for the default export, and `export_pptx.py` (`find_oversized_tag`, called from `build_payload`) for `--browser` export and `export_images.py` image QA. Both are linear, quote-aware scans covered by `tests/selftest.sh` step [1b] and the Python unit tests, and `export_pptx.py` still wraps the exporter in `timeout=300`. **Not covered:** the manual editor (`scripts/serve.mjs`) is a static server, and the bundled frontend reads the deck and calls the WASM in the browser, so a deck opened there is not checked; the worst case is a stalled browser tab. Drop the guards and this note once a WASM built with quick-xml >= 0.41.0 is vendored. |
+    | unsafe-libyaml 0.2.11 (pptd) | RUSTSEC-2024-0449 (unmaintained) | Informational only. GHSA-r24f-hg58-vfrw (unaligned write on 32-bit) is fixed in 0.2.10. |
+    | bytes 1.6.0 (resvg) | RUSTSEC-2026-0007 / GHSA-434x-w66g-qw3r (`BytesMut::reserve` overflow) | **Not affected.** The only bytes panic site is `lib.rs:137` (`panic_advance`). There is no `bytes_mut.rs` site, although `reserve_inner` contains `.expect("overflow")`, so `BytesMut::reserve` is not linked. |
+    | rustybuzz 0.7.0, ttf-parser 0.18.1 (resvg) | RUSTSEC-2026-0206, RUSTSEC-2026-0192 (unmaintained) | Informational only. No vulnerability advisories. |
+
+    All other crate versions embedded in either module return no OSV advisories.
+    `tests/selftest.sh` pins both WASM sha256s, so a re-vendor fails until this
+    triage is redone.
+
 Everything else — the `SKILL.md` body, `references/`, the rest of `scripts/`,
-`tests/test_*.py`, and `editor/` — is upstream as-is.
+`tests/test_*.py` (apart from the agent-browser install test), and `editor/`
+(apart from its README and the chunks listed in item 14) — is upstream as-is.
+The WASM binaries in item 15 are unmodified.
 
 ## Upstream license
 

@@ -1,1 +1,5224 @@
-System.register([],function(e,t){var n,r,i,o,u,a,s,c,l,f,h,p,d,y,v,m,g,b,_,w,k,x,P,E,O,S,j,A,K,C,I,T,B,D,R,F,q,M,N,U,V,W,z,L,Y,G,H,Q,X,J,$,Z,ee,te,ne,re,ie,oe,ue,ae,se,ce,le,fe,he,pe,de,ye,ve,me,ge,be,_e,we,ke,xe,Pe,Ee,Oe,Se,je,Ae,Ke,Ce,Ie,Te,Be,De;function Re(){for(var e=0,t=0,n=arguments.length;t<n;t++)e+=arguments[t].length;var r=Array(e),i=0;for(t=0;t<n;t++)for(var o=arguments[t],u=0,a=o.length;u<a;u++,i++)r[i]=o[u];return r}function Fe(e,t){return"object"!=typeof t||r(t).forEach(function(n){e[n]=t[n]}),e}function qe(e,t){return a.call(e,t)}function Me(e,t){"function"==typeof t&&(t=t(u(e))),r(t).forEach(function(n){Ne(e,n,t[n])})}function Ne(e,t,n,r){s(e,t,Fe(n&&qe(n,"get")&&"function"==typeof n.get?{get:n.get,set:n.set,configurable:!0}:{value:n,configurable:!0,writable:!0},r))}function Ue(e){return{from:function(t){return e.prototype=Object.create(t.prototype),Ne(e.prototype,"constructor",e),{extend:Me.bind(null,e.prototype)}}}}function Ve(e,t){var n;return c(e,t)||(n=u(e))&&Ve(n,t)}function We(e,t,n){return l.call(e,t,n)}function ze(e,t){return t(e)}function Le(e){if(!e)throw new Error("Assertion Failed")}function Ye(e){o.setImmediate?setImmediate(e):setTimeout(e,0)}function Ge(e,t){return e.reduce(function(e,n,r){var i=t(n,r);return i&&(e[i[0]]=i[1]),e},{})}function He(e,t){if(qe(e,t))return e[t];if(!t)return e;if("string"!=typeof t){for(var n=[],r=0,i=t.length;r<i;++r){var o=He(e,t[r]);n.push(o)}return n}var u=t.indexOf(".");if(-1!==u){var a=e[t.substr(0,u)];return void 0===a?void 0:He(a,t.substr(u+1))}}function Qe(e,t,n){if(e&&void 0!==t&&(!("isFrozen"in Object)||!Object.isFrozen(e)))if("string"!=typeof t&&"length"in t){Le("string"!=typeof n&&"length"in n);for(var r=0,o=t.length;r<o;++r)Qe(e,t[r],n[r])}else{var u=t.indexOf(".");if(-1!==u){var a=t.substr(0,u),s=t.substr(u+1);if(""===s)void 0===n?i(e)&&!isNaN(parseInt(a))?e.splice(a,1):delete e[a]:e[a]=n;else{var c=e[a];c||(c=e[a]={}),Qe(c,s,n)}}else void 0===n?i(e)&&!isNaN(parseInt(t))?e.splice(t,1):delete e[t]:e[t]=n}}function Xe(e,t){"string"==typeof t?Qe(e,t,void 0):"length"in t&&[].map.call(t,function(t){Qe(e,t,void 0)})}function Je(e){var t={};for(var n in e)qe(e,n)&&(t[n]=e[n]);return t}function $e(e){return f.apply([],e)}function Ze(e){if(!e||"object"!=typeof e)return e;var t;if(i(e)){t=[];for(var n=0,r=e.length;n<r;++n)t.push(Ze(e[n]))}else if(p.indexOf(e.constructor)>=0)t=e;else for(var o in t=e.constructor?Object.create(e.constructor.prototype):{},e)qe(e,o)&&(t[o]=Ze(e[o]));return t}function et(e){return y.call(e).slice(8,-1)}function tt(e,t,n,i){return n=n||{},i=i||"",r(e).forEach(function(r){if(qe(t,r)){var o=e[r],u=t[r];if("object"==typeof o&&"object"==typeof u&&o&&u){var a=et(o),s=et(u);a===s?d[a]?v(o,a)!==v(u,s)&&(n[i+r]=t[r]):tt(o,u,n,i+r+"."):n[i+r]=t[r]}else o!==u&&(n[i+r]=t[r])}else n[i+r]=void 0}),r(t).forEach(function(r){qe(e,r)||(n[i+r]=t[r])}),n}function nt(e){var t,n,r,o;if(1===arguments.length){if(i(e))return e.slice();if(this===b&&"string"==typeof e)return[e];if(o=g(e)){for(n=[];!(r=o.next()).done;)n.push(r.value);return n}if(null==e)return[e];if("number"==typeof(t=e.length)){for(n=new Array(t);t--;)n[t]=e[t];return n}return[e]}for(t=arguments.length,n=new Array(t);t--;)n[t]=arguments[t];return n}function rt(e,t){w=e,k=t}function it(){if(x)try{throw new Error}catch(e){return e}return new Error}function ot(e,t){var n=e.stack;return n?(t=t||0,0===n.indexOf(e.name)&&(t+=(e.name+e.message).split("\n").length),n.split("\n").slice(t).filter(k).map(function(e){return"\n"+e}).join("")):""}function ut(e,t){this._e=it(),this.name=e,this.message=t}function at(e,t){return e+". Errors: "+Object.keys(t).map(function(e){return t[e].toString()}).filter(function(e,t,n){return n.indexOf(e)===t}).join("\n")}function st(e,t,n,r){this._e=it(),this.failures=t,this.failedKeys=r,this.successCount=n,this.message=at(e,t)}function ct(e,t){this._e=it(),this.name="BulkError",this.failures=t,this.message=at(e,t)}function lt(e,t){if(!e||e instanceof ut||e instanceof TypeError||e instanceof SyntaxError||!e.name||!K[e.name])return e;var n=new K[e.name](t||e.message,e);return"stack"in e&&Ne(n,"stack",{get:function(){return this.inner.stack}}),n}function ft(){}function ht(e){return e}function pt(e,t){return null==e||e===ht?t:function(n){return t(e(n))}}function dt(e,t){return function(){e.apply(this,arguments),t.apply(this,arguments)}}function yt(e,t){return e===ft?t:function(){var n=e.apply(this,arguments);void 0!==n&&(arguments[0]=n);var r=this.onsuccess,i=this.onerror;this.onsuccess=null,this.onerror=null;var o=t.apply(this,arguments);return r&&(this.onsuccess=this.onsuccess?dt(r,this.onsuccess):r),i&&(this.onerror=this.onerror?dt(i,this.onerror):i),void 0!==o?o:n}}function vt(e,t){return e===ft?t:function(){e.apply(this,arguments);var n=this.onsuccess,r=this.onerror;this.onsuccess=this.onerror=null,t.apply(this,arguments),n&&(this.onsuccess=this.onsuccess?dt(n,this.onsuccess):n),r&&(this.onerror=this.onerror?dt(r,this.onerror):r)}}function mt(e,t){return e===ft?t:function(n){var r=e.apply(this,arguments);Fe(n,r);var i=this.onsuccess,o=this.onerror;this.onsuccess=null,this.onerror=null;var u=t.apply(this,arguments);return i&&(this.onsuccess=this.onsuccess?dt(i,this.onsuccess):i),o&&(this.onerror=this.onerror?dt(o,this.onerror):o),void 0===r?void 0===u?void 0:u:Fe(r,u)}}function gt(e,t){return e===ft?t:function(){return!1!==t.apply(this,arguments)&&e.apply(this,arguments)}}function bt(e,t){return e===ft?t:function(){var n=e.apply(this,arguments);if(n&&"function"==typeof n.then){for(var r=this,i=arguments.length,o=new Array(i);i--;)o[i]=arguments[i];return n.then(function(){return t.apply(r,o)})}return t.apply(this,arguments)}}function _t(e){if("object"!=typeof this)throw new TypeError("Promises must be constructed via new");this._listeners=[],this.onuncatched=ft,this._lib=!1;var t=this._PSD=$;if(w&&(this._stackHolder=it(),this._prev=null,this._numPrev=0),"function"!=typeof e){if(e!==I)throw new TypeError("Not a function");return this._state=arguments[1],this._value=arguments[2],void(!1===this._state&&xt(this,this._value))}this._state=null,this._value=null,++t.ref,kt(this,e)}function wt(e,t,n,r,i){this.onFulfilled="function"==typeof e?e:null,this.onRejected="function"==typeof t?t:null,this.resolve=n,this.reject=r,this.psd=i}function kt(e,t){try{t(function(t){if(null===e._state){if(t===e)throw new TypeError("A promise cannot be resolved with itself.");var n=e._lib&&Kt();t&&"function"==typeof t.then?kt(e,function(e,n){t instanceof _t?t._then(e,n):t.then(e,n)}):(e._state=!0,e._value=t,Pt(e)),n&&Ct()}},xt.bind(null,e))}catch(n){xt(e,n)}}function xt(e,t){if(H.push(t),null===e._state){var n=e._lib&&Kt();t=X(t),e._state=!1,e._value=t,w&&null!==t&&"object"==typeof t&&!t._promise&&function(e,t,n){try{e.apply(null,n)}catch(r){t&&t(r)}}(function(){var n=Ve(t,"stack");t._promise=e,Ne(t,"stack",{get:function(){return V?n&&(n.get?n.get.apply(t):n.value):e.stack}})}),function(e){G.some(function(t){return t._value===e._value})||G.push(e)}(e),Pt(e),n&&Ct()}}function Pt(e){var t=e._listeners;e._listeners=[];for(var n=0,r=t.length;n<r;++n)Et(e,t[n]);var i=e._PSD;--i.ref||i.finalize(),0===ee&&(++ee,z(function(){0===--ee&&It()},[]))}function Et(e,t){if(null!==e._state){var n=e._state?t.onFulfilled:t.onRejected;if(null===n)return(e._state?t.resolve:t.reject)(e._value);++t.psd.ref,++ee,z(Ot,[n,e,t])}else e._listeners.push(t)}function Ot(e,t,n){try{Q=t;var r,i=t._value;t._state?r=e(i):(H.length&&(H=[]),r=e(i),-1===H.indexOf(i)&&function(e){for(var t=G.length;t;)if(G[--t]._value===e._value)return void G.splice(t,1)}(t)),n.resolve(r)}catch(o){n.reject(o)}finally{Q=null,0===--ee&&It(),--n.psd.ref||n.psd.finalize()}}function St(e,t,n){if(t.length===n)return t;var r="";if(!1===e._state){var i,o,u=e._value;null!=u?(i=u.name||"Error",o=u.message||u,r=ot(u,0)):(i=u,o=""),t.push(i+(o?": "+o:"")+r)}return w&&((r=ot(e._stackHolder,2))&&-1===t.indexOf(r)&&t.push(r),e._prev&&St(e._prev,t,n)),t}function jt(e,t){var n=t?t._numPrev+1:0;n<T&&(e._prev=t,e._numPrev=n)}function At(){Kt()&&Ct()}function Kt(){var e=L;return L=!1,Y=!1,e}function Ct(){var e,t,n;do{for(;Z.length>0;)for(e=Z,Z=[],n=e.length,t=0;t<n;++t){var r=e[t];r[0].apply(null,r[1])}}while(Z.length>0);L=!0,Y=!0}function It(){var e=G;G=[],e.forEach(function(e){e._PSD.onunhandled.call(null,e._value,e)});for(var t=te.slice(0),n=t.length;n;)t[--n]()}function Tt(e){return new _t(I,!1,e)}function Bt(e,t){var n=$;return function(){var r=Kt(),i=$;try{return Ut(n,!0),e.apply(this,arguments)}catch(o){t&&t(o)}finally{Ut(i,!1),r&&Ct()}}}function Dt(e,t,n,r){var i=$,o=Object.create(i);o.parent=i,o.ref=0,o.global=!1,o.id=++se;var u=J.env;o.env=U?{Promise:_t,PromiseProp:{value:_t,configurable:!0,writable:!0},all:_t.all,race:_t.race,allSettled:_t.allSettled,any:_t.any,resolve:_t.resolve,reject:_t.reject,nthen:Yt(u.nthen,o),gthen:Yt(u.gthen,o)}:{},t&&Fe(o,t),++i.ref,o.finalize=function(){--this.parent.ref||this.parent.finalize()};var a=Wt(o,e,n,r);return 0===o.ref&&o.finalize(),a}function Rt(){return re.id||(re.id=++ie),++re.awaits,re.echoes+=B,re.id}function Ft(){return!!re.awaits&&(0===--re.awaits&&(re.id=0),re.echoes=re.awaits*B,!0)}function qt(e){return re.echoes&&e&&e.constructor===N?(Rt(),e.then(function(e){return Ft(),e},function(e){return Ft(),le(e)})):e}function Mt(e){++ae,re.echoes&&0!==--re.echoes||(re.echoes=re.id=0),oe.push($),Ut(e,!0)}function Nt(){var e=oe[oe.length-1];oe.pop(),Ut(e,!1)}function Ut(e,t){var n=$;if((t?!re.echoes||ue++&&e===$:!ue||--ue&&e===$)||zt(t?Mt.bind(null,e):Nt),e!==$&&($=e,n===J&&(J.env=Vt()),U)){var r=J.env.Promise,i=e.env;F.then=i.nthen,r.prototype.then=i.gthen,(n.global||e.global)&&(Object.defineProperty(o,"Promise",i.PromiseProp),r.all=i.all,r.race=i.race,r.resolve=i.resolve,r.reject=i.reject,i.allSettled&&(r.allSettled=i.allSettled),i.any&&(r.any=i.any))}}function Vt(){var e=o.Promise;return U?{Promise:e,PromiseProp:Object.getOwnPropertyDescriptor(o,"Promise"),all:e.all,race:e.race,allSettled:e.allSettled,any:e.any,resolve:e.resolve,reject:e.reject,nthen:F.then,gthen:e.prototype.then}:{}}function Wt(e,t,n,r,i){var o=$;try{return Ut(e,!0),t(n,r,i)}finally{Ut(o,!1)}}function zt(e){M.call(R,e)}function Lt(e,t,n,r){return"function"!=typeof e?e:function(){var i=$;n&&Rt(),Ut(t,!0);try{return e.apply(this,arguments)}finally{Ut(i,!1),r&&zt(Ft)}}}function Yt(e,t){return function(n,r){return e.call(this,Lt(n,t),Lt(r,t))}}function Gt(e,t){var n;try{n=t.onuncatched(e)}catch(u){}if(!1!==n)try{var r,i={promise:t,reason:e};if(o.document&&document.createEvent?((r=document.createEvent("Event")).initEvent(ce,!0,!0),Fe(r,i)):o.CustomEvent&&Fe(r=new CustomEvent(ce,{detail:i}),i),r&&o.dispatchEvent&&(dispatchEvent(r),!o.PromiseRejectionEvent&&o.onunhandledrejection))try{o.onunhandledrejection(r)}catch(a){}w&&r&&!r.defaultPrevented&&console.warn("Unhandled rejection: "+(e.stack||e))}catch(u){}}function Ht(e,t,n,r){if(e._state.openComplete||$.letThrough){var i=e._createTransaction(t,n,e._dbSchema);try{i.create()}catch(o){return le(o)}return i._promise(t,function(e,t){return Dt(function(){return $.trans=i,r(e,t,i)})}).then(function(e){return i._completion.then(function(){return e})})}if(!e._state.isBeingOpened){if(!e._options.autoOpen)return le(new A.DatabaseClosed);e.open().catch(ft)}return e._state.dbReadyPromise.then(function(){return Ht(e,t,n,r)})}function Qt(e,t){return e?t?function(){return e.apply(this,arguments)&&t.apply(this,arguments)}:e:t}function Xt(e){return function(t){return void 0===He(t,e)&&Xe(t=Ze(t),e),t}}function Jt(e){var t={},n=function(n,r){if(r){for(var i=arguments.length,o=new Array(i-1);--i;)o[i-1]=arguments[i];return t[n].subscribe.apply(null,o),e}if("string"==typeof n)return t[n]};n.addEventType=a;for(var o=1,u=arguments.length;o<u;++o)a(arguments[o]);return n;function a(e,o,u){if("object"!=typeof e){var s;o||(o=gt),u||(u=ft);var c={subscribers:[],fire:u,subscribe:function(e){-1===c.subscribers.indexOf(e)&&(c.subscribers.push(e),c.fire=o(c.fire,e))},unsubscribe:function(e){c.subscribers=c.subscribers.filter(function(t){return t!==e}),c.fire=c.subscribers.reduce(o,u)}};return t[e]=n[e]=c,c}r(s=e).forEach(function(e){var t=s[e];if(i(t))a(e,s[e][0],s[e][1]);else{if("asap"!==t)throw new A.InvalidArgument("Invalid event config");var n=a(e,ht,function(){for(var e=arguments.length,t=new Array(e);e--;)t[e]=arguments[e];n.subscribers.forEach(function(e){Ye(function(){e.apply(null,t)})})})}})}}function $t(e,t){return Ue(t).from({prototype:e}),t}function Zt(e,t){return!(e.filter||e.algorithm||e.or)&&(t?e.justLimit:!e.replayFilter)}function en(e,t){e.filter=Qt(e.filter,t)}function tn(e,t,n){var r=e.replayFilter;e.replayFilter=r?function(){return Qt(r(),t())}:t,e.justLimit=n&&!r}function nn(e,t){if(e.isPrimKey)return t.primaryKey;var n=t.getIndexByKeyPath(e.index);if(!n)throw new A.Schema("KeyPath "+e.index+" on object store "+t.name+" is not indexed");return n}function rn(e,t,n){var r=nn(e,t.schema);return t.openCursor({trans:n,values:!e.keysOnly,reverse:"prev"===e.dir,unique:!!e.unique,query:{index:r,range:e.range}})}function on(e,t,n,r){var i=e.replayFilter?Qt(e.filter,e.replayFilter()):e.filter;if(e.or){var o={},u=function(e,n,r){if(!i||i(n,r,function(e){return n.stop(e)},function(e){return n.fail(e)})){var u=n.primaryKey,a=""+u;"[object ArrayBuffer]"===a&&(a=""+new Uint8Array(u)),qe(o,a)||(o[a]=!0,t(e,n,r))}};return Promise.all([e.or._iterate(u,n),un(rn(e,r,n),e.algorithm,u,!e.keysOnly&&e.valueMapper)])}return un(rn(e,r,n),Qt(e.algorithm,i),t,!e.keysOnly&&e.valueMapper)}function un(e,t,n,r){var i=Bt(r?function(e,t,i){return n(r(e),t,i)}:n);return e.then(function(e){if(e)return e.start(function(){var n=function(){return e.continue()};t&&!t(e,function(e){return n=e},function(t){e.stop(t),n=ft},function(t){e.fail(t),n=ft})||i(e.value,e,function(e){return n=e}),n()})})}function an(e,t){return e<t?-1:e===t?0:1}function sn(e,t){return e>t?-1:e===t?0:1}function cn(e,t,n){var r=e instanceof Se?new e.Collection(e):e;return r._ctx.error=n?new n(t):new TypeError(t),r}function ln(e){return new e.Collection(e,function(){return dn("")}).limit(0)}function fn(e,t,n,r,i,o){for(var u=Math.min(e.length,r.length),a=-1,s=0;s<u;++s){var c=t[s];if(c!==r[s])return i(e[s],n[s])<0?e.substr(0,s)+n[s]+n.substr(s+1):i(e[s],r[s])<0?e.substr(0,s)+r[s]+n.substr(s+1):a>=0?e.substr(0,a)+t[a]+n.substr(a+1):null;i(e[s],c)<0&&(a=s)}return u<r.length&&"next"===o?e+n.substr(e.length):u<e.length&&"prev"===o?e.substr(0,n.length):a<0?null:e.substr(0,a)+r[a]+n.substr(a+1)}function hn(e,t,n,r){var i,o,u,a,s,c,l,f=n.length;if(!n.every(function(e){return"string"==typeof e}))return cn(e,ye);function h(e){i=function(e){return"next"===e?function(e){return e.toUpperCase()}:function(e){return e.toLowerCase()}}(e),o=function(e){return"next"===e?function(e){return e.toLowerCase()}:function(e){return e.toUpperCase()}}(e),u="next"===e?an:sn;var t=n.map(function(e){return{lower:o(e),upper:i(e)}}).sort(function(e,t){return u(e.lower,t.lower)});a=t.map(function(e){return e.upper}),s=t.map(function(e){return e.lower}),c=e,l="next"===e?"":r}h("next");var p=new e.Collection(e,function(){return pn(a[0],s[f-1]+r)});p._ondirectionchange=function(e){h(e)};var d=0;return p._addAlgorithm(function(e,n,r){var i=e.key;if("string"!=typeof i)return!1;var h=o(i);if(t(h,s,d))return!0;for(var p=null,y=d;y<f;++y){var v=fn(i,h,a[y],s[y],u,c);null===v&&null===p?d=y+1:(null===p||u(p,v)>0)&&(p=v)}return n(null!==p?function(){e.continue(p+l)}:r),!1}),p}function pn(e,t,n,r){return{type:2,lower:e,upper:t,lowerOpen:n,upperOpen:r}}function dn(e){return{type:1,lower:e,upper:e}}function yn(e){return 1===e.length?e[0]:e}function vn(e){try{return e.only([[]]),[[]]}catch(t){return he}}function mn(e){return Bt(function(t){return gn(t),e(t.target.error),!1})}function gn(e){e.stopPropagation&&e.stopPropagation(),e.preventDefault&&e.preventDefault()}function bn(e,t,n,r,i,o,u){return{name:e,keyPath:t,unique:n,multi:r,auto:i,compound:o,src:(n&&!u?"&":"")+(r?"*":"")+(i?"++":"")+_n(t)}}function _n(e){return"string"==typeof e?e:e?"["+[].join.call(e,"+")+"]":""}function wn(e,t,n){return{name:e,primKey:t,indexes:n,mappedClass:null,idxByName:Ge(n,function(e){return[e.name,e]})}}function kn(e){return null==e?function(){}:"string"==typeof e?function(e){return 1===e.split(".").length?function(t){return t[e]}:function(t){return He(t,e)}}(e):function(t){return He(t,e)}}function xn(e,t){return"delete"===t.type?t.keys:t.keys||t.values.map(e.extractKey)}function Pn(e){return[].slice.call(e)}function En(e){return null==e?":id":"string"==typeof e?e:"["+e.join("+")+"]"}function On(e,t,n,r){var o=t.cmp.bind(t);function u(e){if(3===e.type)return null;if(4===e.type)throw new Error("Cannot convert never type to IDBKeyRange");var t=e.lower,r=e.upper,i=e.lowerOpen,o=e.upperOpen;return void 0===t?void 0===r?null:n.upperBound(r,!!o):void 0===r?n.lowerBound(t,!!i):n.bound(t,r,!!i,!!o)}var a=function(e,t){var n=Pn(e.objectStoreNames);return{schema:{name:e.name,tables:n.map(function(e){return t.objectStore(e)}).map(function(e){var t=e.keyPath,n=e.autoIncrement,r=i(t),o=null==t,u={},a={name:e.name,primaryKey:{name:null,isPrimaryKey:!0,outbound:o,compound:r,keyPath:t,autoIncrement:n,unique:!0,extractKey:kn(t)},indexes:Pn(e.indexNames).map(function(t){return e.index(t)}).map(function(e){var t=e.name,n=e.unique,r=e.multiEntry,o=e.keyPath,a={name:t,compound:i(o),keyPath:o,unique:n,multiEntry:r,extractKey:kn(o)};return u[En(o)]=a,a}),getIndexByKeyPath:function(e){return u[En(e)]}};return u[":id"]=a.primaryKey,null!=t&&(u[En(t)]=a.primaryKey),a})},hasGetAll:n.length>0&&"getAll"in t.objectStore(n[0])&&!("undefined"!=typeof navigator&&/Safari/.test(navigator.userAgent)&&!/(Chrome\/|Edge\/)/.test(navigator.userAgent)&&[].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1]<604)}}(e,r),s=a.schema,c=a.hasGetAll,l=s.tables.map(function(e){return function(e){var t=e.name;return{name:t,schema:e,mutate:function(n){var r=n.trans,i=n.type,o=n.keys,a=n.values,s=n.range,c=n.wantResults;return new Promise(function(n,l){n=Bt(n);var f=r.objectStore(t),h=null==f.keyPath,p="put"===i||"add"===i;if(!p&&"delete"!==i&&"deleteRange"!==i)throw new Error("Invalid operation type: "+i);var d=(o||a||{length:1}).length;if(o&&a&&o.length!==a.length)throw new Error("Given keys array must have same length as given values array.");if(0===d)return n({numFailures:0,failures:{},results:[],lastResult:void 0});var y,v=c&&Re(o||xn(e.primaryKey,{type:i,keys:o,values:a})),m=[],g=0,b=function(e){++g,gn(e),v&&(v[e.target._reqno]=void 0),m[e.target._reqno]=e.target.error},_=function(e){var t=e.target;v[t._reqno]=t.result};if("deleteRange"===i){if(4===s.type)return n({numFailures:g,failures:m,results:v,lastResult:void 0});y=3===s.type?f.clear():f.delete(u(s))}else{var w=p?h?[a,o]:[a,null]:[o,null],k=w[0],x=w[1];if(p)for(var P=0;P<d;++P)(y=x&&void 0!==x[P]?f[i](k[P],x[P]):f[i](k[P]))._reqno=P,v&&void 0===v[P]&&(y.onsuccess=_),y.onerror=b;else for(P=0;P<d;++P)(y=f[i](k[P]))._reqno=P,y.onerror=b}var E=function(e){var t=e.target.result;v&&(v[d-1]=t),n({numFailures:g,failures:m,results:v,lastResult:t})};y.onerror=function(e){b(e),E(e)},y.onsuccess=E})},getMany:function(e){var n=e.trans,r=e.keys;return new Promise(function(e,i){e=Bt(e);for(var o,u=n.objectStore(t),a=r.length,s=new Array(a),c=0,l=0,f=function(t){var n=t.target;s[n._pos]=n.result,++l===c&&e(s)},h=mn(i),p=0;p<a;++p)null!=r[p]&&((o=u.get(r[p]))._pos=p,o.onsuccess=f,o.onerror=h,++c);0===c&&e(s)})},get:function(e){var n=e.trans,r=e.key;return new Promise(function(e,i){e=Bt(e);var o=n.objectStore(t).get(r);o.onsuccess=function(t){return e(t.target.result)},o.onerror=mn(i)})},query:function(e){return function(n){return new Promise(function(r,i){r=Bt(r);var o=n.trans,a=n.values,s=n.limit,c=n.query,l=s===1/0?void 0:s,f=c.index,h=c.range,p=o.objectStore(t),d=f.isPrimaryKey?p:p.index(f.name),y=u(h);if(0===s)return r({result:[]});if(e){var v=a?d.getAll(y,l):d.getAllKeys(y,l);v.onsuccess=function(e){return r({result:e.target.result})},v.onerror=mn(i)}else{var m=0,g=a||!("openKeyCursor"in d)?d.openCursor(y):d.openKeyCursor(y),b=[];g.onsuccess=function(e){var t=g.result;return t?(b.push(a?t.value:t.primaryKey),++m===s?r({result:b}):void t.continue()):r({result:b})},g.onerror=mn(i)}})}}(c),openCursor:function(e){var n=e.trans,r=e.values,i=e.query,o=e.reverse,a=e.unique;return new Promise(function(e,s){e=Bt(e);var c=i.index,l=i.range,f=n.objectStore(t),h=c.isPrimaryKey?f:f.index(c.name),p=o?a?"prevunique":"prev":a?"nextunique":"next",d=r||!("openKeyCursor"in h)?h.openCursor(u(l),p):h.openKeyCursor(u(l),p);d.onerror=mn(s),d.onsuccess=Bt(function(t){var r=d.result;if(r){r.___id=++Ae,r.done=!1;var i=r.continue.bind(r),o=r.continuePrimaryKey;o&&(o=o.bind(r));var u=r.advance.bind(r),a=function(){throw new Error("Cursor not stopped")};r.trans=n,r.stop=r.continue=r.continuePrimaryKey=r.advance=function(){throw new Error("Cursor not started")},r.fail=Bt(s),r.next=function(){var e=this,t=1;return this.start(function(){return t--?e.continue():e.stop()}).then(function(){return e})},r.start=function(e){var t=new Promise(function(e,t){e=Bt(e),d.onerror=mn(t),r.fail=t,r.stop=function(t){r.stop=r.continue=r.continuePrimaryKey=r.advance=a,e(t)}}),n=function(){if(d.result)try{e()}catch(t){r.fail(t)}else r.done=!0,r.start=function(){throw new Error("Cursor behind last entry")},r.stop()};return d.onsuccess=Bt(function(e){d.onsuccess=n,n()}),r.continue=i,r.continuePrimaryKey=o,r.advance=u,n(),t},e(r)}else e(null)},s)})},count:function(e){var n=e.query,r=e.trans,i=n.index,o=n.range;return new Promise(function(e,n){var a=r.objectStore(t),s=i.isPrimaryKey?a:a.index(i.name),c=u(o),l=c?s.count(c):s.count();l.onsuccess=Bt(function(t){return e(t.target.result)}),l.onerror=mn(n)})}}}(e)}),f={};return l.forEach(function(e){return f[e.name]=e}),{stack:"dbcore",transaction:e.transaction.bind(e),table:function(e){if(!f[e])throw new Error("Table '"+e+"' not found");return f[e]},cmp:o,MIN_KEY:-1/0,MAX_KEY:vn(n),schema:s}}function Sn(e,t){return t.reduce(function(e,t){var r=t.create;return n(n({},e),r(e))},e)}function jn(e,t){var n=t.db;e.core=function(e,t,n,r){var i=n.IDBKeyRange;return{dbcore:Sn(On(t,n.indexedDB,i,r),e.dbcore)}}(e._middlewares,n,e._deps,t).dbcore,e.tables.forEach(function(t){var n=t.name;e.core.schema.tables.some(function(e){return e.name===n})&&(t.core=e.core.table(n),e[n]instanceof e.Table&&(e[n].core=t.core))})}function An(e,t,n,r){n.forEach(function(n){var i=r[n];t.forEach(function(t){var r=Ve(t,n);(!r||"value"in r&&void 0===r.value)&&(t===e.Transaction.prototype||t instanceof e.Transaction?Ne(t,n,{get:function(){return this.table(n)},set:function(e){s(this,n,{value:e,writable:!0,configurable:!0,enumerable:!0})}}):t[n]=new e.Table(n,i))})})}function Kn(e,t){t.forEach(function(t){for(var n in t)t[n]instanceof e.Table&&delete t[n]})}function Cn(e,t){return e._cfg.version-t._cfg.version}function In(e,t,n,i){var o=e._dbSchema,u=e._createTransaction("readwrite",e._storeNames,o);u.create(n),u._completion.catch(i);var a=u._reject.bind(u),s=$.transless||$;Dt(function(){$.trans=u,$.transless=s,0===t?(r(o).forEach(function(e){Bn(n,e,o[e].primKey,o[e].indexes)}),jn(e,n),_t.follow(function(){return e.on.populate.fire(u)}).catch(a)):function(e,t,n,i){var o=[],u=e._versions,a=e._dbSchema=Rn(0,e.idbdb,i),s=!1;function c(){return o.length?_t.resolve(o.shift()(n.idbtrans)).then(c):_t.resolve()}return u.filter(function(e){return e._cfg.version>=t}).forEach(function(u){o.push(function(){var o=a,c=u._cfg.dbschema;Fn(e,o,i),Fn(e,c,i),a=e._dbSchema=c;var l=Tn(o,c);l.add.forEach(function(e){Bn(i,e[0],e[1].primKey,e[1].indexes)}),l.change.forEach(function(e){if(e.recreate)throw new A.Upgrade("Not yet support for changing primary key");var t=i.objectStore(e.name);e.add.forEach(function(e){return Dn(t,e)}),e.change.forEach(function(e){t.deleteIndex(e.name),Dn(t,e)}),e.del.forEach(function(e){return t.deleteIndex(e)})});var f=u._cfg.contentUpgrade;if(f&&u._cfg.version>t){jn(e,i),n._memoizedTables={},s=!0;var h=Je(c);l.del.forEach(function(e){h[e]=o[e]}),Kn(e,[e.Transaction.prototype]),An(e,[e.Transaction.prototype],r(h),h),n.schema=h;var p,d=_(f);d&&Rt();var y=_t.follow(function(){if((p=f(n))&&d){var e=Ft.bind(null,null);p.then(e,e)}});return p&&"function"==typeof p.then?_t.resolve(p):y.then(function(){return p})}}),o.push(function(t){s&&ge||function(e,t){for(var n=0;n<t.db.objectStoreNames.length;++n){var r=t.db.objectStoreNames[n];null==e[r]&&t.db.deleteObjectStore(r)}}(u._cfg.dbschema,t),Kn(e,[e.Transaction.prototype]),An(e,[e.Transaction.prototype],e._storeNames,e._dbSchema),n.schema=e._dbSchema})}),c().then(function(){var e,t;t=i,r(e=a).forEach(function(n){t.db.objectStoreNames.contains(n)||Bn(t,n,e[n].primKey,e[n].indexes)})})}(e,t,u,n).catch(a)})}function Tn(e,t){var n,r={del:[],add:[],change:[]};for(n in e)t[n]||r.del.push(n);for(n in t){var i=e[n],o=t[n];if(i){var u={name:n,def:o,recreate:!1,del:[],add:[],change:[]};if(""+(i.primKey.keyPath||"")!=""+(o.primKey.keyPath||"")||i.primKey.auto!==o.primKey.auto&&!me)u.recreate=!0,r.change.push(u);else{var a=i.idxByName,s=o.idxByName,c=void 0;for(c in a)s[c]||u.del.push(c);for(c in s){var l=a[c],f=s[c];l?l.src!==f.src&&u.change.push(f):u.add.push(f)}(u.del.length>0||u.add.length>0||u.change.length>0)&&r.change.push(u)}}else r.add.push([n,o])}return r}function Bn(e,t,n,r){var i=e.db.createObjectStore(t,n.keyPath?{keyPath:n.keyPath,autoIncrement:n.auto}:{autoIncrement:n.auto});return r.forEach(function(e){return Dn(i,e)}),i}function Dn(e,t){e.createIndex(t.name,t.keyPath,{unique:t.unique,multiEntry:t.multi})}function Rn(e,t,n){var r={};return We(t.objectStoreNames,0).forEach(function(e){for(var t=n.objectStore(e),i=t.keyPath,o=bn(_n(i),i||"",!1,!1,!!t.autoIncrement,i&&"string"!=typeof i,!0),u=[],a=0;a<t.indexNames.length;++a){var s=t.index(t.indexNames[a]);i=s.keyPath;var c=bn(s.name,i,!!s.unique,!!s.multiEntry,!1,i&&"string"!=typeof i,!1);u.push(c)}r[e]=wn(e,o,u)}),r}function Fn(e,t,n){for(var r=n.db.objectStoreNames,i=0;i<r.length;++i){var u=r[i],a=n.objectStore(u);e._hasGetAll="getAll"in a;for(var s=0;s<a.indexNames.length;++s){var c=a.indexNames[s],l=a.index(c).keyPath,f="string"==typeof l?l:"["+We(l).join("+")+"]";if(t[u]){var h=t[u].idxByName[f];h&&(h.name=c,delete t[u].idxByName[f],t[u].idxByName[c]=h)}}}"undefined"!=typeof navigator&&/Safari/.test(navigator.userAgent)&&!/(Chrome\/|Edge\/)/.test(navigator.userAgent)&&o.WorkerGlobalScope&&o instanceof o.WorkerGlobalScope&&[].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1]<604&&(e._hasGetAll=!1)}function qn(e){try{Ce=function(e){var t,n=e&&"function"==typeof e.databases;if(!n){var r=new Be(we,{addons:[]});r.version(1).stores({dbnames:"name"}),t=r.table("dbnames")}return{getDatabaseNames:function(){return n?_t.resolve(e.databases()).then(function(e){return e.map(function(e){return e.name}).filter(function(e){return e!==we})}):t.toCollection().primaryKeys()},add:function(e){return!n&&e!==we&&t.put({name:e}).catch(ft)},remove:function(e){return!n&&e!==we&&t.delete(e).catch(ft)}}}(e)}catch(t){}}function Mn(e){return Dt(function(){return $.letThrough=!0,e()})}function Nn(e){var t=e._state,n=e._deps.indexedDB;if(t.isBeingOpened||e.idbdb)return t.dbReadyPromise.then(function(){return t.dbOpenError?le(t.dbOpenError):e});w&&(t.openCanceller._stackHolder=it()),t.isBeingOpened=!0,t.dbOpenError=null,t.openComplete=!1;var i=t.dbReadyResolve,o=null;return _t.race([t.openCanceller,new _t(function(i,u){if(!n)throw new A.MissingAPI("indexedDB API not found. If using IE10+, make sure to run your code on a server URL (not locally). If using old Safari versions, make sure to include indexedDB polyfill.");var a=e.name,s=t.autoSchema?n.open(a):n.open(a,Math.round(10*e.verno));if(!s)throw new A.MissingAPI("IndexedDB API not available");s.onerror=mn(u),s.onblocked=Bt(e._fireOnBlocked),s.onupgradeneeded=Bt(function(r){if(o=s.transaction,t.autoSchema&&!e._options.allowEmptyDB){s.onerror=gn,o.abort(),s.result.close();var i=n.deleteDatabase(a);i.onsuccess=i.onerror=Bt(function(){u(new A.NoSuchDatabase("Database "+a+" doesnt exist"))})}else{o.onerror=mn(u);var c=r.oldVersion>Math.pow(2,62)?0:r.oldVersion;e.idbdb=s.result,In(e,c/10,o,u)}},u),s.onsuccess=Bt(function(){o=null;var n=e.idbdb=s.result,u=We(n.objectStoreNames);if(u.length>0)try{var c=n.transaction(yn(u),"readonly");t.autoSchema?function(e,t,n){e.verno=t.version/10;var i=e._dbSchema=Rn(0,t,n);e._storeNames=We(t.objectStoreNames,0),An(e,[e._allTables],r(i),i)}(e,n,c):(Fn(e,e._dbSchema,c),function(e,t){var n=Tn(Rn(0,e.idbdb,t),e._dbSchema);return!(n.add.length||n.change.some(function(e){return e.add.length||e.change.length}))}(e,c)||console.warn("Dexie SchemaDiff: Schema was extended without increasing the number passed to db.version(). Some queries may fail.")),jn(e,c)}catch(l){}ve.push(e),n.onversionchange=Bt(function(n){t.vcFired=!0,e.on("versionchange").fire(n)}),Ce.add(a),i()},u)})]).then(function(){return t.onReadyBeingFired=[],_t.resolve(Mn(e.on.ready.fire)).then(function e(){if(t.onReadyBeingFired.length>0){var n=t.onReadyBeingFired.reduce(bt,ft);return t.onReadyBeingFired=[],_t.resolve(Mn(n)).then(e)}})}).finally(function(){t.onReadyBeingFired=null}).then(function(){return t.isBeingOpened=!1,e}).catch(function(n){try{o&&o.abort()}catch(r){}return t.isBeingOpened=!1,e.close(),t.dbOpenError=n,le(t.dbOpenError)}).finally(function(){t.openComplete=!0,i()})}function Un(e){var t=function(t){return e.next(t)},n=o(t),r=o(function(t){return e.throw(t)});function o(e){return function(t){var o=e(t),u=o.value;return o.done?u:u&&"function"==typeof u.then?u.then(n,r):i(u)?Promise.all(u).then(n,r):n(u)}}return o(t)()}function Vn(e,t,n){var r=arguments.length;if(r<2)throw new A.InvalidArgument("Too few arguments");for(var i=new Array(r-1);--r;)i[r-1]=arguments[r];return n=i.pop(),[e,$e(i),n]}function Wn(e,t,n,r,i){return _t.resolve().then(function(){var o=$.transless||$,u=e._createTransaction(t,n,e._dbSchema,r),a={trans:u,transless:o};r?u.idbtrans=r.idbtrans:u.create();var s,c=_(i);c&&Rt();var l=_t.follow(function(){if(s=i.call(u,u))if(c){var e=Ft.bind(null,null);s.then(e,e)}else"function"==typeof s.next&&"function"==typeof s.throw&&(s=Un(s))},a);return(s&&"function"==typeof s.then?_t.resolve(s).then(function(e){return u.active?e:le(new A.PrematureCommit("Transaction committed too early. See http://bit.ly/2kdckMn"))}):l.then(function(){return s})).then(function(e){return r&&u._resolve(),u._completion.then(function(){return e})}).catch(function(e){return u._reject(e),le(e)})})}function zn(e,t,n){for(var r=i(e)?e.slice():[e],o=0;o<n;++o)r.push(t);return r}function Ln(e){return n(n({},e),{table:function(t){var r=e.table(t),i=r.schema,o={},u=[];function a(e,t,r){var i=En(e),s=o[i]=o[i]||[],c=null==e?0:"string"==typeof e?1:e.length,l=t>0,f=n(n({},r),{isVirtual:l,isPrimaryKey:!l&&r.isPrimaryKey,keyTail:t,keyLength:c,extractKey:kn(e),unique:!l&&r.unique});return s.push(f),f.isPrimaryKey||u.push(f),c>1&&a(2===c?e[0]:e.slice(0,c-1),t+1,r),s.sort(function(e,t){return e.keyTail-t.keyTail}),f}var s=a(i.primaryKey.keyPath,0,i.primaryKey);o[":id"]=[s];for(var c=0,l=i.indexes;c<l.length;c++){var f=l[c];a(f.keyPath,0,f)}function h(t){var r,i,o=t.query.index;return o.isVirtual?n(n({},t),{query:{index:o,range:(r=t.query.range,i=o.keyTail,{type:1===r.type?2:r.type,lower:zn(r.lower,r.lowerOpen?e.MAX_KEY:e.MIN_KEY,i),lowerOpen:!0,upper:zn(r.upper,r.upperOpen?e.MIN_KEY:e.MAX_KEY,i),upperOpen:!0})}}):t}return n(n({},r),{schema:n(n({},i),{primaryKey:s,indexes:u,getIndexByKeyPath:function(e){var t=o[En(e)];return t&&t[0]}}),count:function(e){return r.count(h(e))},query:function(e){return r.query(h(e))},openCursor:function(t){var n=t.query.index,i=n.keyTail,o=n.isVirtual,u=n.keyLength;return o?r.openCursor(h(t)).then(function(n){return n&&function(n){return Object.create(n,{continue:{value:function(r){null!=r?n.continue(zn(r,t.reverse?e.MAX_KEY:e.MIN_KEY,i)):t.unique?n.continue(zn(n.key,t.reverse?e.MIN_KEY:e.MAX_KEY,i)):n.continue()}},continuePrimaryKey:{value:function(t,r){n.continuePrimaryKey(zn(t,e.MAX_KEY,i),r)}},key:{get:function(){var e=n.key;return 1===u?e[0]:e.slice(0,u)}},value:{get:function(){return n.value}}})}(n)}):r.openCursor(t)}})}})}return{setters:[],execute:function(){n=function(){return n=Object.assign||function(e){for(var t,n=1,r=arguments.length;n<r;n++)for(var i in t=arguments[n])Object.prototype.hasOwnProperty.call(t,i)&&(e[i]=t[i]);return e},n.apply(this,arguments)},r=Object.keys,i=Array.isArray,o="undefined"!=typeof self?self:"undefined"!=typeof window?window:global,"undefined"==typeof Promise||o.Promise||(o.Promise=Promise),u=Object.getPrototypeOf,a={}.hasOwnProperty,s=Object.defineProperty,c=Object.getOwnPropertyDescriptor,l=[].slice,f=[].concat,h="Boolean,String,Date,RegExp,Blob,File,FileList,ArrayBuffer,DataView,Uint8ClampedArray,ImageData,Map,Set".split(",").concat($e([8,16,32,64].map(function(e){return["Int","Uint","Float"].map(function(t){return t+e+"Array"})}))).filter(function(e){return o[e]}),p=h.map(function(e){return o[e]}),d=Ge(h,function(e){return[e,!0]}),y={}.toString,v=function(e,t){return"Array"===t?""+e.map(function(e){return v(e,et(e))}):"ArrayBuffer"===t?""+new Uint8Array(e):"Date"===t?e.getTime():ArrayBuffer.isView(e)?""+new Uint8Array(e.buffer):e},m="undefined"!=typeof Symbol&&Symbol.iterator,g=m?function(e){var t;return null!=e&&(t=e[m])&&t.apply(e)}:function(){return null},b={},_="undefined"!=typeof Symbol?function(e){return"AsyncFunction"===e[Symbol.toStringTag]}:function(){return!1},w="undefined"!=typeof location&&/^(http|https):\/\/(localhost|127\.0\.0\.1)/.test(location.href),k=function(){return!0},x=!new Error("").stack,E=["Modify","Bulk","OpenFailed","VersionChange","Schema","Upgrade","InvalidTable","MissingAPI","NoSuchDatabase","InvalidArgument","SubTransaction","Unsupported","Internal","DatabaseClosed","PrematureCommit","ForeignAwait"].concat(P=["Unknown","Constraint","Data","TransactionInactive","ReadOnly","Version","NotFound","InvalidState","InvalidAccess","Abort","Timeout","QuotaExceeded","Syntax","DataClone"]),O={VersionChanged:"Database version changed by other database connection",DatabaseClosed:"Database has been closed",Abort:"Transaction aborted",TransactionInactive:"Transaction has already completed or failed"},Ue(ut).from(Error).extend({stack:{get:function(){return this._stack||(this._stack=this.name+": "+this.message+ot(this._e,2))}},toString:function(){return this.name+": "+this.message}}),Ue(st).from(ut),Ue(ct).from(ut),S=E.reduce(function(e,t){return e[t]=t+"Error",e},{}),j=ut,A=E.reduce(function(e,t){var n=t+"Error";function r(e,r){this._e=it(),this.name=n,e?"string"==typeof e?(this.message=e+(r?"\n "+r:""),this.inner=r||null):"object"==typeof e&&(this.message=e.name+" "+e.message,this.inner=e):(this.message=O[t]||n,this.inner=null)}return Ue(r).from(j),e[t]=r,e},{}),A.Syntax=SyntaxError,A.Type=TypeError,A.Range=RangeError,K=P.reduce(function(e,t){return e[t+"Error"]=A[t],e},{}),(C=E.reduce(function(e,t){return-1===["Syntax","Type","Range"].indexOf(t)&&(e[t+"Error"]=A[t]),e},{})).ModifyError=st,C.DexieError=ut,C.BulkError=ct,I={},T=100,B=100,D="undefined"==typeof Promise?[]:function(){var e=Promise.resolve();if("undefined"==typeof crypto||!crypto.subtle)return[e,e.__proto__,e];var t=crypto.subtle.digest("SHA-512",new Uint8Array([0]));return[t,t.__proto__,e]}(),R=D[0],F=D[1],q=D[2],M=F&&F.then,N=R&&R.constructor,U=!!q,V=!1,W=q?function(){q.then(At)}:o.setImmediate?setImmediate.bind(null,At):o.MutationObserver?function(){var e=document.createElement("div");new MutationObserver(function(){At(),e=null}).observe(e,{attributes:!0}),e.setAttribute("i","1")}:function(){setTimeout(At,0)},z=function(e,t){Z.push([e,t]),Y&&(W(),Y=!1)},L=!0,Y=!0,G=[],H=[],Q=null,X=ht,$=J={id:"global",global:!0,ref:0,unhandleds:[],onunhandled:Gt,pgp:!1,env:{},finalize:function(){this.unhandleds.forEach(function(e){try{Gt(e[0],e[1])}catch(t){}})}},Z=[],ee=0,te=[],ne={get:function(){var e=$,t=ae;function n(n,r){var i=this,o=!e.global&&(e!==$||t!==ae),u=o&&!Ft(),a=new _t(function(t,a){Et(i,new wt(Lt(n,e,o,u),Lt(r,e,o,u),t,a,e))});return w&&jt(a,this),a}return n.prototype=I,n},set:function(e){Ne(this,"then",e&&e.prototype===I?ne:{get:function(){return e},set:ne.set})}},Me(_t.prototype,{then:ne,_then:function(e,t){Et(this,new wt(null,null,e,t,$))},catch:function(e){if(1===arguments.length)return this.then(null,e);var t=arguments[0],n=arguments[1];return"function"==typeof t?this.then(null,function(e){return e instanceof t?n(e):Tt(e)}):this.then(null,function(e){return e&&e.name===t?n(e):Tt(e)})},finally:function(e){return this.then(function(t){return e(),t},function(t){return e(),Tt(t)})},stack:{get:function(){if(this._stack)return this._stack;try{V=!0;var e=St(this,[],20).join("\nFrom previous: ");return null!==this._state&&(this._stack=e),e}finally{V=!1}}},timeout:function(e,t){var n=this;return e<1/0?new _t(function(r,i){var o=setTimeout(function(){return i(new A.Timeout(t))},e);n.then(r,i).finally(clearTimeout.bind(null,o))}):this}}),"undefined"!=typeof Symbol&&Symbol.toStringTag&&Ne(_t.prototype,Symbol.toStringTag,"Dexie.Promise"),J.env=Vt(),Me(_t,{all:function(){var e=nt.apply(null,arguments).map(qt);return new _t(function(t,n){0===e.length&&t([]);var r=e.length;e.forEach(function(i,o){return _t.resolve(i).then(function(n){e[o]=n,--r||t(e)},n)})})},resolve:function(e){if(e instanceof _t)return e;if(e&&"function"==typeof e.then)return new _t(function(t,n){e.then(t,n)});var t=new _t(I,!0,e);return jt(t,Q),t},reject:Tt,race:function(){var e=nt.apply(null,arguments).map(qt);return new _t(function(t,n){e.map(function(e){return _t.resolve(e).then(t,n)})})},PSD:{get:function(){return $},set:function(e){return $=e}},totalEchoes:{get:function(){return ae}},newPSD:Dt,usePSD:Wt,scheduler:{get:function(){return z},set:function(e){z=e}},rejectionMapper:{get:function(){return X},set:function(e){X=e}},follow:function(e,t){return new _t(function(n,r){return Dt(function(t,n){var r=$;r.unhandleds=[],r.onunhandled=n,r.finalize=dt(function(){var e=this;!function(e){te.push(function t(){e(),te.splice(te.indexOf(t),1)}),++ee,z(function(){0===--ee&&It()},[])}(function(){0===e.unhandleds.length?t():n(e.unhandleds[0])})},r.finalize),e()},t,n,r)})}}),N&&(N.allSettled&&Ne(_t,"allSettled",function(){var e=nt.apply(null,arguments).map(qt);return new _t(function(t){0===e.length&&t([]);var n=e.length,r=new Array(n);e.forEach(function(e,i){return _t.resolve(e).then(function(e){return r[i]={status:"fulfilled",value:e}},function(e){return r[i]={status:"rejected",reason:e}}).then(function(){return--n||t(r)})})})}),N.any&&"undefined"!=typeof AggregateError&&Ne(_t,"any",function(){var e=nt.apply(null,arguments).map(qt);return new _t(function(t,n){0===e.length&&n(new AggregateError([]));var r=e.length,i=new Array(r);e.forEach(function(e,o){return _t.resolve(e).then(function(e){return t(e)},function(e){i[o]=e,--r||n(new AggregateError(i))})})})})),re={awaits:0,echoes:0,id:0},ie=0,oe=[],ue=0,ae=0,se=0,-1===(""+M).indexOf("[native code]")&&(Rt=Ft=ft),ce="unhandledrejection",le=_t.reject,fe="3.0.3",he=String.fromCharCode(65535),pe=-1/0,de="Invalid key provided. Keys must be of type string, number, Date or Array<string | number | Date>.",ye="String expected.",ve=[],me="undefined"!=typeof navigator&&/(MSIE|Trident|Edge)/.test(navigator.userAgent),ge=me,be=me,_e=function(e){return!/(dexie\.js|dexie\.min\.js)/.test(e)},we="__dbnames",ke="readonly",xe="readwrite",Pe={type:3,lower:-1/0,lowerOpen:!1,upper:[[]],upperOpen:!1},Ee=function(){function e(){}return e.prototype._trans=function(e,t,n){var r=this._tx||$.trans,i=this.name;function o(e,n,r){if(!r.schema[i])throw new A.NotFound("Table "+i+" not part of transaction");return t(r.idbtrans,r)}var u=Kt();try{return r&&r.db===this.db?r===$.trans?r._promise(e,o,n):Dt(function(){return r._promise(e,o,n)},{trans:r,transless:$.transless||$}):Ht(this.db,e,[this.name],o)}finally{u&&Ct()}},e.prototype.get=function(e,t){var n=this;return e&&e.constructor===Object?this.where(e).first(t):this._trans("readonly",function(t){return n.core.get({trans:t,key:e}).then(function(e){return n.hook.reading.fire(e)})}).then(t)},e.prototype.where=function(e){if("string"==typeof e)return new this.db.WhereClause(this,e);if(i(e))return new this.db.WhereClause(this,"["+e.join("+")+"]");var t=r(e);if(1===t.length)return this.where(t[0]).equals(e[t[0]]);var n=this.schema.indexes.concat(this.schema.primKey).filter(function(e){return e.compound&&t.every(function(t){return e.keyPath.indexOf(t)>=0})&&e.keyPath.every(function(e){return t.indexOf(e)>=0})})[0];if(n&&this.db._maxKey!==he)return this.where(n.name).equals(n.keyPath.map(function(t){return e[t]}));!n&&w&&console.warn("The query "+JSON.stringify(e)+" on "+this.name+" would benefit of a compound index ["+t.join("+")+"]");var o=this.schema.idxByName,u=this.db._deps.indexedDB;function a(e,t){try{return 0===u.cmp(e,t)}catch(n){return!1}}var s=t.reduce(function(t,n){var r=t[0],u=t[1],s=o[n],c=e[n];return[r||s,r||!s?Qt(u,s&&s.multi?function(e){var t=He(e,n);return i(t)&&t.some(function(e){return a(c,e)})}:function(e){return a(c,He(e,n))}):u]},[null,null]),c=s[0],l=s[1];return c?this.where(c.name).equals(e[c.keyPath]).filter(l):n?this.filter(l):this.where(t).equals("")},e.prototype.filter=function(e){return this.toCollection().and(e)},e.prototype.count=function(e){return this.toCollection().count(e)},e.prototype.offset=function(e){return this.toCollection().offset(e)},e.prototype.limit=function(e){return this.toCollection().limit(e)},e.prototype.each=function(e){return this.toCollection().each(e)},e.prototype.toArray=function(e){return this.toCollection().toArray(e)},e.prototype.toCollection=function(){return new this.db.Collection(new this.db.WhereClause(this))},e.prototype.orderBy=function(e){return new this.db.Collection(new this.db.WhereClause(this,i(e)?"["+e.join("+")+"]":e))},e.prototype.reverse=function(){return this.toCollection().reverse()},e.prototype.mapToClass=function(e){this.schema.mappedClass=e;var t=function(t){if(!t)return t;var n=Object.create(e.prototype);for(var r in t)if(qe(t,r))try{n[r]=t[r]}catch(i){}return n};return this.schema.readHook&&this.hook.reading.unsubscribe(this.schema.readHook),this.schema.readHook=t,this.hook("reading",t),e},e.prototype.defineClass=function(){return this.mapToClass(function(e){Fe(this,e)})},e.prototype.add=function(e,t){var n=this,r=this.schema.primKey,i=r.auto,o=r.keyPath,u=e;return o&&i&&(u=Xt(o)(e)),this._trans("readwrite",function(e){return n.core.mutate({trans:e,type:"add",keys:null!=t?[t]:null,values:[u]})}).then(function(e){return e.numFailures?_t.reject(e.failures[0]):e.lastResult}).then(function(t){if(o)try{Qe(e,o,t)}catch(n){}return t})},e.prototype.update=function(e,t){if("object"!=typeof t||i(t))throw new A.InvalidArgument("Modifications must be an object.");if("object"!=typeof e||i(e))return this.where(":id").equals(e).modify(t);r(t).forEach(function(n){Qe(e,n,t[n])});var n=He(e,this.schema.primKey.keyPath);return void 0===n?le(new A.InvalidArgument("Given object does not contain its primary key")):this.where(":id").equals(n).modify(t)},e.prototype.put=function(e,t){var n=this,r=this.schema.primKey,i=r.auto,o=r.keyPath,u=e;return o&&i&&(u=Xt(o)(e)),this._trans("readwrite",function(e){return n.core.mutate({trans:e,type:"put",values:[u],keys:null!=t?[t]:null})}).then(function(e){return e.numFailures?_t.reject(e.failures[0]):e.lastResult}).then(function(t){if(o)try{Qe(e,o,t)}catch(n){}return t})},e.prototype.delete=function(e){var t=this;return this._trans("readwrite",function(n){return t.core.mutate({trans:n,type:"delete",keys:[e]})}).then(function(e){return e.numFailures?_t.reject(e.failures[0]):void 0})},e.prototype.clear=function(){var e=this;return this._trans("readwrite",function(t){return e.core.mutate({trans:t,type:"deleteRange",range:Pe})}).then(function(e){return e.numFailures?_t.reject(e.failures[0]):void 0})},e.prototype.bulkGet=function(e){var t=this;return this._trans("readonly",function(n){return t.core.getMany({keys:e,trans:n}).then(function(e){return e.map(function(e){return t.hook.reading.fire(e)})})})},e.prototype.bulkAdd=function(e,t,n){var r=this,i=Array.isArray(t)?t:void 0,o=(n=n||(i?void 0:t))?n.allKeys:void 0;return this._trans("readwrite",function(t){var n=r.schema.primKey,u=n.auto,a=n.keyPath;if(a&&i)throw new A.InvalidArgument("bulkAdd(): keys argument invalid on tables with inbound keys");if(i&&i.length!==e.length)throw new A.InvalidArgument("Arguments objects and keys must have the same length");var s=e.length,c=a&&u?e.map(Xt(a)):e;return r.core.mutate({trans:t,type:"add",keys:i,values:c,wantResults:o}).then(function(e){var t=e.numFailures,n=e.results,i=e.lastResult,u=e.failures;if(0===t)return o?n:i;throw new ct(r.name+".bulkAdd(): "+t+" of "+s+" operations failed",Object.keys(u).map(function(e){return u[e]}))})})},e.prototype.bulkPut=function(e,t,n){var r=this,i=Array.isArray(t)?t:void 0,o=(n=n||(i?void 0:t))?n.allKeys:void 0;return this._trans("readwrite",function(t){var n=r.schema.primKey,u=n.auto,a=n.keyPath;if(a&&i)throw new A.InvalidArgument("bulkPut(): keys argument invalid on tables with inbound keys");if(i&&i.length!==e.length)throw new A.InvalidArgument("Arguments objects and keys must have the same length");var s=e.length,c=a&&u?e.map(Xt(a)):e;return r.core.mutate({trans:t,type:"put",keys:i,values:c,wantResults:o}).then(function(e){var t=e.numFailures,n=e.results,i=e.lastResult,u=e.failures;if(0===t)return o?n:i;throw new ct(r.name+".bulkPut(): "+t+" of "+s+" operations failed",Object.keys(u).map(function(e){return u[e]}))})})},e.prototype.bulkDelete=function(e){var t=this,n=e.length;return this._trans("readwrite",function(n){return t.core.mutate({trans:n,type:"delete",keys:e})}).then(function(e){var r=e.numFailures,i=e.lastResult,o=e.failures;if(0===r)return i;throw new ct(t.name+".bulkDelete(): "+r+" of "+n+" operations failed",o)})},e}(),Oe=function(){function e(){}return e.prototype._read=function(e,t){var n=this._ctx;return n.error?n.table._trans(null,le.bind(null,n.error)):n.table._trans("readonly",e).then(t)},e.prototype._write=function(e){var t=this._ctx;return t.error?t.table._trans(null,le.bind(null,t.error)):t.table._trans("readwrite",e,"locked")},e.prototype._addAlgorithm=function(e){var t=this._ctx;t.algorithm=Qt(t.algorithm,e)},e.prototype._iterate=function(e,t){return on(this._ctx,e,t,this._ctx.table.core)},e.prototype.clone=function(e){var t=Object.create(this.constructor.prototype),n=Object.create(this._ctx);return e&&Fe(n,e),t._ctx=n,t},e.prototype.raw=function(){return this._ctx.valueMapper=null,this},e.prototype.each=function(e){var t=this._ctx;return this._read(function(n){return on(t,e,n,t.table.core)})},e.prototype.count=function(e){var t=this;return this._read(function(e){var n=t._ctx,r=n.table.core;if(Zt(n,!0))return r.count({trans:e,query:{index:nn(n,r.schema),range:n.range}}).then(function(e){return Math.min(e,n.limit)});var i=0;return on(n,function(){return++i,!1},e,r).then(function(){return i})}).then(e)},e.prototype.sortBy=function(e,t){var n=e.split(".").reverse(),r=n[0],i=n.length-1;function o(e,t){return t?o(e[n[t]],t-1):e[r]}var u="next"===this._ctx.dir?1:-1;function a(e,t){var n=o(e,i),r=o(t,i);return n<r?-u:n>r?u:0}return this.toArray(function(e){return e.sort(a)}).then(t)},e.prototype.toArray=function(e){var t=this;return this._read(function(e){var n=t._ctx;if("next"===n.dir&&Zt(n,!0)&&n.limit>0){var r=n.valueMapper,i=nn(n,n.table.core.schema);return n.table.core.query({trans:e,limit:n.limit,values:!0,query:{index:i,range:n.range}}).then(function(e){var t=e.result;return r?t.map(r):t})}var o=[];return on(n,function(e){return o.push(e)},e,n.table.core).then(function(){return o})},e)},e.prototype.offset=function(e){var t=this._ctx;return e<=0||(t.offset+=e,Zt(t)?tn(t,function(){var t=e;return function(e,n){return 0===t||(1===t?(--t,!1):(n(function(){e.advance(t),t=0}),!1))}}):tn(t,function(){var t=e;return function(){return--t<0}})),this},e.prototype.limit=function(e){return this._ctx.limit=Math.min(this._ctx.limit,e),tn(this._ctx,function(){var t=e;return function(e,n,r){return--t<=0&&n(r),t>=0}},!0),this},e.prototype.until=function(e,t){return en(this._ctx,function(n,r,i){return!e(n.value)||(r(i),t)}),this},e.prototype.first=function(e){return this.limit(1).toArray(function(e){return e[0]}).then(e)},e.prototype.last=function(e){return this.reverse().first(e)},e.prototype.filter=function(e){var t,n;return en(this._ctx,function(t){return e(t.value)}),t=this._ctx,n=e,t.isMatch=Qt(t.isMatch,n),this},e.prototype.and=function(e){return this.filter(e)},e.prototype.or=function(e){return new this.db.WhereClause(this._ctx.table,e,this)},e.prototype.reverse=function(){return this._ctx.dir="prev"===this._ctx.dir?"next":"prev",this._ondirectionchange&&this._ondirectionchange(this._ctx.dir),this},e.prototype.desc=function(){return this.reverse()},e.prototype.eachKey=function(e){var t=this._ctx;return t.keysOnly=!t.isMatch,this.each(function(t,n){e(n.key,n)})},e.prototype.eachUniqueKey=function(e){return this._ctx.unique="unique",this.eachKey(e)},e.prototype.eachPrimaryKey=function(e){var t=this._ctx;return t.keysOnly=!t.isMatch,this.each(function(t,n){e(n.primaryKey,n)})},e.prototype.keys=function(e){var t=this._ctx;t.keysOnly=!t.isMatch;var n=[];return this.each(function(e,t){n.push(t.key)}).then(function(){return n}).then(e)},e.prototype.primaryKeys=function(e){var t=this._ctx;if("next"===t.dir&&Zt(t,!0)&&t.limit>0)return this._read(function(e){var n=nn(t,t.table.core.schema);return t.table.core.query({trans:e,values:!1,limit:t.limit,query:{index:n,range:t.range}})}).then(function(e){return e.result}).then(e);t.keysOnly=!t.isMatch;var n=[];return this.each(function(e,t){n.push(t.primaryKey)}).then(function(){return n}).then(e)},e.prototype.uniqueKeys=function(e){return this._ctx.unique="unique",this.keys(e)},e.prototype.firstKey=function(e){return this.limit(1).keys(function(e){return e[0]}).then(e)},e.prototype.lastKey=function(e){return this.reverse().firstKey(e)},e.prototype.distinct=function(){var e=this._ctx,t=e.index&&e.table.schema.idxByName[e.index];if(!t||!t.multi)return this;var n={};return en(this._ctx,function(e){var t=e.primaryKey.toString(),r=qe(n,t);return n[t]=!0,!r}),this},e.prototype.modify=function(e){var t=this,n=this._ctx;return this._write(function(i){var o;if("function"==typeof e)o=e;else{var u=r(e),a=u.length;o=function(t){for(var n=!1,r=0;r<a;++r){var i=u[r],o=e[i];He(t,i)!==o&&(Qe(t,i,o),n=!0)}return n}}var s=n.table.core,c=s.schema.primaryKey,l=c.outbound,f=c.extractKey,h="testmode"in Be?1:2e3,p=t.db.core.cmp,d=[],y=0,v=[],m=function(e,t){var n=t.failures,i=t.numFailures;y+=e-i;for(var o=0,u=r(n);o<u.length;o++){var a=u[o];d.push(n[a])}};return t.clone().primaryKeys().then(function(e){var t=function(n){var r=Math.min(h,e.length-n);return s.getMany({trans:i,keys:e.slice(n,n+r)}).then(function(u){for(var a=[],c=[],d=l?[]:null,y=[],v=0;v<r;++v){var g=u[v],b={value:Ze(g),primKey:e[n+v]};!1!==o.call(b,b.value,b)&&(null==b.value?y.push(e[n+v]):l||0===p(f(g),f(b.value))?(c.push(b.value),l&&d.push(e[n+v])):(y.push(e[n+v]),a.push(b.value)))}return Promise.resolve(a.length>0&&s.mutate({trans:i,type:"add",values:a}).then(function(e){for(var t in e.failures)y.splice(parseInt(t),1);m(a.length,e)})).then(function(e){return c.length>0&&s.mutate({trans:i,type:"put",keys:d,values:c}).then(function(e){return m(c.length,e)})}).then(function(){return y.length>0&&s.mutate({trans:i,type:"delete",keys:y}).then(function(e){return m(y.length,e)})}).then(function(){return e.length>n+r&&t(n+h)})})};return t(0).then(function(){if(d.length>0)throw new st("Error modifying one or more objects",d,y,v);return e.length})})})},e.prototype.delete=function(){var e=this._ctx,t=e.range;return Zt(e)&&(e.isPrimKey&&!be||3===t.type)?this._write(function(n){var r=e.table.core.schema.primaryKey,i=t;return e.table.core.count({trans:n,query:{index:r,range:i}}).then(function(t){return e.table.core.mutate({trans:n,type:"deleteRange",range:i}).then(function(e){var n=e.failures;e.lastResult,e.results;var r=e.numFailures;if(r)throw new st("Could not delete some values",Object.keys(n).map(function(e){return n[e]}),t-r);return t-r})})}):this.modify(function(e,t){return t.value=null})},e}(),Se=function(){function e(){}return Object.defineProperty(e.prototype,"Collection",{get:function(){return this._ctx.table.db.Collection},enumerable:!0,configurable:!0}),e.prototype.between=function(e,t,n,r){n=!1!==n,r=!0===r;try{return this._cmp(e,t)>0||0===this._cmp(e,t)&&(n||r)&&(!n||!r)?ln(this):new this.Collection(this,function(){return pn(e,t,!n,!r)})}catch(i){return cn(this,de)}},e.prototype.equals=function(e){return null==e?cn(this,de):new this.Collection(this,function(){return dn(e)})},e.prototype.above=function(e){return null==e?cn(this,de):new this.Collection(this,function(){return pn(e,void 0,!0)})},e.prototype.aboveOrEqual=function(e){return null==e?cn(this,de):new this.Collection(this,function(){return pn(e,void 0,!1)})},e.prototype.below=function(e){return null==e?cn(this,de):new this.Collection(this,function(){return pn(void 0,e,!1,!0)})},e.prototype.belowOrEqual=function(e){return null==e?cn(this,de):new this.Collection(this,function(){return pn(void 0,e)})},e.prototype.startsWith=function(e){return"string"!=typeof e?cn(this,ye):this.between(e,e+he,!0,!0)},e.prototype.startsWithIgnoreCase=function(e){return""===e?this.startsWith(e):hn(this,function(e,t){return 0===e.indexOf(t[0])},[e],he)},e.prototype.equalsIgnoreCase=function(e){return hn(this,function(e,t){return e===t[0]},[e],"")},e.prototype.anyOfIgnoreCase=function(){var e=nt.apply(b,arguments);return 0===e.length?ln(this):hn(this,function(e,t){return-1!==t.indexOf(e)},e,"")},e.prototype.startsWithAnyOfIgnoreCase=function(){var e=nt.apply(b,arguments);return 0===e.length?ln(this):hn(this,function(e,t){return t.some(function(t){return 0===e.indexOf(t)})},e,he)},e.prototype.anyOf=function(){var e=this,t=nt.apply(b,arguments),n=this._cmp;try{t.sort(n)}catch(o){return cn(this,de)}if(0===t.length)return ln(this);var r=new this.Collection(this,function(){return pn(t[0],t[t.length-1])});r._ondirectionchange=function(r){n="next"===r?e._ascending:e._descending,t.sort(n)};var i=0;return r._addAlgorithm(function(e,r,o){for(var u=e.key;n(u,t[i])>0;)if(++i===t.length)return r(o),!1;return 0===n(u,t[i])||(r(function(){e.continue(t[i])}),!1)}),r},e.prototype.notEqual=function(e){return this.inAnyRange([[pe,e],[e,this.db._maxKey]],{includeLowers:!1,includeUppers:!1})},e.prototype.noneOf=function(){var e=nt.apply(b,arguments);if(0===e.length)return new this.Collection(this);try{e.sort(this._ascending)}catch(n){return cn(this,de)}var t=e.reduce(function(e,t){return e?e.concat([[e[e.length-1][1],t]]):[[pe,t]]},null);return t.push([e[e.length-1],this.db._maxKey]),this.inAnyRange(t,{includeLowers:!1,includeUppers:!1})},e.prototype.inAnyRange=function(e,t){var n=this,r=this._cmp,i=this._ascending,o=this._descending,u=this._min,a=this._max;if(0===e.length)return ln(this);if(!e.every(function(e){return void 0!==e[0]&&void 0!==e[1]&&i(e[0],e[1])<=0}))return cn(this,"First argument to inAnyRange() must be an Array of two-value Arrays [lower,upper] where upper must not be lower than lower",A.InvalidArgument);var s,c=!t||!1!==t.includeLowers,l=t&&!0===t.includeUppers,f=i;function h(e,t){return f(e[0],t[0])}try{s=e.reduce(function(e,t){for(var n=0,i=e.length;n<i;++n){var o=e[n];if(r(t[0],o[1])<0&&r(t[1],o[0])>0){o[0]=u(o[0],t[0]),o[1]=a(o[1],t[1]);break}}return n===i&&e.push(t),e},[]),s.sort(h)}catch(g){return cn(this,de)}var p=0,d=l?function(e){return i(e,s[p][1])>0}:function(e){return i(e,s[p][1])>=0},y=c?function(e){return o(e,s[p][0])>0}:function(e){return o(e,s[p][0])>=0},v=d,m=new this.Collection(this,function(){return pn(s[0][0],s[s.length-1][1],!c,!l)});return m._ondirectionchange=function(e){"next"===e?(v=d,f=i):(v=y,f=o),s.sort(h)},m._addAlgorithm(function(e,t,r){for(var o=e.key;v(o);)if(++p===s.length)return t(r),!1;return!!function(e){return!d(e)&&!y(e)}(o)||(0===n._cmp(o,s[p][1])||0===n._cmp(o,s[p][0])||t(function(){f===i?e.continue(s[p][0]):e.continue(s[p][1])}),!1)}),m},e.prototype.startsWithAnyOf=function(){var e=nt.apply(b,arguments);return e.every(function(e){return"string"==typeof e})?0===e.length?ln(this):this.inAnyRange(e.map(function(e){return[e,e+he]})):cn(this,"startsWithAnyOf() only works with strings")},e}(),je=function(){function e(){}return e.prototype._lock=function(){return Le(!$.global),++this._reculock,1!==this._reculock||$.global||($.lockOwnerFor=this),this},e.prototype._unlock=function(){if(Le(!$.global),0===--this._reculock)for($.global||($.lockOwnerFor=null);this._blockedFuncs.length>0&&!this._locked();){var e=this._blockedFuncs.shift();try{Wt(e[1],e[0])}catch(t){}}return this},e.prototype._locked=function(){return this._reculock&&$.lockOwnerFor!==this},e.prototype.create=function(e){var t=this;if(!this.mode)return this;var n=this.db.idbdb,r=this.db._state.dbOpenError;if(Le(!this.idbtrans),!e&&!n)switch(r&&r.name){case"DatabaseClosedError":throw new A.DatabaseClosed(r);case"MissingAPIError":throw new A.MissingAPI(r.message,r);default:throw new A.OpenFailed(r)}if(!this.active)throw new A.TransactionInactive;return Le(null===this._completion._state),(e=this.idbtrans=e||n.transaction(yn(this.storeNames),this.mode)).onerror=Bt(function(n){gn(n),t._reject(e.error)}),e.onabort=Bt(function(n){gn(n),t.active&&t._reject(new A.Abort(e.error)),t.active=!1,t.on("abort").fire(n)}),e.oncomplete=Bt(function(){t.active=!1,t._resolve()}),this},e.prototype._promise=function(e,t,n){var r=this;if("readwrite"===e&&"readwrite"!==this.mode)return le(new A.ReadOnly("Transaction is readonly"));if(!this.active)return le(new A.TransactionInactive);if(this._locked())return new _t(function(i,o){r._blockedFuncs.push([function(){r._promise(e,t,n).then(i,o)},$])});if(n)return Dt(function(){var e=new _t(function(e,n){r._lock();var i=t(e,n,r);i&&i.then&&i.then(e,n)});return e.finally(function(){return r._unlock()}),e._lib=!0,e});var i=new _t(function(e,n){var i=t(e,n,r);i&&i.then&&i.then(e,n)});return i._lib=!0,i},e.prototype._root=function(){return this.parent?this.parent._root():this},e.prototype.waitFor=function(e){var t=this._root(),n=_t.resolve(e);if(t._waitingFor)t._waitingFor=t._waitingFor.then(function(){return n});else{t._waitingFor=n,t._waitingQueue=[];var r=t.idbtrans.objectStore(t.storeNames[0]);!function e(){for(++t._spinCount;t._waitingQueue.length;)t._waitingQueue.shift()();t._waitingFor&&(r.get(-1/0).onsuccess=e)}()}var i=t._waitingFor;return new _t(function(e,r){n.then(function(n){return t._waitingQueue.push(Bt(e.bind(null,n)))},function(e){return t._waitingQueue.push(Bt(r.bind(null,e)))}).finally(function(){t._waitingFor===i&&(t._waitingFor=null)})})},e.prototype.abort=function(){this.active&&this._reject(new A.Abort),this.active=!1},e.prototype.table=function(e){var t=this._memoizedTables||(this._memoizedTables={});if(qe(t,e))return t[e];var n=this.schema[e];if(!n)throw new A.NotFound("Table "+e+" not part of transaction");var r=new this.db.Table(e,n,this);return r.core=this.db.core.table(e),t[e]=r,r},e}(),Ae=0,Ke=function(){function e(){}return e.prototype._parseStoresSpec=function(e,t){r(e).forEach(function(n){if(null!==e[n]){var r=e[n].split(",").map(function(e,t){var n=(e=e.trim()).replace(/([&*]|\+\+)/g,""),r=/^\[/.test(n)?n.match(/^\[(.*)\]$/)[1].split("+"):n;return bn(n,r||null,/\&/.test(e),/\*/.test(e),/\+\+/.test(e),i(r),0===t)}),o=r.shift();if(o.multi)throw new A.Schema("Primary key cannot be multi-valued");r.forEach(function(e){if(e.auto)throw new A.Schema("Only primary key can be marked as autoIncrement (++)");if(!e.keyPath)throw new A.Schema("Index must have a name and cannot be an empty string")}),t[n]=wn(n,o,r)}})},e.prototype.stores=function(e){var t=this.db;this._cfg.storesSource=this._cfg.storesSource?Fe(this._cfg.storesSource,e):e;var n=t._versions,i={},o={};return n.forEach(function(e){Fe(i,e._cfg.storesSource),o=e._cfg.dbschema={},e._parseStoresSpec(i,o)}),t._dbSchema=o,Kn(t,[t._allTables,t,t.Transaction.prototype]),An(t,[t._allTables,t,t.Transaction.prototype,this._cfg.tables],r(o),o),t._storeNames=r(o),this},e.prototype.upgrade=function(e){return this._cfg.contentUpgrade=e,this},e}(),Ie={stack:"dbcore",name:"VirtualIndexMiddleware",level:1,create:Ln},Te={stack:"dbcore",name:"HooksMiddleware",level:2,create:function(e){return n(n({},e),{table:function(t){var r=e.table(t),i=r.schema.primaryKey;return n(n({},r),{mutate:function(e){var o=$.trans,u=o.table(t).hook,a=u.deleting,s=u.creating,c=u.updating;switch(e.type){case"add":if(s.fire===ft)break;return o._promise("readwrite",function(){return l(e)},!0);case"put":if(s.fire===ft&&c.fire===ft)break;return o._promise("readwrite",function(){return l(e)},!0);case"delete":if(a.fire===ft)break;return o._promise("readwrite",function(){return l(e)},!0);case"deleteRange":if(a.fire===ft)break;return o._promise("readwrite",function(){return function(e){return f(e.trans,e.range,1e4)}(e)},!0)}return r.mutate(e);function l(e){var t=$.trans,o=e.keys||xn(i,e);if(!o)throw new Error("Keys missing");return"delete"!==(e="add"===e.type||"put"===e.type?n(n({},e),{keys:o,wantResults:!0}):n({},e)).type&&(e.values=Re(e.values)),e.keys&&(e.keys=Re(e.keys)),function(e,t,n){return"add"===t.type?Promise.resolve(new Array(t.values.length)):e.getMany({trans:t.trans,keys:n})}(r,e,o).then(function(n){var u=o.map(function(r,o){var u=n[o],l={onerror:null,onsuccess:null};if("delete"===e.type)a.fire.call(l,r,u,t);else if("add"===e.type||void 0===u){var f=s.fire.call(l,r,e.values[o],t);null==r&&null!=f&&(r=f,e.keys[o]=r,i.outbound||Qe(e.values[o],i.keyPath,r))}else{var h=tt(u,e.values[o]),p=c.fire.call(l,h,r,u,t);if(p){var d=e.values[o];Object.keys(p).forEach(function(e){qe(d,e)?d[e]=p[e]:Qe(d,e,p[e])})}}return l});return r.mutate(e).then(function(t){for(var r=t.failures,i=t.results,a=t.numFailures,s=t.lastResult,c=0;c<o.length;++c){var l=i?i[c]:o[c],f=u[c];null==l?f.onerror&&f.onerror(r[c]):f.onsuccess&&f.onsuccess("put"===e.type&&n[c]?e.values[c]:l)}return{failures:r,results:i,numFailures:a,lastResult:s}}).catch(function(e){return u.forEach(function(t){return t.onerror&&t.onerror(e)}),Promise.reject(e)})})}function f(e,t,o){return r.query({trans:e,values:!1,query:{index:i,range:t},limit:o}).then(function(r){var i=r.result;return l({type:"delete",keys:i,trans:e}).then(function(r){return r.numFailures>0?Promise.reject(r.failures[0]):i.length<o?{failures:[],numFailures:0,lastResult:void 0}:f(e,n(n({},t),{lower:i[i.length-1],lowerOpen:!0}),o)})})}}})}})}},e("t",Be=function(){function e(t,r){var i=this;this._middlewares={},this.verno=0;var o=e.dependencies;this._options=r=n({addons:e.addons,autoOpen:!0,indexedDB:o.indexedDB,IDBKeyRange:o.IDBKeyRange},r),this._deps={indexedDB:r.indexedDB,IDBKeyRange:r.IDBKeyRange};var u=r.addons;this._dbSchema={},this._versions=[],this._storeNames=[],this._allTables={},this.idbdb=null;var a,s={dbOpenError:null,isBeingOpened:!1,onReadyBeingFired:null,openComplete:!1,dbReadyResolve:ft,dbReadyPromise:null,cancelOpen:ft,openCanceller:null,autoSchema:!0};s.dbReadyPromise=new _t(function(e){s.dbReadyResolve=e}),s.openCanceller=new _t(function(e,t){s.cancelOpen=t}),this._state=s,this.name=t,this.on=Jt(this,"populate","blocked","versionchange",{ready:[bt,ft]}),this.on.ready.subscribe=ze(this.on.ready.subscribe,function(t){return function(n,r){e.vip(function(){var e=i._state;if(e.openComplete)e.dbOpenError||_t.resolve().then(n),r&&t(n);else if(e.onReadyBeingFired)e.onReadyBeingFired.push(n),r&&t(n);else{t(n);var o=i;r||t(function e(){o.on.ready.unsubscribe(n),o.on.ready.unsubscribe(e)})}})}}),this.Collection=(a=this,$t(Oe.prototype,function(e,t){this.db=a;var n=Pe,r=null;if(t)try{n=t()}catch(s){r=s}var i=e._ctx,o=i.table,u=o.hook.reading.fire;this._ctx={table:o,index:i.index,isPrimKey:!i.index||o.schema.primKey.keyPath&&i.index===o.schema.primKey.name,range:n,keysOnly:!1,dir:"next",unique:"",algorithm:null,filter:null,replayFilter:null,justLimit:!0,isMatch:null,offset:0,limit:1/0,error:r,or:i.or,valueMapper:u!==ht?u:null}})),this.Table=function(e){return $t(Ee.prototype,function(t,n,r){this.db=e,this._tx=r,this.name=t,this.schema=n,this.hook=e._allTables[t]?e._allTables[t].hook:Jt(null,{creating:[yt,ft],reading:[pt,ht],updating:[mt,ft],deleting:[vt,ft]})})}(this),this.Transaction=function(e){return $t(je.prototype,function(t,n,r,i){var o=this;this.db=e,this.mode=t,this.storeNames=n,this.schema=r,this.idbtrans=null,this.on=Jt(this,"complete","error","abort"),this.parent=i||null,this.active=!0,this._reculock=0,this._blockedFuncs=[],this._resolve=null,this._reject=null,this._waitingFor=null,this._waitingQueue=null,this._spinCount=0,this._completion=new _t(function(e,t){o._resolve=e,o._reject=t}),this._completion.then(function(){o.active=!1,o.on.complete.fire()},function(e){var t=o.active;return o.active=!1,o.on.error.fire(e),o.parent?o.parent._reject(e):t&&o.idbtrans&&o.idbtrans.abort(),le(e)})})}(this),this.Version=function(e){return $t(Ke.prototype,function(t){this.db=e,this._cfg={version:t,storesSource:null,dbschema:{},tables:{},contentUpgrade:null}})}(this),this.WhereClause=function(e){return $t(Se.prototype,function(t,n,r){this.db=e,this._ctx={table:t,index:":id"===n?null:n,or:r};var i=e._deps.indexedDB;if(!i)throw new A.MissingAPI("indexedDB API missing");this._cmp=this._ascending=i.cmp.bind(i),this._descending=function(e,t){return i.cmp(t,e)},this._max=function(e,t){return i.cmp(e,t)>0?e:t},this._min=function(e,t){return i.cmp(e,t)<0?e:t},this._IDBKeyRange=e._deps.IDBKeyRange})}(this),this.on("versionchange",function(e){e.newVersion>0?console.warn("Another connection wants to upgrade database '"+i.name+"'. Closing db now to resume the upgrade."):console.warn("Another connection wants to delete database '"+i.name+"'. Closing db now to resume the delete request."),i.close()}),this.on("blocked",function(e){!e.newVersion||e.newVersion<e.oldVersion?console.warn("Dexie.delete('"+i.name+"') was blocked"):console.warn("Upgrade '"+i.name+"' blocked by other connection holding version "+e.oldVersion/10)}),this._maxKey=vn(r.IDBKeyRange),this._createTransaction=function(e,t,n,r){return new i.Transaction(e,t,n,r)},this._fireOnBlocked=function(e){i.on("blocked").fire(e),ve.filter(function(e){return e.name===i.name&&e!==i&&!e._state.vcFired}).map(function(t){return t.on("versionchange").fire(e)})},this.use(Ie),this.use(Te),u.forEach(function(e){return e(i)})}return e.prototype.version=function(e){if(isNaN(e)||e<.1)throw new A.Type("Given version is not a positive number");if(e=Math.round(10*e)/10,this.idbdb||this._state.isBeingOpened)throw new A.Schema("Cannot add version when database is open");this.verno=Math.max(this.verno,e);var t=this._versions,n=t.filter(function(t){return t._cfg.version===e})[0];return n||(n=new this.Version(e),t.push(n),t.sort(Cn),n.stores({}),this._state.autoSchema=!1,n)},e.prototype._whenReady=function(e){var t=this;return this._state.openComplete||$.letThrough?e():new _t(function(e,n){if(!t._state.isBeingOpened){if(!t._options.autoOpen)return void n(new A.DatabaseClosed);t.open().catch(ft)}t._state.dbReadyPromise.then(e,n)}).then(e)},e.prototype.use=function(e){var t=e.stack,n=e.create,r=e.level,i=e.name;i&&this.unuse({stack:t,name:i});var o=this._middlewares[t]||(this._middlewares[t]=[]);return o.push({stack:t,create:n,level:null==r?10:r,name:i}),o.sort(function(e,t){return e.level-t.level}),this},e.prototype.unuse=function(e){var t=e.stack,n=e.name,r=e.create;return t&&this._middlewares[t]&&(this._middlewares[t]=this._middlewares[t].filter(function(e){return r?e.create!==r:!!n&&e.name!==n})),this},e.prototype.open=function(){return Nn(this)},e.prototype.close=function(){var e=ve.indexOf(this),t=this._state;if(e>=0&&ve.splice(e,1),this.idbdb){try{this.idbdb.close()}catch(n){}this.idbdb=null}this._options.autoOpen=!1,t.dbOpenError=new A.DatabaseClosed,t.isBeingOpened&&t.cancelOpen(t.dbOpenError),t.dbReadyPromise=new _t(function(e){t.dbReadyResolve=e}),t.openCanceller=new _t(function(e,n){t.cancelOpen=n})},e.prototype.delete=function(){var e=this,t=arguments.length>0,n=this._state;return new _t(function(r,i){var o=function(){e.close();var t=e._deps.indexedDB.deleteDatabase(e.name);t.onsuccess=Bt(function(){Ce.remove(e.name),r()}),t.onerror=mn(i),t.onblocked=e._fireOnBlocked};if(t)throw new A.InvalidArgument("Arguments not allowed in db.delete()");n.isBeingOpened?n.dbReadyPromise.then(o):o()})},e.prototype.backendDB=function(){return this.idbdb},e.prototype.isOpen=function(){return null!==this.idbdb},e.prototype.hasBeenClosed=function(){var e=this._state.dbOpenError;return e&&"DatabaseClosed"===e.name},e.prototype.hasFailed=function(){return null!==this._state.dbOpenError},e.prototype.dynamicallyOpened=function(){return this._state.autoSchema},Object.defineProperty(e.prototype,"tables",{get:function(){var e=this;return r(this._allTables).map(function(t){return e._allTables[t]})},enumerable:!0,configurable:!0}),e.prototype.transaction=function(){var e=Vn.apply(this,arguments);return this._transaction.apply(this,e)},e.prototype._transaction=function(e,t,n){var r=this,i=$.trans;i&&i.db===this&&-1===e.indexOf("!")||(i=null);var o,u,a=-1!==e.indexOf("?");e=e.replace("!","").replace("?","");try{if(u=t.map(function(e){var t=e instanceof r.Table?e.name:e;if("string"!=typeof t)throw new TypeError("Invalid table argument to Dexie.transaction(). Only Table or String are allowed");return t}),"r"==e||e===ke)o=ke;else{if("rw"!=e&&e!=xe)throw new A.InvalidArgument("Invalid transaction mode: "+e);o=xe}if(i){if(i.mode===ke&&o===xe){if(!a)throw new A.SubTransaction("Cannot enter a sub-transaction with READWRITE mode when parent transaction is READONLY");i=null}i&&u.forEach(function(e){if(i&&-1===i.storeNames.indexOf(e)){if(!a)throw new A.SubTransaction("Table "+e+" not included in parent transaction.");i=null}}),a&&i&&!i.active&&(i=null)}}catch(c){return i?i._promise(null,function(e,t){t(c)}):le(c)}var s=Wn.bind(null,this,o,u,i,n);return i?i._promise(o,s,"lock"):$.trans?Wt($.transless,function(){return r._whenReady(s)}):this._whenReady(s)},e.prototype.table=function(e){if(!qe(this._allTables,e))throw new A.InvalidTable("Table "+e+" does not exist");return this._allTables[e]},e}()),Me(De=Be,n(n({},C),{delete:function(e){return new De(e).delete()},exists:function(e){return new De(e,{addons:[]}).open().then(function(e){return e.close(),!0}).catch("NoSuchDatabaseError",function(){return!1})},getDatabaseNames:function(e){return Ce?Ce.getDatabaseNames().then(e):_t.resolve([])},defineClass:function(){return function(e){Fe(this,e)}},ignoreTransaction:function(e){return $.trans?Wt($.transless,e):e()},vip:Mn,async:function(e){return function(){try{var t=Un(e.apply(this,arguments));return t&&"function"==typeof t.then?t:_t.resolve(t)}catch(n){return le(n)}}},spawn:function(e,t,n){try{var r=Un(e.apply(n,t||[]));return r&&"function"==typeof r.then?r:_t.resolve(r)}catch(i){return le(i)}},currentTransaction:{get:function(){return $.trans||null}},waitFor:function(e,t){var n=_t.resolve("function"==typeof e?De.ignoreTransaction(e):e).timeout(t||6e4);return $.trans?$.trans.waitFor(n):n},Promise:_t,debug:{get:function(){return w},set:function(e){rt(e,"dexie"===e?function(){return!0}:_e)}},derive:Ue,extend:Fe,props:Me,override:ze,Events:Jt,getByKeyPath:He,setByKeyPath:Qe,delByKeyPath:Xe,shallowClone:Je,deepClone:Ze,getObjectDiff:tt,asap:Ye,minKey:pe,addons:[],connections:ve,errnames:S,dependencies:function(){try{return{indexedDB:o.indexedDB||o.mozIndexedDB||o.webkitIndexedDB||o.msIndexedDB,IDBKeyRange:o.IDBKeyRange||o.webkitIDBKeyRange}}catch(e){return{indexedDB:null,IDBKeyRange:null}}}(),semVer:fe,version:fe.split(".").map(function(e){return parseInt(e)}).reduce(function(e,t,n){return e+t/Math.pow(10,2*n)}),default:De,Dexie:De})),De.maxKey=vn(De.dependencies.IDBKeyRange),qn(Be.dependencies.indexedDB),_t.rejectionMapper=lt,rt(w,_e)}}});
+/*! Dexie.js 3.2.7 (Apache-2.0) — npm dist rebuilt into the neo-ppt chunk by hstack/open-kimi-ppt; see ATTRIBUTION.md */
+System.register([],function(e,t){return{setters:[],execute:function(){var module={exports:{}},exports=module.exports,define=void 0;
+/*
+ * Dexie.js - a minimalistic wrapper for IndexedDB
+ * ===============================================
+ *
+ * By David Fahlander, david.fahlander@gmail.com
+ *
+ * Version 3.2.7, Wed Mar 20 2024
+ *
+ * https://dexie.org
+ *
+ * Apache License Version 2.0, January 2004, http://www.apache.org/licenses/
+ */
+ 
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Dexie = factory());
+})(this, (function () { 'use strict';
+
+    /*! *****************************************************************************
+    Copyright (c) Microsoft Corporation.
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+    var __assign = function() {
+        __assign = Object.assign || function __assign(t) {
+            for (var s, i = 1, n = arguments.length; i < n; i++) {
+                s = arguments[i];
+                for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+            }
+            return t;
+        };
+        return __assign.apply(this, arguments);
+    };
+    function __spreadArray(to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    }
+
+    var _global = typeof globalThis !== 'undefined' ? globalThis :
+        typeof self !== 'undefined' ? self :
+            typeof window !== 'undefined' ? window :
+                global;
+
+    var keys = Object.keys;
+    var isArray = Array.isArray;
+    if (typeof Promise !== 'undefined' && !_global.Promise) {
+        _global.Promise = Promise;
+    }
+    function extend(obj, extension) {
+        if (typeof extension !== 'object')
+            return obj;
+        keys(extension).forEach(function (key) {
+            obj[key] = extension[key];
+        });
+        return obj;
+    }
+    var getProto = Object.getPrototypeOf;
+    var _hasOwn = {}.hasOwnProperty;
+    function hasOwn(obj, prop) {
+        return _hasOwn.call(obj, prop);
+    }
+    function props(proto, extension) {
+        if (typeof extension === 'function')
+            extension = extension(getProto(proto));
+        (typeof Reflect === "undefined" ? keys : Reflect.ownKeys)(extension).forEach(function (key) {
+            setProp(proto, key, extension[key]);
+        });
+    }
+    var defineProperty = Object.defineProperty;
+    function setProp(obj, prop, functionOrGetSet, options) {
+        defineProperty(obj, prop, extend(functionOrGetSet && hasOwn(functionOrGetSet, "get") && typeof functionOrGetSet.get === 'function' ?
+            { get: functionOrGetSet.get, set: functionOrGetSet.set, configurable: true } :
+            { value: functionOrGetSet, configurable: true, writable: true }, options));
+    }
+    function derive(Child) {
+        return {
+            from: function (Parent) {
+                Child.prototype = Object.create(Parent.prototype);
+                setProp(Child.prototype, "constructor", Child);
+                return {
+                    extend: props.bind(null, Child.prototype)
+                };
+            }
+        };
+    }
+    var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+    function getPropertyDescriptor(obj, prop) {
+        var pd = getOwnPropertyDescriptor(obj, prop);
+        var proto;
+        return pd || (proto = getProto(obj)) && getPropertyDescriptor(proto, prop);
+    }
+    var _slice = [].slice;
+    function slice(args, start, end) {
+        return _slice.call(args, start, end);
+    }
+    function override(origFunc, overridedFactory) {
+        return overridedFactory(origFunc);
+    }
+    function assert(b) {
+        if (!b)
+            throw new Error("Assertion Failed");
+    }
+    function asap$1(fn) {
+        if (_global.setImmediate)
+            setImmediate(fn);
+        else
+            setTimeout(fn, 0);
+    }
+    function arrayToObject(array, extractor) {
+        return array.reduce(function (result, item, i) {
+            var nameAndValue = extractor(item, i);
+            if (nameAndValue)
+                result[nameAndValue[0]] = nameAndValue[1];
+            return result;
+        }, {});
+    }
+    function tryCatch(fn, onerror, args) {
+        try {
+            fn.apply(null, args);
+        }
+        catch (ex) {
+            onerror && onerror(ex);
+        }
+    }
+    function getByKeyPath(obj, keyPath) {
+        if (typeof keyPath === 'string' && hasOwn(obj, keyPath))
+            return obj[keyPath];
+        if (!keyPath)
+            return obj;
+        if (typeof keyPath !== 'string') {
+            var rv = [];
+            for (var i = 0, l = keyPath.length; i < l; ++i) {
+                var val = getByKeyPath(obj, keyPath[i]);
+                rv.push(val);
+            }
+            return rv;
+        }
+        var period = keyPath.indexOf('.');
+        if (period !== -1) {
+            var innerObj = obj[keyPath.substr(0, period)];
+            return innerObj == null ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
+        }
+        return undefined;
+    }
+    function setByKeyPath(obj, keyPath, value) {
+        if (!obj || keyPath === undefined)
+            return;
+        if ('isFrozen' in Object && Object.isFrozen(obj))
+            return;
+        if (typeof keyPath !== 'string' && 'length' in keyPath) {
+            assert(typeof value !== 'string' && 'length' in value);
+            for (var i = 0, l = keyPath.length; i < l; ++i) {
+                setByKeyPath(obj, keyPath[i], value[i]);
+            }
+        }
+        else {
+            var period = keyPath.indexOf('.');
+            if (period !== -1) {
+                var currentKeyPath = keyPath.substr(0, period);
+                var remainingKeyPath = keyPath.substr(period + 1);
+                if (remainingKeyPath === "")
+                    if (value === undefined) {
+                        if (isArray(obj) && !isNaN(parseInt(currentKeyPath)))
+                            obj.splice(currentKeyPath, 1);
+                        else
+                            delete obj[currentKeyPath];
+                    }
+                    else
+                        obj[currentKeyPath] = value;
+                else {
+                    var innerObj = obj[currentKeyPath];
+                    if (!innerObj || !hasOwn(obj, currentKeyPath))
+                        innerObj = (obj[currentKeyPath] = {});
+                    setByKeyPath(innerObj, remainingKeyPath, value);
+                }
+            }
+            else {
+                if (value === undefined) {
+                    if (isArray(obj) && !isNaN(parseInt(keyPath)))
+                        obj.splice(keyPath, 1);
+                    else
+                        delete obj[keyPath];
+                }
+                else
+                    obj[keyPath] = value;
+            }
+        }
+    }
+    function delByKeyPath(obj, keyPath) {
+        if (typeof keyPath === 'string')
+            setByKeyPath(obj, keyPath, undefined);
+        else if ('length' in keyPath)
+            [].map.call(keyPath, function (kp) {
+                setByKeyPath(obj, kp, undefined);
+            });
+    }
+    function shallowClone(obj) {
+        var rv = {};
+        for (var m in obj) {
+            if (hasOwn(obj, m))
+                rv[m] = obj[m];
+        }
+        return rv;
+    }
+    var concat = [].concat;
+    function flatten(a) {
+        return concat.apply([], a);
+    }
+    var intrinsicTypeNames = "BigUint64Array,BigInt64Array,Array,Boolean,String,Date,RegExp,Blob,File,FileList,FileSystemFileHandle,FileSystemDirectoryHandle,ArrayBuffer,DataView,Uint8ClampedArray,ImageBitmap,ImageData,Map,Set,CryptoKey"
+        .split(',').concat(flatten([8, 16, 32, 64].map(function (num) { return ["Int", "Uint", "Float"].map(function (t) { return t + num + "Array"; }); }))).filter(function (t) { return _global[t]; });
+    var intrinsicTypes = intrinsicTypeNames.map(function (t) { return _global[t]; });
+    arrayToObject(intrinsicTypeNames, function (x) { return [x, true]; });
+    var circularRefs = null;
+    function deepClone(any) {
+        circularRefs = typeof WeakMap !== 'undefined' && new WeakMap();
+        var rv = innerDeepClone(any);
+        circularRefs = null;
+        return rv;
+    }
+    function innerDeepClone(any) {
+        if (!any || typeof any !== 'object')
+            return any;
+        var rv = circularRefs && circularRefs.get(any);
+        if (rv)
+            return rv;
+        if (isArray(any)) {
+            rv = [];
+            circularRefs && circularRefs.set(any, rv);
+            for (var i = 0, l = any.length; i < l; ++i) {
+                rv.push(innerDeepClone(any[i]));
+            }
+        }
+        else if (intrinsicTypes.indexOf(any.constructor) >= 0) {
+            rv = any;
+        }
+        else {
+            var proto = getProto(any);
+            rv = proto === Object.prototype ? {} : Object.create(proto);
+            circularRefs && circularRefs.set(any, rv);
+            for (var prop in any) {
+                if (hasOwn(any, prop)) {
+                    rv[prop] = innerDeepClone(any[prop]);
+                }
+            }
+        }
+        return rv;
+    }
+    var toString = {}.toString;
+    function toStringTag(o) {
+        return toString.call(o).slice(8, -1);
+    }
+    var iteratorSymbol = typeof Symbol !== 'undefined' ?
+        Symbol.iterator :
+        '@@iterator';
+    var getIteratorOf = typeof iteratorSymbol === "symbol" ? function (x) {
+        var i;
+        return x != null && (i = x[iteratorSymbol]) && i.apply(x);
+    } : function () { return null; };
+    var NO_CHAR_ARRAY = {};
+    function getArrayOf(arrayLike) {
+        var i, a, x, it;
+        if (arguments.length === 1) {
+            if (isArray(arrayLike))
+                return arrayLike.slice();
+            if (this === NO_CHAR_ARRAY && typeof arrayLike === 'string')
+                return [arrayLike];
+            if ((it = getIteratorOf(arrayLike))) {
+                a = [];
+                while ((x = it.next()), !x.done)
+                    a.push(x.value);
+                return a;
+            }
+            if (arrayLike == null)
+                return [arrayLike];
+            i = arrayLike.length;
+            if (typeof i === 'number') {
+                a = new Array(i);
+                while (i--)
+                    a[i] = arrayLike[i];
+                return a;
+            }
+            return [arrayLike];
+        }
+        i = arguments.length;
+        a = new Array(i);
+        while (i--)
+            a[i] = arguments[i];
+        return a;
+    }
+    var isAsyncFunction = typeof Symbol !== 'undefined'
+        ? function (fn) { return fn[Symbol.toStringTag] === 'AsyncFunction'; }
+        : function () { return false; };
+
+    var debug = typeof location !== 'undefined' &&
+        /^(http|https):\/\/(localhost|127\.0\.0\.1)/.test(location.href);
+    function setDebug(value, filter) {
+        debug = value;
+        libraryFilter = filter;
+    }
+    var libraryFilter = function () { return true; };
+    var NEEDS_THROW_FOR_STACK = !new Error("").stack;
+    function getErrorWithStack() {
+        if (NEEDS_THROW_FOR_STACK)
+            try {
+                getErrorWithStack.arguments;
+                throw new Error();
+            }
+            catch (e) {
+                return e;
+            }
+        return new Error();
+    }
+    function prettyStack(exception, numIgnoredFrames) {
+        var stack = exception.stack;
+        if (!stack)
+            return "";
+        numIgnoredFrames = (numIgnoredFrames || 0);
+        if (stack.indexOf(exception.name) === 0)
+            numIgnoredFrames += (exception.name + exception.message).split('\n').length;
+        return stack.split('\n')
+            .slice(numIgnoredFrames)
+            .filter(libraryFilter)
+            .map(function (frame) { return "\n" + frame; })
+            .join('');
+    }
+
+    var dexieErrorNames = [
+        'Modify',
+        'Bulk',
+        'OpenFailed',
+        'VersionChange',
+        'Schema',
+        'Upgrade',
+        'InvalidTable',
+        'MissingAPI',
+        'NoSuchDatabase',
+        'InvalidArgument',
+        'SubTransaction',
+        'Unsupported',
+        'Internal',
+        'DatabaseClosed',
+        'PrematureCommit',
+        'ForeignAwait'
+    ];
+    var idbDomErrorNames = [
+        'Unknown',
+        'Constraint',
+        'Data',
+        'TransactionInactive',
+        'ReadOnly',
+        'Version',
+        'NotFound',
+        'InvalidState',
+        'InvalidAccess',
+        'Abort',
+        'Timeout',
+        'QuotaExceeded',
+        'Syntax',
+        'DataClone'
+    ];
+    var errorList = dexieErrorNames.concat(idbDomErrorNames);
+    var defaultTexts = {
+        VersionChanged: "Database version changed by other database connection",
+        DatabaseClosed: "Database has been closed",
+        Abort: "Transaction aborted",
+        TransactionInactive: "Transaction has already completed or failed",
+        MissingAPI: "IndexedDB API missing. Please visit https://tinyurl.com/y2uuvskb"
+    };
+    function DexieError(name, msg) {
+        this._e = getErrorWithStack();
+        this.name = name;
+        this.message = msg;
+    }
+    derive(DexieError).from(Error).extend({
+        stack: {
+            get: function () {
+                return this._stack ||
+                    (this._stack = this.name + ": " + this.message + prettyStack(this._e, 2));
+            }
+        },
+        toString: function () { return this.name + ": " + this.message; }
+    });
+    function getMultiErrorMessage(msg, failures) {
+        return msg + ". Errors: " + Object.keys(failures)
+            .map(function (key) { return failures[key].toString(); })
+            .filter(function (v, i, s) { return s.indexOf(v) === i; })
+            .join('\n');
+    }
+    function ModifyError(msg, failures, successCount, failedKeys) {
+        this._e = getErrorWithStack();
+        this.failures = failures;
+        this.failedKeys = failedKeys;
+        this.successCount = successCount;
+        this.message = getMultiErrorMessage(msg, failures);
+    }
+    derive(ModifyError).from(DexieError);
+    function BulkError(msg, failures) {
+        this._e = getErrorWithStack();
+        this.name = "BulkError";
+        this.failures = Object.keys(failures).map(function (pos) { return failures[pos]; });
+        this.failuresByPos = failures;
+        this.message = getMultiErrorMessage(msg, failures);
+    }
+    derive(BulkError).from(DexieError);
+    var errnames = errorList.reduce(function (obj, name) { return (obj[name] = name + "Error", obj); }, {});
+    var BaseException = DexieError;
+    var exceptions = errorList.reduce(function (obj, name) {
+        var fullName = name + "Error";
+        function DexieError(msgOrInner, inner) {
+            this._e = getErrorWithStack();
+            this.name = fullName;
+            if (!msgOrInner) {
+                this.message = defaultTexts[name] || fullName;
+                this.inner = null;
+            }
+            else if (typeof msgOrInner === 'string') {
+                this.message = "" + msgOrInner + (!inner ? '' : '\n ' + inner);
+                this.inner = inner || null;
+            }
+            else if (typeof msgOrInner === 'object') {
+                this.message = msgOrInner.name + " " + msgOrInner.message;
+                this.inner = msgOrInner;
+            }
+        }
+        derive(DexieError).from(BaseException);
+        obj[name] = DexieError;
+        return obj;
+    }, {});
+    exceptions.Syntax = SyntaxError;
+    exceptions.Type = TypeError;
+    exceptions.Range = RangeError;
+    var exceptionMap = idbDomErrorNames.reduce(function (obj, name) {
+        obj[name + "Error"] = exceptions[name];
+        return obj;
+    }, {});
+    function mapError(domError, message) {
+        if (!domError || domError instanceof DexieError || domError instanceof TypeError || domError instanceof SyntaxError || !domError.name || !exceptionMap[domError.name])
+            return domError;
+        var rv = new exceptionMap[domError.name](message || domError.message, domError);
+        if ("stack" in domError) {
+            setProp(rv, "stack", { get: function () {
+                    return this.inner.stack;
+                } });
+        }
+        return rv;
+    }
+    var fullNameExceptions = errorList.reduce(function (obj, name) {
+        if (["Syntax", "Type", "Range"].indexOf(name) === -1)
+            obj[name + "Error"] = exceptions[name];
+        return obj;
+    }, {});
+    fullNameExceptions.ModifyError = ModifyError;
+    fullNameExceptions.DexieError = DexieError;
+    fullNameExceptions.BulkError = BulkError;
+
+    function nop() { }
+    function mirror(val) { return val; }
+    function pureFunctionChain(f1, f2) {
+        if (f1 == null || f1 === mirror)
+            return f2;
+        return function (val) {
+            return f2(f1(val));
+        };
+    }
+    function callBoth(on1, on2) {
+        return function () {
+            on1.apply(this, arguments);
+            on2.apply(this, arguments);
+        };
+    }
+    function hookCreatingChain(f1, f2) {
+        if (f1 === nop)
+            return f2;
+        return function () {
+            var res = f1.apply(this, arguments);
+            if (res !== undefined)
+                arguments[0] = res;
+            var onsuccess = this.onsuccess,
+            onerror = this.onerror;
+            this.onsuccess = null;
+            this.onerror = null;
+            var res2 = f2.apply(this, arguments);
+            if (onsuccess)
+                this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
+            if (onerror)
+                this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
+            return res2 !== undefined ? res2 : res;
+        };
+    }
+    function hookDeletingChain(f1, f2) {
+        if (f1 === nop)
+            return f2;
+        return function () {
+            f1.apply(this, arguments);
+            var onsuccess = this.onsuccess,
+            onerror = this.onerror;
+            this.onsuccess = this.onerror = null;
+            f2.apply(this, arguments);
+            if (onsuccess)
+                this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
+            if (onerror)
+                this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
+        };
+    }
+    function hookUpdatingChain(f1, f2) {
+        if (f1 === nop)
+            return f2;
+        return function (modifications) {
+            var res = f1.apply(this, arguments);
+            extend(modifications, res);
+            var onsuccess = this.onsuccess,
+            onerror = this.onerror;
+            this.onsuccess = null;
+            this.onerror = null;
+            var res2 = f2.apply(this, arguments);
+            if (onsuccess)
+                this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
+            if (onerror)
+                this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
+            return res === undefined ?
+                (res2 === undefined ? undefined : res2) :
+                (extend(res, res2));
+        };
+    }
+    function reverseStoppableEventChain(f1, f2) {
+        if (f1 === nop)
+            return f2;
+        return function () {
+            if (f2.apply(this, arguments) === false)
+                return false;
+            return f1.apply(this, arguments);
+        };
+    }
+    function promisableChain(f1, f2) {
+        if (f1 === nop)
+            return f2;
+        return function () {
+            var res = f1.apply(this, arguments);
+            if (res && typeof res.then === 'function') {
+                var thiz = this, i = arguments.length, args = new Array(i);
+                while (i--)
+                    args[i] = arguments[i];
+                return res.then(function () {
+                    return f2.apply(thiz, args);
+                });
+            }
+            return f2.apply(this, arguments);
+        };
+    }
+
+    var INTERNAL = {};
+    var LONG_STACKS_CLIP_LIMIT = 100,
+    MAX_LONG_STACKS = 20, ZONE_ECHO_LIMIT = 100, _a$1 = typeof Promise === 'undefined' ?
+        [] :
+        (function () {
+            var globalP = Promise.resolve();
+            if (typeof crypto === 'undefined' || !crypto.subtle)
+                return [globalP, getProto(globalP), globalP];
+            var nativeP = crypto.subtle.digest("SHA-512", new Uint8Array([0]));
+            return [
+                nativeP,
+                getProto(nativeP),
+                globalP
+            ];
+        })(), resolvedNativePromise = _a$1[0], nativePromiseProto = _a$1[1], resolvedGlobalPromise = _a$1[2], nativePromiseThen = nativePromiseProto && nativePromiseProto.then;
+    var NativePromise = resolvedNativePromise && resolvedNativePromise.constructor;
+    var patchGlobalPromise = !!resolvedGlobalPromise;
+    var stack_being_generated = false;
+    var schedulePhysicalTick = resolvedGlobalPromise ?
+        function () { resolvedGlobalPromise.then(physicalTick); }
+        :
+            _global.setImmediate ?
+                setImmediate.bind(null, physicalTick) :
+                _global.MutationObserver ?
+                    function () {
+                        var hiddenDiv = document.createElement("div");
+                        (new MutationObserver(function () {
+                            physicalTick();
+                            hiddenDiv = null;
+                        })).observe(hiddenDiv, { attributes: true });
+                        hiddenDiv.setAttribute('i', '1');
+                    } :
+                    function () { setTimeout(physicalTick, 0); };
+    var asap = function (callback, args) {
+        microtickQueue.push([callback, args]);
+        if (needsNewPhysicalTick) {
+            schedulePhysicalTick();
+            needsNewPhysicalTick = false;
+        }
+    };
+    var isOutsideMicroTick = true,
+    needsNewPhysicalTick = true,
+    unhandledErrors = [],
+    rejectingErrors = [],
+    currentFulfiller = null, rejectionMapper = mirror;
+    var globalPSD = {
+        id: 'global',
+        global: true,
+        ref: 0,
+        unhandleds: [],
+        onunhandled: globalError,
+        pgp: false,
+        env: {},
+        finalize: function () {
+            this.unhandleds.forEach(function (uh) {
+                try {
+                    globalError(uh[0], uh[1]);
+                }
+                catch (e) { }
+            });
+        }
+    };
+    var PSD = globalPSD;
+    var microtickQueue = [];
+    var numScheduledCalls = 0;
+    var tickFinalizers = [];
+    function DexiePromise(fn) {
+        if (typeof this !== 'object')
+            throw new TypeError('Promises must be constructed via new');
+        this._listeners = [];
+        this.onuncatched = nop;
+        this._lib = false;
+        var psd = (this._PSD = PSD);
+        if (debug) {
+            this._stackHolder = getErrorWithStack();
+            this._prev = null;
+            this._numPrev = 0;
+        }
+        if (typeof fn !== 'function') {
+            if (fn !== INTERNAL)
+                throw new TypeError('Not a function');
+            this._state = arguments[1];
+            this._value = arguments[2];
+            if (this._state === false)
+                handleRejection(this, this._value);
+            return;
+        }
+        this._state = null;
+        this._value = null;
+        ++psd.ref;
+        executePromiseTask(this, fn);
+    }
+    var thenProp = {
+        get: function () {
+            var psd = PSD, microTaskId = totalEchoes;
+            function then(onFulfilled, onRejected) {
+                var _this = this;
+                var possibleAwait = !psd.global && (psd !== PSD || microTaskId !== totalEchoes);
+                var cleanup = possibleAwait && !decrementExpectedAwaits();
+                var rv = new DexiePromise(function (resolve, reject) {
+                    propagateToListener(_this, new Listener(nativeAwaitCompatibleWrap(onFulfilled, psd, possibleAwait, cleanup), nativeAwaitCompatibleWrap(onRejected, psd, possibleAwait, cleanup), resolve, reject, psd));
+                });
+                debug && linkToPreviousPromise(rv, this);
+                return rv;
+            }
+            then.prototype = INTERNAL;
+            return then;
+        },
+        set: function (value) {
+            setProp(this, 'then', value && value.prototype === INTERNAL ?
+                thenProp :
+                {
+                    get: function () {
+                        return value;
+                    },
+                    set: thenProp.set
+                });
+        }
+    };
+    props(DexiePromise.prototype, {
+        then: thenProp,
+        _then: function (onFulfilled, onRejected) {
+            propagateToListener(this, new Listener(null, null, onFulfilled, onRejected, PSD));
+        },
+        catch: function (onRejected) {
+            if (arguments.length === 1)
+                return this.then(null, onRejected);
+            var type = arguments[0], handler = arguments[1];
+            return typeof type === 'function' ? this.then(null, function (err) {
+                return err instanceof type ? handler(err) : PromiseReject(err);
+            })
+                : this.then(null, function (err) {
+                    return err && err.name === type ? handler(err) : PromiseReject(err);
+                });
+        },
+        finally: function (onFinally) {
+            return this.then(function (value) {
+                onFinally();
+                return value;
+            }, function (err) {
+                onFinally();
+                return PromiseReject(err);
+            });
+        },
+        stack: {
+            get: function () {
+                if (this._stack)
+                    return this._stack;
+                try {
+                    stack_being_generated = true;
+                    var stacks = getStack(this, [], MAX_LONG_STACKS);
+                    var stack = stacks.join("\nFrom previous: ");
+                    if (this._state !== null)
+                        this._stack = stack;
+                    return stack;
+                }
+                finally {
+                    stack_being_generated = false;
+                }
+            }
+        },
+        timeout: function (ms, msg) {
+            var _this = this;
+            return ms < Infinity ?
+                new DexiePromise(function (resolve, reject) {
+                    var handle = setTimeout(function () { return reject(new exceptions.Timeout(msg)); }, ms);
+                    _this.then(resolve, reject).finally(clearTimeout.bind(null, handle));
+                }) : this;
+        }
+    });
+    if (typeof Symbol !== 'undefined' && Symbol.toStringTag)
+        setProp(DexiePromise.prototype, Symbol.toStringTag, 'Dexie.Promise');
+    globalPSD.env = snapShot();
+    function Listener(onFulfilled, onRejected, resolve, reject, zone) {
+        this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+        this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+        this.resolve = resolve;
+        this.reject = reject;
+        this.psd = zone;
+    }
+    props(DexiePromise, {
+        all: function () {
+            var values = getArrayOf.apply(null, arguments)
+                .map(onPossibleParallellAsync);
+            return new DexiePromise(function (resolve, reject) {
+                if (values.length === 0)
+                    resolve([]);
+                var remaining = values.length;
+                values.forEach(function (a, i) { return DexiePromise.resolve(a).then(function (x) {
+                    values[i] = x;
+                    if (!--remaining)
+                        resolve(values);
+                }, reject); });
+            });
+        },
+        resolve: function (value) {
+            if (value instanceof DexiePromise)
+                return value;
+            if (value && typeof value.then === 'function')
+                return new DexiePromise(function (resolve, reject) {
+                    value.then(resolve, reject);
+                });
+            var rv = new DexiePromise(INTERNAL, true, value);
+            linkToPreviousPromise(rv, currentFulfiller);
+            return rv;
+        },
+        reject: PromiseReject,
+        race: function () {
+            var values = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
+            return new DexiePromise(function (resolve, reject) {
+                values.map(function (value) { return DexiePromise.resolve(value).then(resolve, reject); });
+            });
+        },
+        PSD: {
+            get: function () { return PSD; },
+            set: function (value) { return PSD = value; }
+        },
+        totalEchoes: { get: function () { return totalEchoes; } },
+        newPSD: newScope,
+        usePSD: usePSD,
+        scheduler: {
+            get: function () { return asap; },
+            set: function (value) { asap = value; }
+        },
+        rejectionMapper: {
+            get: function () { return rejectionMapper; },
+            set: function (value) { rejectionMapper = value; }
+        },
+        follow: function (fn, zoneProps) {
+            return new DexiePromise(function (resolve, reject) {
+                return newScope(function (resolve, reject) {
+                    var psd = PSD;
+                    psd.unhandleds = [];
+                    psd.onunhandled = reject;
+                    psd.finalize = callBoth(function () {
+                        var _this = this;
+                        run_at_end_of_this_or_next_physical_tick(function () {
+                            _this.unhandleds.length === 0 ? resolve() : reject(_this.unhandleds[0]);
+                        });
+                    }, psd.finalize);
+                    fn();
+                }, zoneProps, resolve, reject);
+            });
+        }
+    });
+    if (NativePromise) {
+        if (NativePromise.allSettled)
+            setProp(DexiePromise, "allSettled", function () {
+                var possiblePromises = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
+                return new DexiePromise(function (resolve) {
+                    if (possiblePromises.length === 0)
+                        resolve([]);
+                    var remaining = possiblePromises.length;
+                    var results = new Array(remaining);
+                    possiblePromises.forEach(function (p, i) { return DexiePromise.resolve(p).then(function (value) { return results[i] = { status: "fulfilled", value: value }; }, function (reason) { return results[i] = { status: "rejected", reason: reason }; })
+                        .then(function () { return --remaining || resolve(results); }); });
+                });
+            });
+        if (NativePromise.any && typeof AggregateError !== 'undefined')
+            setProp(DexiePromise, "any", function () {
+                var possiblePromises = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
+                return new DexiePromise(function (resolve, reject) {
+                    if (possiblePromises.length === 0)
+                        reject(new AggregateError([]));
+                    var remaining = possiblePromises.length;
+                    var failures = new Array(remaining);
+                    possiblePromises.forEach(function (p, i) { return DexiePromise.resolve(p).then(function (value) { return resolve(value); }, function (failure) {
+                        failures[i] = failure;
+                        if (!--remaining)
+                            reject(new AggregateError(failures));
+                    }); });
+                });
+            });
+    }
+    function executePromiseTask(promise, fn) {
+        try {
+            fn(function (value) {
+                if (promise._state !== null)
+                    return;
+                if (value === promise)
+                    throw new TypeError('A promise cannot be resolved with itself.');
+                var shouldExecuteTick = promise._lib && beginMicroTickScope();
+                if (value && typeof value.then === 'function') {
+                    executePromiseTask(promise, function (resolve, reject) {
+                        value instanceof DexiePromise ?
+                            value._then(resolve, reject) :
+                            value.then(resolve, reject);
+                    });
+                }
+                else {
+                    promise._state = true;
+                    promise._value = value;
+                    propagateAllListeners(promise);
+                }
+                if (shouldExecuteTick)
+                    endMicroTickScope();
+            }, handleRejection.bind(null, promise));
+        }
+        catch (ex) {
+            handleRejection(promise, ex);
+        }
+    }
+    function handleRejection(promise, reason) {
+        rejectingErrors.push(reason);
+        if (promise._state !== null)
+            return;
+        var shouldExecuteTick = promise._lib && beginMicroTickScope();
+        reason = rejectionMapper(reason);
+        promise._state = false;
+        promise._value = reason;
+        debug && reason !== null && typeof reason === 'object' && !reason._promise && tryCatch(function () {
+            var origProp = getPropertyDescriptor(reason, "stack");
+            reason._promise = promise;
+            setProp(reason, "stack", {
+                get: function () {
+                    return stack_being_generated ?
+                        origProp && (origProp.get ?
+                            origProp.get.apply(reason) :
+                            origProp.value) :
+                        promise.stack;
+                }
+            });
+        });
+        addPossiblyUnhandledError(promise);
+        propagateAllListeners(promise);
+        if (shouldExecuteTick)
+            endMicroTickScope();
+    }
+    function propagateAllListeners(promise) {
+        var listeners = promise._listeners;
+        promise._listeners = [];
+        for (var i = 0, len = listeners.length; i < len; ++i) {
+            propagateToListener(promise, listeners[i]);
+        }
+        var psd = promise._PSD;
+        --psd.ref || psd.finalize();
+        if (numScheduledCalls === 0) {
+            ++numScheduledCalls;
+            asap(function () {
+                if (--numScheduledCalls === 0)
+                    finalizePhysicalTick();
+            }, []);
+        }
+    }
+    function propagateToListener(promise, listener) {
+        if (promise._state === null) {
+            promise._listeners.push(listener);
+            return;
+        }
+        var cb = promise._state ? listener.onFulfilled : listener.onRejected;
+        if (cb === null) {
+            return (promise._state ? listener.resolve : listener.reject)(promise._value);
+        }
+        ++listener.psd.ref;
+        ++numScheduledCalls;
+        asap(callListener, [cb, promise, listener]);
+    }
+    function callListener(cb, promise, listener) {
+        try {
+            currentFulfiller = promise;
+            var ret, value = promise._value;
+            if (promise._state) {
+                ret = cb(value);
+            }
+            else {
+                if (rejectingErrors.length)
+                    rejectingErrors = [];
+                ret = cb(value);
+                if (rejectingErrors.indexOf(value) === -1)
+                    markErrorAsHandled(promise);
+            }
+            listener.resolve(ret);
+        }
+        catch (e) {
+            listener.reject(e);
+        }
+        finally {
+            currentFulfiller = null;
+            if (--numScheduledCalls === 0)
+                finalizePhysicalTick();
+            --listener.psd.ref || listener.psd.finalize();
+        }
+    }
+    function getStack(promise, stacks, limit) {
+        if (stacks.length === limit)
+            return stacks;
+        var stack = "";
+        if (promise._state === false) {
+            var failure = promise._value, errorName, message;
+            if (failure != null) {
+                errorName = failure.name || "Error";
+                message = failure.message || failure;
+                stack = prettyStack(failure, 0);
+            }
+            else {
+                errorName = failure;
+                message = "";
+            }
+            stacks.push(errorName + (message ? ": " + message : "") + stack);
+        }
+        if (debug) {
+            stack = prettyStack(promise._stackHolder, 2);
+            if (stack && stacks.indexOf(stack) === -1)
+                stacks.push(stack);
+            if (promise._prev)
+                getStack(promise._prev, stacks, limit);
+        }
+        return stacks;
+    }
+    function linkToPreviousPromise(promise, prev) {
+        var numPrev = prev ? prev._numPrev + 1 : 0;
+        if (numPrev < LONG_STACKS_CLIP_LIMIT) {
+            promise._prev = prev;
+            promise._numPrev = numPrev;
+        }
+    }
+    function physicalTick() {
+        beginMicroTickScope() && endMicroTickScope();
+    }
+    function beginMicroTickScope() {
+        var wasRootExec = isOutsideMicroTick;
+        isOutsideMicroTick = false;
+        needsNewPhysicalTick = false;
+        return wasRootExec;
+    }
+    function endMicroTickScope() {
+        var callbacks, i, l;
+        do {
+            while (microtickQueue.length > 0) {
+                callbacks = microtickQueue;
+                microtickQueue = [];
+                l = callbacks.length;
+                for (i = 0; i < l; ++i) {
+                    var item = callbacks[i];
+                    item[0].apply(null, item[1]);
+                }
+            }
+        } while (microtickQueue.length > 0);
+        isOutsideMicroTick = true;
+        needsNewPhysicalTick = true;
+    }
+    function finalizePhysicalTick() {
+        var unhandledErrs = unhandledErrors;
+        unhandledErrors = [];
+        unhandledErrs.forEach(function (p) {
+            p._PSD.onunhandled.call(null, p._value, p);
+        });
+        var finalizers = tickFinalizers.slice(0);
+        var i = finalizers.length;
+        while (i)
+            finalizers[--i]();
+    }
+    function run_at_end_of_this_or_next_physical_tick(fn) {
+        function finalizer() {
+            fn();
+            tickFinalizers.splice(tickFinalizers.indexOf(finalizer), 1);
+        }
+        tickFinalizers.push(finalizer);
+        ++numScheduledCalls;
+        asap(function () {
+            if (--numScheduledCalls === 0)
+                finalizePhysicalTick();
+        }, []);
+    }
+    function addPossiblyUnhandledError(promise) {
+        if (!unhandledErrors.some(function (p) { return p._value === promise._value; }))
+            unhandledErrors.push(promise);
+    }
+    function markErrorAsHandled(promise) {
+        var i = unhandledErrors.length;
+        while (i)
+            if (unhandledErrors[--i]._value === promise._value) {
+                unhandledErrors.splice(i, 1);
+                return;
+            }
+    }
+    function PromiseReject(reason) {
+        return new DexiePromise(INTERNAL, false, reason);
+    }
+    function wrap(fn, errorCatcher) {
+        var psd = PSD;
+        return function () {
+            var wasRootExec = beginMicroTickScope(), outerScope = PSD;
+            try {
+                switchToZone(psd, true);
+                return fn.apply(this, arguments);
+            }
+            catch (e) {
+                errorCatcher && errorCatcher(e);
+            }
+            finally {
+                switchToZone(outerScope, false);
+                if (wasRootExec)
+                    endMicroTickScope();
+            }
+        };
+    }
+    var task = { awaits: 0, echoes: 0, id: 0 };
+    var taskCounter = 0;
+    var zoneStack = [];
+    var zoneEchoes = 0;
+    var totalEchoes = 0;
+    var zone_id_counter = 0;
+    function newScope(fn, props, a1, a2) {
+        var parent = PSD, psd = Object.create(parent);
+        psd.parent = parent;
+        psd.ref = 0;
+        psd.global = false;
+        psd.id = ++zone_id_counter;
+        var globalEnv = globalPSD.env;
+        psd.env = patchGlobalPromise ? {
+            Promise: DexiePromise,
+            PromiseProp: { value: DexiePromise, configurable: true, writable: true },
+            all: DexiePromise.all,
+            race: DexiePromise.race,
+            allSettled: DexiePromise.allSettled,
+            any: DexiePromise.any,
+            resolve: DexiePromise.resolve,
+            reject: DexiePromise.reject,
+            nthen: getPatchedPromiseThen(globalEnv.nthen, psd),
+            gthen: getPatchedPromiseThen(globalEnv.gthen, psd)
+        } : {};
+        if (props)
+            extend(psd, props);
+        ++parent.ref;
+        psd.finalize = function () {
+            --this.parent.ref || this.parent.finalize();
+        };
+        var rv = usePSD(psd, fn, a1, a2);
+        if (psd.ref === 0)
+            psd.finalize();
+        return rv;
+    }
+    function incrementExpectedAwaits() {
+        if (!task.id)
+            task.id = ++taskCounter;
+        ++task.awaits;
+        task.echoes += ZONE_ECHO_LIMIT;
+        return task.id;
+    }
+    function decrementExpectedAwaits() {
+        if (!task.awaits)
+            return false;
+        if (--task.awaits === 0)
+            task.id = 0;
+        task.echoes = task.awaits * ZONE_ECHO_LIMIT;
+        return true;
+    }
+    if (('' + nativePromiseThen).indexOf('[native code]') === -1) {
+        incrementExpectedAwaits = decrementExpectedAwaits = nop;
+    }
+    function onPossibleParallellAsync(possiblePromise) {
+        if (task.echoes && possiblePromise && possiblePromise.constructor === NativePromise) {
+            incrementExpectedAwaits();
+            return possiblePromise.then(function (x) {
+                decrementExpectedAwaits();
+                return x;
+            }, function (e) {
+                decrementExpectedAwaits();
+                return rejection(e);
+            });
+        }
+        return possiblePromise;
+    }
+    function zoneEnterEcho(targetZone) {
+        ++totalEchoes;
+        if (!task.echoes || --task.echoes === 0) {
+            task.echoes = task.id = 0;
+        }
+        zoneStack.push(PSD);
+        switchToZone(targetZone, true);
+    }
+    function zoneLeaveEcho() {
+        var zone = zoneStack[zoneStack.length - 1];
+        zoneStack.pop();
+        switchToZone(zone, false);
+    }
+    function switchToZone(targetZone, bEnteringZone) {
+        var currentZone = PSD;
+        if (bEnteringZone ? task.echoes && (!zoneEchoes++ || targetZone !== PSD) : zoneEchoes && (!--zoneEchoes || targetZone !== PSD)) {
+            enqueueNativeMicroTask(bEnteringZone ? zoneEnterEcho.bind(null, targetZone) : zoneLeaveEcho);
+        }
+        if (targetZone === PSD)
+            return;
+        PSD = targetZone;
+        if (currentZone === globalPSD)
+            globalPSD.env = snapShot();
+        if (patchGlobalPromise) {
+            var GlobalPromise_1 = globalPSD.env.Promise;
+            var targetEnv = targetZone.env;
+            nativePromiseProto.then = targetEnv.nthen;
+            GlobalPromise_1.prototype.then = targetEnv.gthen;
+            if (currentZone.global || targetZone.global) {
+                Object.defineProperty(_global, 'Promise', targetEnv.PromiseProp);
+                GlobalPromise_1.all = targetEnv.all;
+                GlobalPromise_1.race = targetEnv.race;
+                GlobalPromise_1.resolve = targetEnv.resolve;
+                GlobalPromise_1.reject = targetEnv.reject;
+                if (targetEnv.allSettled)
+                    GlobalPromise_1.allSettled = targetEnv.allSettled;
+                if (targetEnv.any)
+                    GlobalPromise_1.any = targetEnv.any;
+            }
+        }
+    }
+    function snapShot() {
+        var GlobalPromise = _global.Promise;
+        return patchGlobalPromise ? {
+            Promise: GlobalPromise,
+            PromiseProp: Object.getOwnPropertyDescriptor(_global, "Promise"),
+            all: GlobalPromise.all,
+            race: GlobalPromise.race,
+            allSettled: GlobalPromise.allSettled,
+            any: GlobalPromise.any,
+            resolve: GlobalPromise.resolve,
+            reject: GlobalPromise.reject,
+            nthen: nativePromiseProto.then,
+            gthen: GlobalPromise.prototype.then
+        } : {};
+    }
+    function usePSD(psd, fn, a1, a2, a3) {
+        var outerScope = PSD;
+        try {
+            switchToZone(psd, true);
+            return fn(a1, a2, a3);
+        }
+        finally {
+            switchToZone(outerScope, false);
+        }
+    }
+    function enqueueNativeMicroTask(job) {
+        nativePromiseThen.call(resolvedNativePromise, job);
+    }
+    function nativeAwaitCompatibleWrap(fn, zone, possibleAwait, cleanup) {
+        return typeof fn !== 'function' ? fn : function () {
+            var outerZone = PSD;
+            if (possibleAwait)
+                incrementExpectedAwaits();
+            switchToZone(zone, true);
+            try {
+                return fn.apply(this, arguments);
+            }
+            finally {
+                switchToZone(outerZone, false);
+                if (cleanup)
+                    enqueueNativeMicroTask(decrementExpectedAwaits);
+            }
+        };
+    }
+    function getPatchedPromiseThen(origThen, zone) {
+        return function (onResolved, onRejected) {
+            return origThen.call(this, nativeAwaitCompatibleWrap(onResolved, zone), nativeAwaitCompatibleWrap(onRejected, zone));
+        };
+    }
+    var UNHANDLEDREJECTION = "unhandledrejection";
+    function globalError(err, promise) {
+        var rv;
+        try {
+            rv = promise.onuncatched(err);
+        }
+        catch (e) { }
+        if (rv !== false)
+            try {
+                var event, eventData = { promise: promise, reason: err };
+                if (_global.document && document.createEvent) {
+                    event = document.createEvent('Event');
+                    event.initEvent(UNHANDLEDREJECTION, true, true);
+                    extend(event, eventData);
+                }
+                else if (_global.CustomEvent) {
+                    event = new CustomEvent(UNHANDLEDREJECTION, { detail: eventData });
+                    extend(event, eventData);
+                }
+                if (event && _global.dispatchEvent) {
+                    dispatchEvent(event);
+                    if (!_global.PromiseRejectionEvent && _global.onunhandledrejection)
+                        try {
+                            _global.onunhandledrejection(event);
+                        }
+                        catch (_) { }
+                }
+                if (debug && event && !event.defaultPrevented) {
+                    console.warn("Unhandled rejection: " + (err.stack || err));
+                }
+            }
+            catch (e) { }
+    }
+    var rejection = DexiePromise.reject;
+
+    function tempTransaction(db, mode, storeNames, fn) {
+        if (!db.idbdb || (!db._state.openComplete && (!PSD.letThrough && !db._vip))) {
+            if (db._state.openComplete) {
+                return rejection(new exceptions.DatabaseClosed(db._state.dbOpenError));
+            }
+            if (!db._state.isBeingOpened) {
+                if (!db._options.autoOpen)
+                    return rejection(new exceptions.DatabaseClosed());
+                db.open().catch(nop);
+            }
+            return db._state.dbReadyPromise.then(function () { return tempTransaction(db, mode, storeNames, fn); });
+        }
+        else {
+            var trans = db._createTransaction(mode, storeNames, db._dbSchema);
+            try {
+                trans.create();
+                db._state.PR1398_maxLoop = 3;
+            }
+            catch (ex) {
+                if (ex.name === errnames.InvalidState && db.isOpen() && --db._state.PR1398_maxLoop > 0) {
+                    console.warn('Dexie: Need to reopen db');
+                    db._close();
+                    return db.open().then(function () { return tempTransaction(db, mode, storeNames, fn); });
+                }
+                return rejection(ex);
+            }
+            return trans._promise(mode, function (resolve, reject) {
+                return newScope(function () {
+                    PSD.trans = trans;
+                    return fn(resolve, reject, trans);
+                });
+            }).then(function (result) {
+                return trans._completion.then(function () { return result; });
+            });
+        }
+    }
+
+    var DEXIE_VERSION = '3.2.7';
+    var maxString = String.fromCharCode(65535);
+    var minKey = -Infinity;
+    var INVALID_KEY_ARGUMENT = "Invalid key provided. Keys must be of type string, number, Date or Array<string | number | Date>.";
+    var STRING_EXPECTED = "String expected.";
+    var connections = [];
+    var isIEOrEdge = typeof navigator !== 'undefined' && /(MSIE|Trident|Edge)/.test(navigator.userAgent);
+    var hasIEDeleteObjectStoreBug = isIEOrEdge;
+    var hangsOnDeleteLargeKeyRange = isIEOrEdge;
+    var dexieStackFrameFilter = function (frame) { return !/(dexie\.js|dexie\.min\.js)/.test(frame); };
+    var DBNAMES_DB = '__dbnames';
+    var READONLY = 'readonly';
+    var READWRITE = 'readwrite';
+
+    function combine(filter1, filter2) {
+        return filter1 ?
+            filter2 ?
+                function () { return filter1.apply(this, arguments) && filter2.apply(this, arguments); } :
+                filter1 :
+            filter2;
+    }
+
+    var AnyRange = {
+        type: 3 ,
+        lower: -Infinity,
+        lowerOpen: false,
+        upper: [[]],
+        upperOpen: false
+    };
+
+    function workaroundForUndefinedPrimKey(keyPath) {
+        return typeof keyPath === "string" && !/\./.test(keyPath)
+            ? function (obj) {
+                if (obj[keyPath] === undefined && (keyPath in obj)) {
+                    obj = deepClone(obj);
+                    delete obj[keyPath];
+                }
+                return obj;
+            }
+            : function (obj) { return obj; };
+    }
+
+    var Table =  (function () {
+        function Table() {
+        }
+        Table.prototype._trans = function (mode, fn, writeLocked) {
+            var trans = this._tx || PSD.trans;
+            var tableName = this.name;
+            function checkTableInTransaction(resolve, reject, trans) {
+                if (!trans.schema[tableName])
+                    throw new exceptions.NotFound("Table " + tableName + " not part of transaction");
+                return fn(trans.idbtrans, trans);
+            }
+            var wasRootExec = beginMicroTickScope();
+            try {
+                return trans && trans.db === this.db ?
+                    trans === PSD.trans ?
+                        trans._promise(mode, checkTableInTransaction, writeLocked) :
+                        newScope(function () { return trans._promise(mode, checkTableInTransaction, writeLocked); }, { trans: trans, transless: PSD.transless || PSD }) :
+                    tempTransaction(this.db, mode, [this.name], checkTableInTransaction);
+            }
+            finally {
+                if (wasRootExec)
+                    endMicroTickScope();
+            }
+        };
+        Table.prototype.get = function (keyOrCrit, cb) {
+            var _this = this;
+            if (keyOrCrit && keyOrCrit.constructor === Object)
+                return this.where(keyOrCrit).first(cb);
+            return this._trans('readonly', function (trans) {
+                return _this.core.get({ trans: trans, key: keyOrCrit })
+                    .then(function (res) { return _this.hook.reading.fire(res); });
+            }).then(cb);
+        };
+        Table.prototype.where = function (indexOrCrit) {
+            if (typeof indexOrCrit === 'string')
+                return new this.db.WhereClause(this, indexOrCrit);
+            if (isArray(indexOrCrit))
+                return new this.db.WhereClause(this, "[" + indexOrCrit.join('+') + "]");
+            var keyPaths = keys(indexOrCrit);
+            if (keyPaths.length === 1)
+                return this
+                    .where(keyPaths[0])
+                    .equals(indexOrCrit[keyPaths[0]]);
+            var compoundIndex = this.schema.indexes.concat(this.schema.primKey).filter(function (ix) {
+                if (ix.compound &&
+                    keyPaths.every(function (keyPath) { return ix.keyPath.indexOf(keyPath) >= 0; })) {
+                    for (var i = 0; i < keyPaths.length; ++i) {
+                        if (keyPaths.indexOf(ix.keyPath[i]) === -1)
+                            return false;
+                    }
+                    return true;
+                }
+                return false;
+            }).sort(function (a, b) { return a.keyPath.length - b.keyPath.length; })[0];
+            if (compoundIndex && this.db._maxKey !== maxString) {
+                var keyPathsInValidOrder = compoundIndex.keyPath.slice(0, keyPaths.length);
+                return this
+                    .where(keyPathsInValidOrder)
+                    .equals(keyPathsInValidOrder.map(function (kp) { return indexOrCrit[kp]; }));
+            }
+            if (!compoundIndex && debug)
+                console.warn("The query " + JSON.stringify(indexOrCrit) + " on " + this.name + " would benefit of a " +
+                    ("compound index [" + keyPaths.join('+') + "]"));
+            var idxByName = this.schema.idxByName;
+            var idb = this.db._deps.indexedDB;
+            function equals(a, b) {
+                try {
+                    return idb.cmp(a, b) === 0;
+                }
+                catch (e) {
+                    return false;
+                }
+            }
+            var _a = keyPaths.reduce(function (_a, keyPath) {
+                var prevIndex = _a[0], prevFilterFn = _a[1];
+                var index = idxByName[keyPath];
+                var value = indexOrCrit[keyPath];
+                return [
+                    prevIndex || index,
+                    prevIndex || !index ?
+                        combine(prevFilterFn, index && index.multi ?
+                            function (x) {
+                                var prop = getByKeyPath(x, keyPath);
+                                return isArray(prop) && prop.some(function (item) { return equals(value, item); });
+                            } : function (x) { return equals(value, getByKeyPath(x, keyPath)); })
+                        : prevFilterFn
+                ];
+            }, [null, null]), idx = _a[0], filterFunction = _a[1];
+            return idx ?
+                this.where(idx.name).equals(indexOrCrit[idx.keyPath])
+                    .filter(filterFunction) :
+                compoundIndex ?
+                    this.filter(filterFunction) :
+                    this.where(keyPaths).equals('');
+        };
+        Table.prototype.filter = function (filterFunction) {
+            return this.toCollection().and(filterFunction);
+        };
+        Table.prototype.count = function (thenShortcut) {
+            return this.toCollection().count(thenShortcut);
+        };
+        Table.prototype.offset = function (offset) {
+            return this.toCollection().offset(offset);
+        };
+        Table.prototype.limit = function (numRows) {
+            return this.toCollection().limit(numRows);
+        };
+        Table.prototype.each = function (callback) {
+            return this.toCollection().each(callback);
+        };
+        Table.prototype.toArray = function (thenShortcut) {
+            return this.toCollection().toArray(thenShortcut);
+        };
+        Table.prototype.toCollection = function () {
+            return new this.db.Collection(new this.db.WhereClause(this));
+        };
+        Table.prototype.orderBy = function (index) {
+            return new this.db.Collection(new this.db.WhereClause(this, isArray(index) ?
+                "[" + index.join('+') + "]" :
+                index));
+        };
+        Table.prototype.reverse = function () {
+            return this.toCollection().reverse();
+        };
+        Table.prototype.mapToClass = function (constructor) {
+            this.schema.mappedClass = constructor;
+            var readHook = function (obj) {
+                if (!obj)
+                    return obj;
+                var res = Object.create(constructor.prototype);
+                for (var m in obj)
+                    if (hasOwn(obj, m))
+                        try {
+                            res[m] = obj[m];
+                        }
+                        catch (_) { }
+                return res;
+            };
+            if (this.schema.readHook) {
+                this.hook.reading.unsubscribe(this.schema.readHook);
+            }
+            this.schema.readHook = readHook;
+            this.hook("reading", readHook);
+            return constructor;
+        };
+        Table.prototype.defineClass = function () {
+            function Class(content) {
+                extend(this, content);
+            }
+            return this.mapToClass(Class);
+        };
+        Table.prototype.add = function (obj, key) {
+            var _this = this;
+            var _a = this.schema.primKey, auto = _a.auto, keyPath = _a.keyPath;
+            var objToAdd = obj;
+            if (keyPath && auto) {
+                objToAdd = workaroundForUndefinedPrimKey(keyPath)(obj);
+            }
+            return this._trans('readwrite', function (trans) {
+                return _this.core.mutate({ trans: trans, type: 'add', keys: key != null ? [key] : null, values: [objToAdd] });
+            }).then(function (res) { return res.numFailures ? DexiePromise.reject(res.failures[0]) : res.lastResult; })
+                .then(function (lastResult) {
+                if (keyPath) {
+                    try {
+                        setByKeyPath(obj, keyPath, lastResult);
+                    }
+                    catch (_) { }
+                }
+                return lastResult;
+            });
+        };
+        Table.prototype.update = function (keyOrObject, modifications) {
+            if (typeof keyOrObject === 'object' && !isArray(keyOrObject)) {
+                var key = getByKeyPath(keyOrObject, this.schema.primKey.keyPath);
+                if (key === undefined)
+                    return rejection(new exceptions.InvalidArgument("Given object does not contain its primary key"));
+                try {
+                    if (typeof modifications !== "function") {
+                        keys(modifications).forEach(function (keyPath) {
+                            setByKeyPath(keyOrObject, keyPath, modifications[keyPath]);
+                        });
+                    }
+                    else {
+                        modifications(keyOrObject, { value: keyOrObject, primKey: key });
+                    }
+                }
+                catch (_a) {
+                }
+                return this.where(":id").equals(key).modify(modifications);
+            }
+            else {
+                return this.where(":id").equals(keyOrObject).modify(modifications);
+            }
+        };
+        Table.prototype.put = function (obj, key) {
+            var _this = this;
+            var _a = this.schema.primKey, auto = _a.auto, keyPath = _a.keyPath;
+            var objToAdd = obj;
+            if (keyPath && auto) {
+                objToAdd = workaroundForUndefinedPrimKey(keyPath)(obj);
+            }
+            return this._trans('readwrite', function (trans) { return _this.core.mutate({ trans: trans, type: 'put', values: [objToAdd], keys: key != null ? [key] : null }); })
+                .then(function (res) { return res.numFailures ? DexiePromise.reject(res.failures[0]) : res.lastResult; })
+                .then(function (lastResult) {
+                if (keyPath) {
+                    try {
+                        setByKeyPath(obj, keyPath, lastResult);
+                    }
+                    catch (_) { }
+                }
+                return lastResult;
+            });
+        };
+        Table.prototype.delete = function (key) {
+            var _this = this;
+            return this._trans('readwrite', function (trans) { return _this.core.mutate({ trans: trans, type: 'delete', keys: [key] }); })
+                .then(function (res) { return res.numFailures ? DexiePromise.reject(res.failures[0]) : undefined; });
+        };
+        Table.prototype.clear = function () {
+            var _this = this;
+            return this._trans('readwrite', function (trans) { return _this.core.mutate({ trans: trans, type: 'deleteRange', range: AnyRange }); })
+                .then(function (res) { return res.numFailures ? DexiePromise.reject(res.failures[0]) : undefined; });
+        };
+        Table.prototype.bulkGet = function (keys) {
+            var _this = this;
+            return this._trans('readonly', function (trans) {
+                return _this.core.getMany({
+                    keys: keys,
+                    trans: trans
+                }).then(function (result) { return result.map(function (res) { return _this.hook.reading.fire(res); }); });
+            });
+        };
+        Table.prototype.bulkAdd = function (objects, keysOrOptions, options) {
+            var _this = this;
+            var keys = Array.isArray(keysOrOptions) ? keysOrOptions : undefined;
+            options = options || (keys ? undefined : keysOrOptions);
+            var wantResults = options ? options.allKeys : undefined;
+            return this._trans('readwrite', function (trans) {
+                var _a = _this.schema.primKey, auto = _a.auto, keyPath = _a.keyPath;
+                if (keyPath && keys)
+                    throw new exceptions.InvalidArgument("bulkAdd(): keys argument invalid on tables with inbound keys");
+                if (keys && keys.length !== objects.length)
+                    throw new exceptions.InvalidArgument("Arguments objects and keys must have the same length");
+                var numObjects = objects.length;
+                var objectsToAdd = keyPath && auto ?
+                    objects.map(workaroundForUndefinedPrimKey(keyPath)) :
+                    objects;
+                return _this.core.mutate({ trans: trans, type: 'add', keys: keys, values: objectsToAdd, wantResults: wantResults })
+                    .then(function (_a) {
+                    var numFailures = _a.numFailures, results = _a.results, lastResult = _a.lastResult, failures = _a.failures;
+                    var result = wantResults ? results : lastResult;
+                    if (numFailures === 0)
+                        return result;
+                    throw new BulkError(_this.name + ".bulkAdd(): " + numFailures + " of " + numObjects + " operations failed", failures);
+                });
+            });
+        };
+        Table.prototype.bulkPut = function (objects, keysOrOptions, options) {
+            var _this = this;
+            var keys = Array.isArray(keysOrOptions) ? keysOrOptions : undefined;
+            options = options || (keys ? undefined : keysOrOptions);
+            var wantResults = options ? options.allKeys : undefined;
+            return this._trans('readwrite', function (trans) {
+                var _a = _this.schema.primKey, auto = _a.auto, keyPath = _a.keyPath;
+                if (keyPath && keys)
+                    throw new exceptions.InvalidArgument("bulkPut(): keys argument invalid on tables with inbound keys");
+                if (keys && keys.length !== objects.length)
+                    throw new exceptions.InvalidArgument("Arguments objects and keys must have the same length");
+                var numObjects = objects.length;
+                var objectsToPut = keyPath && auto ?
+                    objects.map(workaroundForUndefinedPrimKey(keyPath)) :
+                    objects;
+                return _this.core.mutate({ trans: trans, type: 'put', keys: keys, values: objectsToPut, wantResults: wantResults })
+                    .then(function (_a) {
+                    var numFailures = _a.numFailures, results = _a.results, lastResult = _a.lastResult, failures = _a.failures;
+                    var result = wantResults ? results : lastResult;
+                    if (numFailures === 0)
+                        return result;
+                    throw new BulkError(_this.name + ".bulkPut(): " + numFailures + " of " + numObjects + " operations failed", failures);
+                });
+            });
+        };
+        Table.prototype.bulkDelete = function (keys) {
+            var _this = this;
+            var numKeys = keys.length;
+            return this._trans('readwrite', function (trans) {
+                return _this.core.mutate({ trans: trans, type: 'delete', keys: keys });
+            }).then(function (_a) {
+                var numFailures = _a.numFailures, lastResult = _a.lastResult, failures = _a.failures;
+                if (numFailures === 0)
+                    return lastResult;
+                throw new BulkError(_this.name + ".bulkDelete(): " + numFailures + " of " + numKeys + " operations failed", failures);
+            });
+        };
+        return Table;
+    }());
+
+    function Events(ctx) {
+        var evs = {};
+        var rv = function (eventName, subscriber) {
+            if (subscriber) {
+                var i = arguments.length, args = new Array(i - 1);
+                while (--i)
+                    args[i - 1] = arguments[i];
+                evs[eventName].subscribe.apply(null, args);
+                return ctx;
+            }
+            else if (typeof (eventName) === 'string') {
+                return evs[eventName];
+            }
+        };
+        rv.addEventType = add;
+        for (var i = 1, l = arguments.length; i < l; ++i) {
+            add(arguments[i]);
+        }
+        return rv;
+        function add(eventName, chainFunction, defaultFunction) {
+            if (typeof eventName === 'object')
+                return addConfiguredEvents(eventName);
+            if (!chainFunction)
+                chainFunction = reverseStoppableEventChain;
+            if (!defaultFunction)
+                defaultFunction = nop;
+            var context = {
+                subscribers: [],
+                fire: defaultFunction,
+                subscribe: function (cb) {
+                    if (context.subscribers.indexOf(cb) === -1) {
+                        context.subscribers.push(cb);
+                        context.fire = chainFunction(context.fire, cb);
+                    }
+                },
+                unsubscribe: function (cb) {
+                    context.subscribers = context.subscribers.filter(function (fn) { return fn !== cb; });
+                    context.fire = context.subscribers.reduce(chainFunction, defaultFunction);
+                }
+            };
+            evs[eventName] = rv[eventName] = context;
+            return context;
+        }
+        function addConfiguredEvents(cfg) {
+            keys(cfg).forEach(function (eventName) {
+                var args = cfg[eventName];
+                if (isArray(args)) {
+                    add(eventName, cfg[eventName][0], cfg[eventName][1]);
+                }
+                else if (args === 'asap') {
+                    var context = add(eventName, mirror, function fire() {
+                        var i = arguments.length, args = new Array(i);
+                        while (i--)
+                            args[i] = arguments[i];
+                        context.subscribers.forEach(function (fn) {
+                            asap$1(function fireEvent() {
+                                fn.apply(null, args);
+                            });
+                        });
+                    });
+                }
+                else
+                    throw new exceptions.InvalidArgument("Invalid event config");
+            });
+        }
+    }
+
+    function makeClassConstructor(prototype, constructor) {
+        derive(constructor).from({ prototype: prototype });
+        return constructor;
+    }
+
+    function createTableConstructor(db) {
+        return makeClassConstructor(Table.prototype, function Table(name, tableSchema, trans) {
+            this.db = db;
+            this._tx = trans;
+            this.name = name;
+            this.schema = tableSchema;
+            this.hook = db._allTables[name] ? db._allTables[name].hook : Events(null, {
+                "creating": [hookCreatingChain, nop],
+                "reading": [pureFunctionChain, mirror],
+                "updating": [hookUpdatingChain, nop],
+                "deleting": [hookDeletingChain, nop]
+            });
+        });
+    }
+
+    function isPlainKeyRange(ctx, ignoreLimitFilter) {
+        return !(ctx.filter || ctx.algorithm || ctx.or) &&
+            (ignoreLimitFilter ? ctx.justLimit : !ctx.replayFilter);
+    }
+    function addFilter(ctx, fn) {
+        ctx.filter = combine(ctx.filter, fn);
+    }
+    function addReplayFilter(ctx, factory, isLimitFilter) {
+        var curr = ctx.replayFilter;
+        ctx.replayFilter = curr ? function () { return combine(curr(), factory()); } : factory;
+        ctx.justLimit = isLimitFilter && !curr;
+    }
+    function addMatchFilter(ctx, fn) {
+        ctx.isMatch = combine(ctx.isMatch, fn);
+    }
+    function getIndexOrStore(ctx, coreSchema) {
+        if (ctx.isPrimKey)
+            return coreSchema.primaryKey;
+        var index = coreSchema.getIndexByKeyPath(ctx.index);
+        if (!index)
+            throw new exceptions.Schema("KeyPath " + ctx.index + " on object store " + coreSchema.name + " is not indexed");
+        return index;
+    }
+    function openCursor(ctx, coreTable, trans) {
+        var index = getIndexOrStore(ctx, coreTable.schema);
+        return coreTable.openCursor({
+            trans: trans,
+            values: !ctx.keysOnly,
+            reverse: ctx.dir === 'prev',
+            unique: !!ctx.unique,
+            query: {
+                index: index,
+                range: ctx.range
+            }
+        });
+    }
+    function iter(ctx, fn, coreTrans, coreTable) {
+        var filter = ctx.replayFilter ? combine(ctx.filter, ctx.replayFilter()) : ctx.filter;
+        if (!ctx.or) {
+            return iterate(openCursor(ctx, coreTable, coreTrans), combine(ctx.algorithm, filter), fn, !ctx.keysOnly && ctx.valueMapper);
+        }
+        else {
+            var set_1 = {};
+            var union = function (item, cursor, advance) {
+                if (!filter || filter(cursor, advance, function (result) { return cursor.stop(result); }, function (err) { return cursor.fail(err); })) {
+                    var primaryKey = cursor.primaryKey;
+                    var key = '' + primaryKey;
+                    if (key === '[object ArrayBuffer]')
+                        key = '' + new Uint8Array(primaryKey);
+                    if (!hasOwn(set_1, key)) {
+                        set_1[key] = true;
+                        fn(item, cursor, advance);
+                    }
+                }
+            };
+            return Promise.all([
+                ctx.or._iterate(union, coreTrans),
+                iterate(openCursor(ctx, coreTable, coreTrans), ctx.algorithm, union, !ctx.keysOnly && ctx.valueMapper)
+            ]);
+        }
+    }
+    function iterate(cursorPromise, filter, fn, valueMapper) {
+        var mappedFn = valueMapper ? function (x, c, a) { return fn(valueMapper(x), c, a); } : fn;
+        var wrappedFn = wrap(mappedFn);
+        return cursorPromise.then(function (cursor) {
+            if (cursor) {
+                return cursor.start(function () {
+                    var c = function () { return cursor.continue(); };
+                    if (!filter || filter(cursor, function (advancer) { return c = advancer; }, function (val) { cursor.stop(val); c = nop; }, function (e) { cursor.fail(e); c = nop; }))
+                        wrappedFn(cursor.value, cursor, function (advancer) { return c = advancer; });
+                    c();
+                });
+            }
+        });
+    }
+
+    function cmp(a, b) {
+        try {
+            var ta = type(a);
+            var tb = type(b);
+            if (ta !== tb) {
+                if (ta === 'Array')
+                    return 1;
+                if (tb === 'Array')
+                    return -1;
+                if (ta === 'binary')
+                    return 1;
+                if (tb === 'binary')
+                    return -1;
+                if (ta === 'string')
+                    return 1;
+                if (tb === 'string')
+                    return -1;
+                if (ta === 'Date')
+                    return 1;
+                if (tb !== 'Date')
+                    return NaN;
+                return -1;
+            }
+            switch (ta) {
+                case 'number':
+                case 'Date':
+                case 'string':
+                    return a > b ? 1 : a < b ? -1 : 0;
+                case 'binary': {
+                    return compareUint8Arrays(getUint8Array(a), getUint8Array(b));
+                }
+                case 'Array':
+                    return compareArrays(a, b);
+            }
+        }
+        catch (_a) { }
+        return NaN;
+    }
+    function compareArrays(a, b) {
+        var al = a.length;
+        var bl = b.length;
+        var l = al < bl ? al : bl;
+        for (var i = 0; i < l; ++i) {
+            var res = cmp(a[i], b[i]);
+            if (res !== 0)
+                return res;
+        }
+        return al === bl ? 0 : al < bl ? -1 : 1;
+    }
+    function compareUint8Arrays(a, b) {
+        var al = a.length;
+        var bl = b.length;
+        var l = al < bl ? al : bl;
+        for (var i = 0; i < l; ++i) {
+            if (a[i] !== b[i])
+                return a[i] < b[i] ? -1 : 1;
+        }
+        return al === bl ? 0 : al < bl ? -1 : 1;
+    }
+    function type(x) {
+        var t = typeof x;
+        if (t !== 'object')
+            return t;
+        if (ArrayBuffer.isView(x))
+            return 'binary';
+        var tsTag = toStringTag(x);
+        return tsTag === 'ArrayBuffer' ? 'binary' : tsTag;
+    }
+    function getUint8Array(a) {
+        if (a instanceof Uint8Array)
+            return a;
+        if (ArrayBuffer.isView(a))
+            return new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
+        return new Uint8Array(a);
+    }
+
+    var Collection =  (function () {
+        function Collection() {
+        }
+        Collection.prototype._read = function (fn, cb) {
+            var ctx = this._ctx;
+            return ctx.error ?
+                ctx.table._trans(null, rejection.bind(null, ctx.error)) :
+                ctx.table._trans('readonly', fn).then(cb);
+        };
+        Collection.prototype._write = function (fn) {
+            var ctx = this._ctx;
+            return ctx.error ?
+                ctx.table._trans(null, rejection.bind(null, ctx.error)) :
+                ctx.table._trans('readwrite', fn, "locked");
+        };
+        Collection.prototype._addAlgorithm = function (fn) {
+            var ctx = this._ctx;
+            ctx.algorithm = combine(ctx.algorithm, fn);
+        };
+        Collection.prototype._iterate = function (fn, coreTrans) {
+            return iter(this._ctx, fn, coreTrans, this._ctx.table.core);
+        };
+        Collection.prototype.clone = function (props) {
+            var rv = Object.create(this.constructor.prototype), ctx = Object.create(this._ctx);
+            if (props)
+                extend(ctx, props);
+            rv._ctx = ctx;
+            return rv;
+        };
+        Collection.prototype.raw = function () {
+            this._ctx.valueMapper = null;
+            return this;
+        };
+        Collection.prototype.each = function (fn) {
+            var ctx = this._ctx;
+            return this._read(function (trans) { return iter(ctx, fn, trans, ctx.table.core); });
+        };
+        Collection.prototype.count = function (cb) {
+            var _this = this;
+            return this._read(function (trans) {
+                var ctx = _this._ctx;
+                var coreTable = ctx.table.core;
+                if (isPlainKeyRange(ctx, true)) {
+                    return coreTable.count({
+                        trans: trans,
+                        query: {
+                            index: getIndexOrStore(ctx, coreTable.schema),
+                            range: ctx.range
+                        }
+                    }).then(function (count) { return Math.min(count, ctx.limit); });
+                }
+                else {
+                    var count = 0;
+                    return iter(ctx, function () { ++count; return false; }, trans, coreTable)
+                        .then(function () { return count; });
+                }
+            }).then(cb);
+        };
+        Collection.prototype.sortBy = function (keyPath, cb) {
+            var parts = keyPath.split('.').reverse(), lastPart = parts[0], lastIndex = parts.length - 1;
+            function getval(obj, i) {
+                if (i)
+                    return getval(obj[parts[i]], i - 1);
+                return obj[lastPart];
+            }
+            var order = this._ctx.dir === "next" ? 1 : -1;
+            function sorter(a, b) {
+                var aVal = getval(a, lastIndex), bVal = getval(b, lastIndex);
+                return aVal < bVal ? -order : aVal > bVal ? order : 0;
+            }
+            return this.toArray(function (a) {
+                return a.sort(sorter);
+            }).then(cb);
+        };
+        Collection.prototype.toArray = function (cb) {
+            var _this = this;
+            return this._read(function (trans) {
+                var ctx = _this._ctx;
+                if (ctx.dir === 'next' && isPlainKeyRange(ctx, true) && ctx.limit > 0) {
+                    var valueMapper_1 = ctx.valueMapper;
+                    var index = getIndexOrStore(ctx, ctx.table.core.schema);
+                    return ctx.table.core.query({
+                        trans: trans,
+                        limit: ctx.limit,
+                        values: true,
+                        query: {
+                            index: index,
+                            range: ctx.range
+                        }
+                    }).then(function (_a) {
+                        var result = _a.result;
+                        return valueMapper_1 ? result.map(valueMapper_1) : result;
+                    });
+                }
+                else {
+                    var a_1 = [];
+                    return iter(ctx, function (item) { return a_1.push(item); }, trans, ctx.table.core).then(function () { return a_1; });
+                }
+            }, cb);
+        };
+        Collection.prototype.offset = function (offset) {
+            var ctx = this._ctx;
+            if (offset <= 0)
+                return this;
+            ctx.offset += offset;
+            if (isPlainKeyRange(ctx)) {
+                addReplayFilter(ctx, function () {
+                    var offsetLeft = offset;
+                    return function (cursor, advance) {
+                        if (offsetLeft === 0)
+                            return true;
+                        if (offsetLeft === 1) {
+                            --offsetLeft;
+                            return false;
+                        }
+                        advance(function () {
+                            cursor.advance(offsetLeft);
+                            offsetLeft = 0;
+                        });
+                        return false;
+                    };
+                });
+            }
+            else {
+                addReplayFilter(ctx, function () {
+                    var offsetLeft = offset;
+                    return function () { return (--offsetLeft < 0); };
+                });
+            }
+            return this;
+        };
+        Collection.prototype.limit = function (numRows) {
+            this._ctx.limit = Math.min(this._ctx.limit, numRows);
+            addReplayFilter(this._ctx, function () {
+                var rowsLeft = numRows;
+                return function (cursor, advance, resolve) {
+                    if (--rowsLeft <= 0)
+                        advance(resolve);
+                    return rowsLeft >= 0;
+                };
+            }, true);
+            return this;
+        };
+        Collection.prototype.until = function (filterFunction, bIncludeStopEntry) {
+            addFilter(this._ctx, function (cursor, advance, resolve) {
+                if (filterFunction(cursor.value)) {
+                    advance(resolve);
+                    return bIncludeStopEntry;
+                }
+                else {
+                    return true;
+                }
+            });
+            return this;
+        };
+        Collection.prototype.first = function (cb) {
+            return this.limit(1).toArray(function (a) { return a[0]; }).then(cb);
+        };
+        Collection.prototype.last = function (cb) {
+            return this.reverse().first(cb);
+        };
+        Collection.prototype.filter = function (filterFunction) {
+            addFilter(this._ctx, function (cursor) {
+                return filterFunction(cursor.value);
+            });
+            addMatchFilter(this._ctx, filterFunction);
+            return this;
+        };
+        Collection.prototype.and = function (filter) {
+            return this.filter(filter);
+        };
+        Collection.prototype.or = function (indexName) {
+            return new this.db.WhereClause(this._ctx.table, indexName, this);
+        };
+        Collection.prototype.reverse = function () {
+            this._ctx.dir = (this._ctx.dir === "prev" ? "next" : "prev");
+            if (this._ondirectionchange)
+                this._ondirectionchange(this._ctx.dir);
+            return this;
+        };
+        Collection.prototype.desc = function () {
+            return this.reverse();
+        };
+        Collection.prototype.eachKey = function (cb) {
+            var ctx = this._ctx;
+            ctx.keysOnly = !ctx.isMatch;
+            return this.each(function (val, cursor) { cb(cursor.key, cursor); });
+        };
+        Collection.prototype.eachUniqueKey = function (cb) {
+            this._ctx.unique = "unique";
+            return this.eachKey(cb);
+        };
+        Collection.prototype.eachPrimaryKey = function (cb) {
+            var ctx = this._ctx;
+            ctx.keysOnly = !ctx.isMatch;
+            return this.each(function (val, cursor) { cb(cursor.primaryKey, cursor); });
+        };
+        Collection.prototype.keys = function (cb) {
+            var ctx = this._ctx;
+            ctx.keysOnly = !ctx.isMatch;
+            var a = [];
+            return this.each(function (item, cursor) {
+                a.push(cursor.key);
+            }).then(function () {
+                return a;
+            }).then(cb);
+        };
+        Collection.prototype.primaryKeys = function (cb) {
+            var ctx = this._ctx;
+            if (ctx.dir === 'next' && isPlainKeyRange(ctx, true) && ctx.limit > 0) {
+                return this._read(function (trans) {
+                    var index = getIndexOrStore(ctx, ctx.table.core.schema);
+                    return ctx.table.core.query({
+                        trans: trans,
+                        values: false,
+                        limit: ctx.limit,
+                        query: {
+                            index: index,
+                            range: ctx.range
+                        }
+                    });
+                }).then(function (_a) {
+                    var result = _a.result;
+                    return result;
+                }).then(cb);
+            }
+            ctx.keysOnly = !ctx.isMatch;
+            var a = [];
+            return this.each(function (item, cursor) {
+                a.push(cursor.primaryKey);
+            }).then(function () {
+                return a;
+            }).then(cb);
+        };
+        Collection.prototype.uniqueKeys = function (cb) {
+            this._ctx.unique = "unique";
+            return this.keys(cb);
+        };
+        Collection.prototype.firstKey = function (cb) {
+            return this.limit(1).keys(function (a) { return a[0]; }).then(cb);
+        };
+        Collection.prototype.lastKey = function (cb) {
+            return this.reverse().firstKey(cb);
+        };
+        Collection.prototype.distinct = function () {
+            var ctx = this._ctx, idx = ctx.index && ctx.table.schema.idxByName[ctx.index];
+            if (!idx || !idx.multi)
+                return this;
+            var set = {};
+            addFilter(this._ctx, function (cursor) {
+                var strKey = cursor.primaryKey.toString();
+                var found = hasOwn(set, strKey);
+                set[strKey] = true;
+                return !found;
+            });
+            return this;
+        };
+        Collection.prototype.modify = function (changes) {
+            var _this = this;
+            var ctx = this._ctx;
+            return this._write(function (trans) {
+                var modifyer;
+                if (typeof changes === 'function') {
+                    modifyer = changes;
+                }
+                else {
+                    var keyPaths = keys(changes);
+                    var numKeys = keyPaths.length;
+                    modifyer = function (item) {
+                        var anythingModified = false;
+                        for (var i = 0; i < numKeys; ++i) {
+                            var keyPath = keyPaths[i], val = changes[keyPath];
+                            if (getByKeyPath(item, keyPath) !== val) {
+                                setByKeyPath(item, keyPath, val);
+                                anythingModified = true;
+                            }
+                        }
+                        return anythingModified;
+                    };
+                }
+                var coreTable = ctx.table.core;
+                var _a = coreTable.schema.primaryKey, outbound = _a.outbound, extractKey = _a.extractKey;
+                var limit = _this.db._options.modifyChunkSize || 200;
+                var totalFailures = [];
+                var successCount = 0;
+                var failedKeys = [];
+                var applyMutateResult = function (expectedCount, res) {
+                    var failures = res.failures, numFailures = res.numFailures;
+                    successCount += expectedCount - numFailures;
+                    for (var _i = 0, _a = keys(failures); _i < _a.length; _i++) {
+                        var pos = _a[_i];
+                        totalFailures.push(failures[pos]);
+                    }
+                };
+                return _this.clone().primaryKeys().then(function (keys) {
+                    var nextChunk = function (offset) {
+                        var count = Math.min(limit, keys.length - offset);
+                        return coreTable.getMany({
+                            trans: trans,
+                            keys: keys.slice(offset, offset + count),
+                            cache: "immutable"
+                        }).then(function (values) {
+                            var addValues = [];
+                            var putValues = [];
+                            var putKeys = outbound ? [] : null;
+                            var deleteKeys = [];
+                            for (var i = 0; i < count; ++i) {
+                                var origValue = values[i];
+                                var ctx_1 = {
+                                    value: deepClone(origValue),
+                                    primKey: keys[offset + i]
+                                };
+                                if (modifyer.call(ctx_1, ctx_1.value, ctx_1) !== false) {
+                                    if (ctx_1.value == null) {
+                                        deleteKeys.push(keys[offset + i]);
+                                    }
+                                    else if (!outbound && cmp(extractKey(origValue), extractKey(ctx_1.value)) !== 0) {
+                                        deleteKeys.push(keys[offset + i]);
+                                        addValues.push(ctx_1.value);
+                                    }
+                                    else {
+                                        putValues.push(ctx_1.value);
+                                        if (outbound)
+                                            putKeys.push(keys[offset + i]);
+                                    }
+                                }
+                            }
+                            var criteria = isPlainKeyRange(ctx) &&
+                                ctx.limit === Infinity &&
+                                (typeof changes !== 'function' || changes === deleteCallback) && {
+                                index: ctx.index,
+                                range: ctx.range
+                            };
+                            return Promise.resolve(addValues.length > 0 &&
+                                coreTable.mutate({ trans: trans, type: 'add', values: addValues })
+                                    .then(function (res) {
+                                    for (var pos in res.failures) {
+                                        deleteKeys.splice(parseInt(pos), 1);
+                                    }
+                                    applyMutateResult(addValues.length, res);
+                                })).then(function () { return (putValues.length > 0 || (criteria && typeof changes === 'object')) &&
+                                coreTable.mutate({
+                                    trans: trans,
+                                    type: 'put',
+                                    keys: putKeys,
+                                    values: putValues,
+                                    criteria: criteria,
+                                    changeSpec: typeof changes !== 'function'
+                                        && changes
+                                }).then(function (res) { return applyMutateResult(putValues.length, res); }); }).then(function () { return (deleteKeys.length > 0 || (criteria && changes === deleteCallback)) &&
+                                coreTable.mutate({
+                                    trans: trans,
+                                    type: 'delete',
+                                    keys: deleteKeys,
+                                    criteria: criteria
+                                }).then(function (res) { return applyMutateResult(deleteKeys.length, res); }); }).then(function () {
+                                return keys.length > offset + count && nextChunk(offset + limit);
+                            });
+                        });
+                    };
+                    return nextChunk(0).then(function () {
+                        if (totalFailures.length > 0)
+                            throw new ModifyError("Error modifying one or more objects", totalFailures, successCount, failedKeys);
+                        return keys.length;
+                    });
+                });
+            });
+        };
+        Collection.prototype.delete = function () {
+            var ctx = this._ctx, range = ctx.range;
+            if (isPlainKeyRange(ctx) &&
+                ((ctx.isPrimKey && !hangsOnDeleteLargeKeyRange) || range.type === 3 ))
+             {
+                return this._write(function (trans) {
+                    var primaryKey = ctx.table.core.schema.primaryKey;
+                    var coreRange = range;
+                    return ctx.table.core.count({ trans: trans, query: { index: primaryKey, range: coreRange } }).then(function (count) {
+                        return ctx.table.core.mutate({ trans: trans, type: 'deleteRange', range: coreRange })
+                            .then(function (_a) {
+                            var failures = _a.failures; _a.lastResult; _a.results; var numFailures = _a.numFailures;
+                            if (numFailures)
+                                throw new ModifyError("Could not delete some values", Object.keys(failures).map(function (pos) { return failures[pos]; }), count - numFailures);
+                            return count - numFailures;
+                        });
+                    });
+                });
+            }
+            return this.modify(deleteCallback);
+        };
+        return Collection;
+    }());
+    var deleteCallback = function (value, ctx) { return ctx.value = null; };
+
+    function createCollectionConstructor(db) {
+        return makeClassConstructor(Collection.prototype, function Collection(whereClause, keyRangeGenerator) {
+            this.db = db;
+            var keyRange = AnyRange, error = null;
+            if (keyRangeGenerator)
+                try {
+                    keyRange = keyRangeGenerator();
+                }
+                catch (ex) {
+                    error = ex;
+                }
+            var whereCtx = whereClause._ctx;
+            var table = whereCtx.table;
+            var readingHook = table.hook.reading.fire;
+            this._ctx = {
+                table: table,
+                index: whereCtx.index,
+                isPrimKey: (!whereCtx.index || (table.schema.primKey.keyPath && whereCtx.index === table.schema.primKey.name)),
+                range: keyRange,
+                keysOnly: false,
+                dir: "next",
+                unique: "",
+                algorithm: null,
+                filter: null,
+                replayFilter: null,
+                justLimit: true,
+                isMatch: null,
+                offset: 0,
+                limit: Infinity,
+                error: error,
+                or: whereCtx.or,
+                valueMapper: readingHook !== mirror ? readingHook : null
+            };
+        });
+    }
+
+    function simpleCompare(a, b) {
+        return a < b ? -1 : a === b ? 0 : 1;
+    }
+    function simpleCompareReverse(a, b) {
+        return a > b ? -1 : a === b ? 0 : 1;
+    }
+
+    function fail(collectionOrWhereClause, err, T) {
+        var collection = collectionOrWhereClause instanceof WhereClause ?
+            new collectionOrWhereClause.Collection(collectionOrWhereClause) :
+            collectionOrWhereClause;
+        collection._ctx.error = T ? new T(err) : new TypeError(err);
+        return collection;
+    }
+    function emptyCollection(whereClause) {
+        return new whereClause.Collection(whereClause, function () { return rangeEqual(""); }).limit(0);
+    }
+    function upperFactory(dir) {
+        return dir === "next" ?
+            function (s) { return s.toUpperCase(); } :
+            function (s) { return s.toLowerCase(); };
+    }
+    function lowerFactory(dir) {
+        return dir === "next" ?
+            function (s) { return s.toLowerCase(); } :
+            function (s) { return s.toUpperCase(); };
+    }
+    function nextCasing(key, lowerKey, upperNeedle, lowerNeedle, cmp, dir) {
+        var length = Math.min(key.length, lowerNeedle.length);
+        var llp = -1;
+        for (var i = 0; i < length; ++i) {
+            var lwrKeyChar = lowerKey[i];
+            if (lwrKeyChar !== lowerNeedle[i]) {
+                if (cmp(key[i], upperNeedle[i]) < 0)
+                    return key.substr(0, i) + upperNeedle[i] + upperNeedle.substr(i + 1);
+                if (cmp(key[i], lowerNeedle[i]) < 0)
+                    return key.substr(0, i) + lowerNeedle[i] + upperNeedle.substr(i + 1);
+                if (llp >= 0)
+                    return key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1);
+                return null;
+            }
+            if (cmp(key[i], lwrKeyChar) < 0)
+                llp = i;
+        }
+        if (length < lowerNeedle.length && dir === "next")
+            return key + upperNeedle.substr(key.length);
+        if (length < key.length && dir === "prev")
+            return key.substr(0, upperNeedle.length);
+        return (llp < 0 ? null : key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1));
+    }
+    function addIgnoreCaseAlgorithm(whereClause, match, needles, suffix) {
+        var upper, lower, compare, upperNeedles, lowerNeedles, direction, nextKeySuffix, needlesLen = needles.length;
+        if (!needles.every(function (s) { return typeof s === 'string'; })) {
+            return fail(whereClause, STRING_EXPECTED);
+        }
+        function initDirection(dir) {
+            upper = upperFactory(dir);
+            lower = lowerFactory(dir);
+            compare = (dir === "next" ? simpleCompare : simpleCompareReverse);
+            var needleBounds = needles.map(function (needle) {
+                return { lower: lower(needle), upper: upper(needle) };
+            }).sort(function (a, b) {
+                return compare(a.lower, b.lower);
+            });
+            upperNeedles = needleBounds.map(function (nb) { return nb.upper; });
+            lowerNeedles = needleBounds.map(function (nb) { return nb.lower; });
+            direction = dir;
+            nextKeySuffix = (dir === "next" ? "" : suffix);
+        }
+        initDirection("next");
+        var c = new whereClause.Collection(whereClause, function () { return createRange(upperNeedles[0], lowerNeedles[needlesLen - 1] + suffix); });
+        c._ondirectionchange = function (direction) {
+            initDirection(direction);
+        };
+        var firstPossibleNeedle = 0;
+        c._addAlgorithm(function (cursor, advance, resolve) {
+            var key = cursor.key;
+            if (typeof key !== 'string')
+                return false;
+            var lowerKey = lower(key);
+            if (match(lowerKey, lowerNeedles, firstPossibleNeedle)) {
+                return true;
+            }
+            else {
+                var lowestPossibleCasing = null;
+                for (var i = firstPossibleNeedle; i < needlesLen; ++i) {
+                    var casing = nextCasing(key, lowerKey, upperNeedles[i], lowerNeedles[i], compare, direction);
+                    if (casing === null && lowestPossibleCasing === null)
+                        firstPossibleNeedle = i + 1;
+                    else if (lowestPossibleCasing === null || compare(lowestPossibleCasing, casing) > 0) {
+                        lowestPossibleCasing = casing;
+                    }
+                }
+                if (lowestPossibleCasing !== null) {
+                    advance(function () { cursor.continue(lowestPossibleCasing + nextKeySuffix); });
+                }
+                else {
+                    advance(resolve);
+                }
+                return false;
+            }
+        });
+        return c;
+    }
+    function createRange(lower, upper, lowerOpen, upperOpen) {
+        return {
+            type: 2 ,
+            lower: lower,
+            upper: upper,
+            lowerOpen: lowerOpen,
+            upperOpen: upperOpen
+        };
+    }
+    function rangeEqual(value) {
+        return {
+            type: 1 ,
+            lower: value,
+            upper: value
+        };
+    }
+
+    var WhereClause =  (function () {
+        function WhereClause() {
+        }
+        Object.defineProperty(WhereClause.prototype, "Collection", {
+            get: function () {
+                return this._ctx.table.db.Collection;
+            },
+            enumerable: false,
+            configurable: true
+        });
+        WhereClause.prototype.between = function (lower, upper, includeLower, includeUpper) {
+            includeLower = includeLower !== false;
+            includeUpper = includeUpper === true;
+            try {
+                if ((this._cmp(lower, upper) > 0) ||
+                    (this._cmp(lower, upper) === 0 && (includeLower || includeUpper) && !(includeLower && includeUpper)))
+                    return emptyCollection(this);
+                return new this.Collection(this, function () { return createRange(lower, upper, !includeLower, !includeUpper); });
+            }
+            catch (e) {
+                return fail(this, INVALID_KEY_ARGUMENT);
+            }
+        };
+        WhereClause.prototype.equals = function (value) {
+            if (value == null)
+                return fail(this, INVALID_KEY_ARGUMENT);
+            return new this.Collection(this, function () { return rangeEqual(value); });
+        };
+        WhereClause.prototype.above = function (value) {
+            if (value == null)
+                return fail(this, INVALID_KEY_ARGUMENT);
+            return new this.Collection(this, function () { return createRange(value, undefined, true); });
+        };
+        WhereClause.prototype.aboveOrEqual = function (value) {
+            if (value == null)
+                return fail(this, INVALID_KEY_ARGUMENT);
+            return new this.Collection(this, function () { return createRange(value, undefined, false); });
+        };
+        WhereClause.prototype.below = function (value) {
+            if (value == null)
+                return fail(this, INVALID_KEY_ARGUMENT);
+            return new this.Collection(this, function () { return createRange(undefined, value, false, true); });
+        };
+        WhereClause.prototype.belowOrEqual = function (value) {
+            if (value == null)
+                return fail(this, INVALID_KEY_ARGUMENT);
+            return new this.Collection(this, function () { return createRange(undefined, value); });
+        };
+        WhereClause.prototype.startsWith = function (str) {
+            if (typeof str !== 'string')
+                return fail(this, STRING_EXPECTED);
+            return this.between(str, str + maxString, true, true);
+        };
+        WhereClause.prototype.startsWithIgnoreCase = function (str) {
+            if (str === "")
+                return this.startsWith(str);
+            return addIgnoreCaseAlgorithm(this, function (x, a) { return x.indexOf(a[0]) === 0; }, [str], maxString);
+        };
+        WhereClause.prototype.equalsIgnoreCase = function (str) {
+            return addIgnoreCaseAlgorithm(this, function (x, a) { return x === a[0]; }, [str], "");
+        };
+        WhereClause.prototype.anyOfIgnoreCase = function () {
+            var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+            if (set.length === 0)
+                return emptyCollection(this);
+            return addIgnoreCaseAlgorithm(this, function (x, a) { return a.indexOf(x) !== -1; }, set, "");
+        };
+        WhereClause.prototype.startsWithAnyOfIgnoreCase = function () {
+            var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+            if (set.length === 0)
+                return emptyCollection(this);
+            return addIgnoreCaseAlgorithm(this, function (x, a) { return a.some(function (n) { return x.indexOf(n) === 0; }); }, set, maxString);
+        };
+        WhereClause.prototype.anyOf = function () {
+            var _this = this;
+            var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+            var compare = this._cmp;
+            try {
+                set.sort(compare);
+            }
+            catch (e) {
+                return fail(this, INVALID_KEY_ARGUMENT);
+            }
+            if (set.length === 0)
+                return emptyCollection(this);
+            var c = new this.Collection(this, function () { return createRange(set[0], set[set.length - 1]); });
+            c._ondirectionchange = function (direction) {
+                compare = (direction === "next" ?
+                    _this._ascending :
+                    _this._descending);
+                set.sort(compare);
+            };
+            var i = 0;
+            c._addAlgorithm(function (cursor, advance, resolve) {
+                var key = cursor.key;
+                while (compare(key, set[i]) > 0) {
+                    ++i;
+                    if (i === set.length) {
+                        advance(resolve);
+                        return false;
+                    }
+                }
+                if (compare(key, set[i]) === 0) {
+                    return true;
+                }
+                else {
+                    advance(function () { cursor.continue(set[i]); });
+                    return false;
+                }
+            });
+            return c;
+        };
+        WhereClause.prototype.notEqual = function (value) {
+            return this.inAnyRange([[minKey, value], [value, this.db._maxKey]], { includeLowers: false, includeUppers: false });
+        };
+        WhereClause.prototype.noneOf = function () {
+            var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+            if (set.length === 0)
+                return new this.Collection(this);
+            try {
+                set.sort(this._ascending);
+            }
+            catch (e) {
+                return fail(this, INVALID_KEY_ARGUMENT);
+            }
+            var ranges = set.reduce(function (res, val) { return res ?
+                res.concat([[res[res.length - 1][1], val]]) :
+                [[minKey, val]]; }, null);
+            ranges.push([set[set.length - 1], this.db._maxKey]);
+            return this.inAnyRange(ranges, { includeLowers: false, includeUppers: false });
+        };
+        WhereClause.prototype.inAnyRange = function (ranges, options) {
+            var _this = this;
+            var cmp = this._cmp, ascending = this._ascending, descending = this._descending, min = this._min, max = this._max;
+            if (ranges.length === 0)
+                return emptyCollection(this);
+            if (!ranges.every(function (range) {
+                return range[0] !== undefined &&
+                    range[1] !== undefined &&
+                    ascending(range[0], range[1]) <= 0;
+            })) {
+                return fail(this, "First argument to inAnyRange() must be an Array of two-value Arrays [lower,upper] where upper must not be lower than lower", exceptions.InvalidArgument);
+            }
+            var includeLowers = !options || options.includeLowers !== false;
+            var includeUppers = options && options.includeUppers === true;
+            function addRange(ranges, newRange) {
+                var i = 0, l = ranges.length;
+                for (; i < l; ++i) {
+                    var range = ranges[i];
+                    if (cmp(newRange[0], range[1]) < 0 && cmp(newRange[1], range[0]) > 0) {
+                        range[0] = min(range[0], newRange[0]);
+                        range[1] = max(range[1], newRange[1]);
+                        break;
+                    }
+                }
+                if (i === l)
+                    ranges.push(newRange);
+                return ranges;
+            }
+            var sortDirection = ascending;
+            function rangeSorter(a, b) { return sortDirection(a[0], b[0]); }
+            var set;
+            try {
+                set = ranges.reduce(addRange, []);
+                set.sort(rangeSorter);
+            }
+            catch (ex) {
+                return fail(this, INVALID_KEY_ARGUMENT);
+            }
+            var rangePos = 0;
+            var keyIsBeyondCurrentEntry = includeUppers ?
+                function (key) { return ascending(key, set[rangePos][1]) > 0; } :
+                function (key) { return ascending(key, set[rangePos][1]) >= 0; };
+            var keyIsBeforeCurrentEntry = includeLowers ?
+                function (key) { return descending(key, set[rangePos][0]) > 0; } :
+                function (key) { return descending(key, set[rangePos][0]) >= 0; };
+            function keyWithinCurrentRange(key) {
+                return !keyIsBeyondCurrentEntry(key) && !keyIsBeforeCurrentEntry(key);
+            }
+            var checkKey = keyIsBeyondCurrentEntry;
+            var c = new this.Collection(this, function () { return createRange(set[0][0], set[set.length - 1][1], !includeLowers, !includeUppers); });
+            c._ondirectionchange = function (direction) {
+                if (direction === "next") {
+                    checkKey = keyIsBeyondCurrentEntry;
+                    sortDirection = ascending;
+                }
+                else {
+                    checkKey = keyIsBeforeCurrentEntry;
+                    sortDirection = descending;
+                }
+                set.sort(rangeSorter);
+            };
+            c._addAlgorithm(function (cursor, advance, resolve) {
+                var key = cursor.key;
+                while (checkKey(key)) {
+                    ++rangePos;
+                    if (rangePos === set.length) {
+                        advance(resolve);
+                        return false;
+                    }
+                }
+                if (keyWithinCurrentRange(key)) {
+                    return true;
+                }
+                else if (_this._cmp(key, set[rangePos][1]) === 0 || _this._cmp(key, set[rangePos][0]) === 0) {
+                    return false;
+                }
+                else {
+                    advance(function () {
+                        if (sortDirection === ascending)
+                            cursor.continue(set[rangePos][0]);
+                        else
+                            cursor.continue(set[rangePos][1]);
+                    });
+                    return false;
+                }
+            });
+            return c;
+        };
+        WhereClause.prototype.startsWithAnyOf = function () {
+            var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+            if (!set.every(function (s) { return typeof s === 'string'; })) {
+                return fail(this, "startsWithAnyOf() only works with strings");
+            }
+            if (set.length === 0)
+                return emptyCollection(this);
+            return this.inAnyRange(set.map(function (str) { return [str, str + maxString]; }));
+        };
+        return WhereClause;
+    }());
+
+    function createWhereClauseConstructor(db) {
+        return makeClassConstructor(WhereClause.prototype, function WhereClause(table, index, orCollection) {
+            this.db = db;
+            this._ctx = {
+                table: table,
+                index: index === ":id" ? null : index,
+                or: orCollection
+            };
+            var indexedDB = db._deps.indexedDB;
+            if (!indexedDB)
+                throw new exceptions.MissingAPI();
+            this._cmp = this._ascending = indexedDB.cmp.bind(indexedDB);
+            this._descending = function (a, b) { return indexedDB.cmp(b, a); };
+            this._max = function (a, b) { return indexedDB.cmp(a, b) > 0 ? a : b; };
+            this._min = function (a, b) { return indexedDB.cmp(a, b) < 0 ? a : b; };
+            this._IDBKeyRange = db._deps.IDBKeyRange;
+        });
+    }
+
+    function eventRejectHandler(reject) {
+        return wrap(function (event) {
+            preventDefault(event);
+            reject(event.target.error);
+            return false;
+        });
+    }
+    function preventDefault(event) {
+        if (event.stopPropagation)
+            event.stopPropagation();
+        if (event.preventDefault)
+            event.preventDefault();
+    }
+
+    var DEXIE_STORAGE_MUTATED_EVENT_NAME = 'storagemutated';
+    var STORAGE_MUTATED_DOM_EVENT_NAME = 'x-storagemutated-1';
+    var globalEvents = Events(null, DEXIE_STORAGE_MUTATED_EVENT_NAME);
+
+    var Transaction =  (function () {
+        function Transaction() {
+        }
+        Transaction.prototype._lock = function () {
+            assert(!PSD.global);
+            ++this._reculock;
+            if (this._reculock === 1 && !PSD.global)
+                PSD.lockOwnerFor = this;
+            return this;
+        };
+        Transaction.prototype._unlock = function () {
+            assert(!PSD.global);
+            if (--this._reculock === 0) {
+                if (!PSD.global)
+                    PSD.lockOwnerFor = null;
+                while (this._blockedFuncs.length > 0 && !this._locked()) {
+                    var fnAndPSD = this._blockedFuncs.shift();
+                    try {
+                        usePSD(fnAndPSD[1], fnAndPSD[0]);
+                    }
+                    catch (e) { }
+                }
+            }
+            return this;
+        };
+        Transaction.prototype._locked = function () {
+            return this._reculock && PSD.lockOwnerFor !== this;
+        };
+        Transaction.prototype.create = function (idbtrans) {
+            var _this = this;
+            if (!this.mode)
+                return this;
+            var idbdb = this.db.idbdb;
+            var dbOpenError = this.db._state.dbOpenError;
+            assert(!this.idbtrans);
+            if (!idbtrans && !idbdb) {
+                switch (dbOpenError && dbOpenError.name) {
+                    case "DatabaseClosedError":
+                        throw new exceptions.DatabaseClosed(dbOpenError);
+                    case "MissingAPIError":
+                        throw new exceptions.MissingAPI(dbOpenError.message, dbOpenError);
+                    default:
+                        throw new exceptions.OpenFailed(dbOpenError);
+                }
+            }
+            if (!this.active)
+                throw new exceptions.TransactionInactive();
+            assert(this._completion._state === null);
+            idbtrans = this.idbtrans = idbtrans ||
+                (this.db.core
+                    ? this.db.core.transaction(this.storeNames, this.mode, { durability: this.chromeTransactionDurability })
+                    : idbdb.transaction(this.storeNames, this.mode, { durability: this.chromeTransactionDurability }));
+            idbtrans.onerror = wrap(function (ev) {
+                preventDefault(ev);
+                _this._reject(idbtrans.error);
+            });
+            idbtrans.onabort = wrap(function (ev) {
+                preventDefault(ev);
+                _this.active && _this._reject(new exceptions.Abort(idbtrans.error));
+                _this.active = false;
+                _this.on("abort").fire(ev);
+            });
+            idbtrans.oncomplete = wrap(function () {
+                _this.active = false;
+                _this._resolve();
+                if ('mutatedParts' in idbtrans) {
+                    globalEvents.storagemutated.fire(idbtrans["mutatedParts"]);
+                }
+            });
+            return this;
+        };
+        Transaction.prototype._promise = function (mode, fn, bWriteLock) {
+            var _this = this;
+            if (mode === 'readwrite' && this.mode !== 'readwrite')
+                return rejection(new exceptions.ReadOnly("Transaction is readonly"));
+            if (!this.active)
+                return rejection(new exceptions.TransactionInactive());
+            if (this._locked()) {
+                return new DexiePromise(function (resolve, reject) {
+                    _this._blockedFuncs.push([function () {
+                            _this._promise(mode, fn, bWriteLock).then(resolve, reject);
+                        }, PSD]);
+                });
+            }
+            else if (bWriteLock) {
+                return newScope(function () {
+                    var p = new DexiePromise(function (resolve, reject) {
+                        _this._lock();
+                        var rv = fn(resolve, reject, _this);
+                        if (rv && rv.then)
+                            rv.then(resolve, reject);
+                    });
+                    p.finally(function () { return _this._unlock(); });
+                    p._lib = true;
+                    return p;
+                });
+            }
+            else {
+                var p = new DexiePromise(function (resolve, reject) {
+                    var rv = fn(resolve, reject, _this);
+                    if (rv && rv.then)
+                        rv.then(resolve, reject);
+                });
+                p._lib = true;
+                return p;
+            }
+        };
+        Transaction.prototype._root = function () {
+            return this.parent ? this.parent._root() : this;
+        };
+        Transaction.prototype.waitFor = function (promiseLike) {
+            var root = this._root();
+            var promise = DexiePromise.resolve(promiseLike);
+            if (root._waitingFor) {
+                root._waitingFor = root._waitingFor.then(function () { return promise; });
+            }
+            else {
+                root._waitingFor = promise;
+                root._waitingQueue = [];
+                var store = root.idbtrans.objectStore(root.storeNames[0]);
+                (function spin() {
+                    ++root._spinCount;
+                    while (root._waitingQueue.length)
+                        (root._waitingQueue.shift())();
+                    if (root._waitingFor)
+                        store.get(-Infinity).onsuccess = spin;
+                }());
+            }
+            var currentWaitPromise = root._waitingFor;
+            return new DexiePromise(function (resolve, reject) {
+                promise.then(function (res) { return root._waitingQueue.push(wrap(resolve.bind(null, res))); }, function (err) { return root._waitingQueue.push(wrap(reject.bind(null, err))); }).finally(function () {
+                    if (root._waitingFor === currentWaitPromise) {
+                        root._waitingFor = null;
+                    }
+                });
+            });
+        };
+        Transaction.prototype.abort = function () {
+            if (this.active) {
+                this.active = false;
+                if (this.idbtrans)
+                    this.idbtrans.abort();
+                this._reject(new exceptions.Abort());
+            }
+        };
+        Transaction.prototype.table = function (tableName) {
+            var memoizedTables = (this._memoizedTables || (this._memoizedTables = {}));
+            if (hasOwn(memoizedTables, tableName))
+                return memoizedTables[tableName];
+            var tableSchema = this.schema[tableName];
+            if (!tableSchema) {
+                throw new exceptions.NotFound("Table " + tableName + " not part of transaction");
+            }
+            var transactionBoundTable = new this.db.Table(tableName, tableSchema, this);
+            transactionBoundTable.core = this.db.core.table(tableName);
+            memoizedTables[tableName] = transactionBoundTable;
+            return transactionBoundTable;
+        };
+        return Transaction;
+    }());
+
+    function createTransactionConstructor(db) {
+        return makeClassConstructor(Transaction.prototype, function Transaction(mode, storeNames, dbschema, chromeTransactionDurability, parent) {
+            var _this = this;
+            this.db = db;
+            this.mode = mode;
+            this.storeNames = storeNames;
+            this.schema = dbschema;
+            this.chromeTransactionDurability = chromeTransactionDurability;
+            this.idbtrans = null;
+            this.on = Events(this, "complete", "error", "abort");
+            this.parent = parent || null;
+            this.active = true;
+            this._reculock = 0;
+            this._blockedFuncs = [];
+            this._resolve = null;
+            this._reject = null;
+            this._waitingFor = null;
+            this._waitingQueue = null;
+            this._spinCount = 0;
+            this._completion = new DexiePromise(function (resolve, reject) {
+                _this._resolve = resolve;
+                _this._reject = reject;
+            });
+            this._completion.then(function () {
+                _this.active = false;
+                _this.on.complete.fire();
+            }, function (e) {
+                var wasActive = _this.active;
+                _this.active = false;
+                _this.on.error.fire(e);
+                _this.parent ?
+                    _this.parent._reject(e) :
+                    wasActive && _this.idbtrans && _this.idbtrans.abort();
+                return rejection(e);
+            });
+        });
+    }
+
+    function createIndexSpec(name, keyPath, unique, multi, auto, compound, isPrimKey) {
+        return {
+            name: name,
+            keyPath: keyPath,
+            unique: unique,
+            multi: multi,
+            auto: auto,
+            compound: compound,
+            src: (unique && !isPrimKey ? '&' : '') + (multi ? '*' : '') + (auto ? "++" : "") + nameFromKeyPath(keyPath)
+        };
+    }
+    function nameFromKeyPath(keyPath) {
+        return typeof keyPath === 'string' ?
+            keyPath :
+            keyPath ? ('[' + [].join.call(keyPath, '+') + ']') : "";
+    }
+
+    function createTableSchema(name, primKey, indexes) {
+        return {
+            name: name,
+            primKey: primKey,
+            indexes: indexes,
+            mappedClass: null,
+            idxByName: arrayToObject(indexes, function (index) { return [index.name, index]; })
+        };
+    }
+
+    function safariMultiStoreFix(storeNames) {
+        return storeNames.length === 1 ? storeNames[0] : storeNames;
+    }
+    var getMaxKey = function (IdbKeyRange) {
+        try {
+            IdbKeyRange.only([[]]);
+            getMaxKey = function () { return [[]]; };
+            return [[]];
+        }
+        catch (e) {
+            getMaxKey = function () { return maxString; };
+            return maxString;
+        }
+    };
+
+    function getKeyExtractor(keyPath) {
+        if (keyPath == null) {
+            return function () { return undefined; };
+        }
+        else if (typeof keyPath === 'string') {
+            return getSinglePathKeyExtractor(keyPath);
+        }
+        else {
+            return function (obj) { return getByKeyPath(obj, keyPath); };
+        }
+    }
+    function getSinglePathKeyExtractor(keyPath) {
+        var split = keyPath.split('.');
+        if (split.length === 1) {
+            return function (obj) { return obj[keyPath]; };
+        }
+        else {
+            return function (obj) { return getByKeyPath(obj, keyPath); };
+        }
+    }
+
+    function arrayify(arrayLike) {
+        return [].slice.call(arrayLike);
+    }
+    var _id_counter = 0;
+    function getKeyPathAlias(keyPath) {
+        return keyPath == null ?
+            ":id" :
+            typeof keyPath === 'string' ?
+                keyPath :
+                "[" + keyPath.join('+') + "]";
+    }
+    function createDBCore(db, IdbKeyRange, tmpTrans) {
+        function extractSchema(db, trans) {
+            var tables = arrayify(db.objectStoreNames);
+            return {
+                schema: {
+                    name: db.name,
+                    tables: tables.map(function (table) { return trans.objectStore(table); }).map(function (store) {
+                        var keyPath = store.keyPath, autoIncrement = store.autoIncrement;
+                        var compound = isArray(keyPath);
+                        var outbound = keyPath == null;
+                        var indexByKeyPath = {};
+                        var result = {
+                            name: store.name,
+                            primaryKey: {
+                                name: null,
+                                isPrimaryKey: true,
+                                outbound: outbound,
+                                compound: compound,
+                                keyPath: keyPath,
+                                autoIncrement: autoIncrement,
+                                unique: true,
+                                extractKey: getKeyExtractor(keyPath)
+                            },
+                            indexes: arrayify(store.indexNames).map(function (indexName) { return store.index(indexName); })
+                                .map(function (index) {
+                                var name = index.name, unique = index.unique, multiEntry = index.multiEntry, keyPath = index.keyPath;
+                                var compound = isArray(keyPath);
+                                var result = {
+                                    name: name,
+                                    compound: compound,
+                                    keyPath: keyPath,
+                                    unique: unique,
+                                    multiEntry: multiEntry,
+                                    extractKey: getKeyExtractor(keyPath)
+                                };
+                                indexByKeyPath[getKeyPathAlias(keyPath)] = result;
+                                return result;
+                            }),
+                            getIndexByKeyPath: function (keyPath) { return indexByKeyPath[getKeyPathAlias(keyPath)]; }
+                        };
+                        indexByKeyPath[":id"] = result.primaryKey;
+                        if (keyPath != null) {
+                            indexByKeyPath[getKeyPathAlias(keyPath)] = result.primaryKey;
+                        }
+                        return result;
+                    })
+                },
+                hasGetAll: tables.length > 0 && ('getAll' in trans.objectStore(tables[0])) &&
+                    !(typeof navigator !== 'undefined' && /Safari/.test(navigator.userAgent) &&
+                        !/(Chrome\/|Edge\/)/.test(navigator.userAgent) &&
+                        [].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1] < 604)
+            };
+        }
+        function makeIDBKeyRange(range) {
+            if (range.type === 3 )
+                return null;
+            if (range.type === 4 )
+                throw new Error("Cannot convert never type to IDBKeyRange");
+            var lower = range.lower, upper = range.upper, lowerOpen = range.lowerOpen, upperOpen = range.upperOpen;
+            var idbRange = lower === undefined ?
+                upper === undefined ?
+                    null :
+                    IdbKeyRange.upperBound(upper, !!upperOpen) :
+                upper === undefined ?
+                    IdbKeyRange.lowerBound(lower, !!lowerOpen) :
+                    IdbKeyRange.bound(lower, upper, !!lowerOpen, !!upperOpen);
+            return idbRange;
+        }
+        function createDbCoreTable(tableSchema) {
+            var tableName = tableSchema.name;
+            function mutate(_a) {
+                var trans = _a.trans, type = _a.type, keys = _a.keys, values = _a.values, range = _a.range;
+                return new Promise(function (resolve, reject) {
+                    resolve = wrap(resolve);
+                    var store = trans.objectStore(tableName);
+                    var outbound = store.keyPath == null;
+                    var isAddOrPut = type === "put" || type === "add";
+                    if (!isAddOrPut && type !== 'delete' && type !== 'deleteRange')
+                        throw new Error("Invalid operation type: " + type);
+                    var length = (keys || values || { length: 1 }).length;
+                    if (keys && values && keys.length !== values.length) {
+                        throw new Error("Given keys array must have same length as given values array.");
+                    }
+                    if (length === 0)
+                        return resolve({ numFailures: 0, failures: {}, results: [], lastResult: undefined });
+                    var req;
+                    var reqs = [];
+                    var failures = [];
+                    var numFailures = 0;
+                    var errorHandler = function (event) {
+                        ++numFailures;
+                        preventDefault(event);
+                    };
+                    if (type === 'deleteRange') {
+                        if (range.type === 4 )
+                            return resolve({ numFailures: numFailures, failures: failures, results: [], lastResult: undefined });
+                        if (range.type === 3 )
+                            reqs.push(req = store.clear());
+                        else
+                            reqs.push(req = store.delete(makeIDBKeyRange(range)));
+                    }
+                    else {
+                        var _a = isAddOrPut ?
+                            outbound ?
+                                [values, keys] :
+                                [values, null] :
+                            [keys, null], args1 = _a[0], args2 = _a[1];
+                        if (isAddOrPut) {
+                            for (var i = 0; i < length; ++i) {
+                                reqs.push(req = (args2 && args2[i] !== undefined ?
+                                    store[type](args1[i], args2[i]) :
+                                    store[type](args1[i])));
+                                req.onerror = errorHandler;
+                            }
+                        }
+                        else {
+                            for (var i = 0; i < length; ++i) {
+                                reqs.push(req = store[type](args1[i]));
+                                req.onerror = errorHandler;
+                            }
+                        }
+                    }
+                    var done = function (event) {
+                        var lastResult = event.target.result;
+                        reqs.forEach(function (req, i) { return req.error != null && (failures[i] = req.error); });
+                        resolve({
+                            numFailures: numFailures,
+                            failures: failures,
+                            results: type === "delete" ? keys : reqs.map(function (req) { return req.result; }),
+                            lastResult: lastResult
+                        });
+                    };
+                    req.onerror = function (event) {
+                        errorHandler(event);
+                        done(event);
+                    };
+                    req.onsuccess = done;
+                });
+            }
+            function openCursor(_a) {
+                var trans = _a.trans, values = _a.values, query = _a.query, reverse = _a.reverse, unique = _a.unique;
+                return new Promise(function (resolve, reject) {
+                    resolve = wrap(resolve);
+                    var index = query.index, range = query.range;
+                    var store = trans.objectStore(tableName);
+                    var source = index.isPrimaryKey ?
+                        store :
+                        store.index(index.name);
+                    var direction = reverse ?
+                        unique ?
+                            "prevunique" :
+                            "prev" :
+                        unique ?
+                            "nextunique" :
+                            "next";
+                    var req = values || !('openKeyCursor' in source) ?
+                        source.openCursor(makeIDBKeyRange(range), direction) :
+                        source.openKeyCursor(makeIDBKeyRange(range), direction);
+                    req.onerror = eventRejectHandler(reject);
+                    req.onsuccess = wrap(function (ev) {
+                        var cursor = req.result;
+                        if (!cursor) {
+                            resolve(null);
+                            return;
+                        }
+                        cursor.___id = ++_id_counter;
+                        cursor.done = false;
+                        var _cursorContinue = cursor.continue.bind(cursor);
+                        var _cursorContinuePrimaryKey = cursor.continuePrimaryKey;
+                        if (_cursorContinuePrimaryKey)
+                            _cursorContinuePrimaryKey = _cursorContinuePrimaryKey.bind(cursor);
+                        var _cursorAdvance = cursor.advance.bind(cursor);
+                        var doThrowCursorIsNotStarted = function () { throw new Error("Cursor not started"); };
+                        var doThrowCursorIsStopped = function () { throw new Error("Cursor not stopped"); };
+                        cursor.trans = trans;
+                        cursor.stop = cursor.continue = cursor.continuePrimaryKey = cursor.advance = doThrowCursorIsNotStarted;
+                        cursor.fail = wrap(reject);
+                        cursor.next = function () {
+                            var _this = this;
+                            var gotOne = 1;
+                            return this.start(function () { return gotOne-- ? _this.continue() : _this.stop(); }).then(function () { return _this; });
+                        };
+                        cursor.start = function (callback) {
+                            var iterationPromise = new Promise(function (resolveIteration, rejectIteration) {
+                                resolveIteration = wrap(resolveIteration);
+                                req.onerror = eventRejectHandler(rejectIteration);
+                                cursor.fail = rejectIteration;
+                                cursor.stop = function (value) {
+                                    cursor.stop = cursor.continue = cursor.continuePrimaryKey = cursor.advance = doThrowCursorIsStopped;
+                                    resolveIteration(value);
+                                };
+                            });
+                            var guardedCallback = function () {
+                                if (req.result) {
+                                    try {
+                                        callback();
+                                    }
+                                    catch (err) {
+                                        cursor.fail(err);
+                                    }
+                                }
+                                else {
+                                    cursor.done = true;
+                                    cursor.start = function () { throw new Error("Cursor behind last entry"); };
+                                    cursor.stop();
+                                }
+                            };
+                            req.onsuccess = wrap(function (ev) {
+                                req.onsuccess = guardedCallback;
+                                guardedCallback();
+                            });
+                            cursor.continue = _cursorContinue;
+                            cursor.continuePrimaryKey = _cursorContinuePrimaryKey;
+                            cursor.advance = _cursorAdvance;
+                            guardedCallback();
+                            return iterationPromise;
+                        };
+                        resolve(cursor);
+                    }, reject);
+                });
+            }
+            function query(hasGetAll) {
+                return function (request) {
+                    return new Promise(function (resolve, reject) {
+                        resolve = wrap(resolve);
+                        var trans = request.trans, values = request.values, limit = request.limit, query = request.query;
+                        var nonInfinitLimit = limit === Infinity ? undefined : limit;
+                        var index = query.index, range = query.range;
+                        var store = trans.objectStore(tableName);
+                        var source = index.isPrimaryKey ? store : store.index(index.name);
+                        var idbKeyRange = makeIDBKeyRange(range);
+                        if (limit === 0)
+                            return resolve({ result: [] });
+                        if (hasGetAll) {
+                            var req = values ?
+                                source.getAll(idbKeyRange, nonInfinitLimit) :
+                                source.getAllKeys(idbKeyRange, nonInfinitLimit);
+                            req.onsuccess = function (event) { return resolve({ result: event.target.result }); };
+                            req.onerror = eventRejectHandler(reject);
+                        }
+                        else {
+                            var count_1 = 0;
+                            var req_1 = values || !('openKeyCursor' in source) ?
+                                source.openCursor(idbKeyRange) :
+                                source.openKeyCursor(idbKeyRange);
+                            var result_1 = [];
+                            req_1.onsuccess = function (event) {
+                                var cursor = req_1.result;
+                                if (!cursor)
+                                    return resolve({ result: result_1 });
+                                result_1.push(values ? cursor.value : cursor.primaryKey);
+                                if (++count_1 === limit)
+                                    return resolve({ result: result_1 });
+                                cursor.continue();
+                            };
+                            req_1.onerror = eventRejectHandler(reject);
+                        }
+                    });
+                };
+            }
+            return {
+                name: tableName,
+                schema: tableSchema,
+                mutate: mutate,
+                getMany: function (_a) {
+                    var trans = _a.trans, keys = _a.keys;
+                    return new Promise(function (resolve, reject) {
+                        resolve = wrap(resolve);
+                        var store = trans.objectStore(tableName);
+                        var length = keys.length;
+                        var result = new Array(length);
+                        var keyCount = 0;
+                        var callbackCount = 0;
+                        var req;
+                        var successHandler = function (event) {
+                            var req = event.target;
+                            if ((result[req._pos] = req.result) != null)
+                                ;
+                            if (++callbackCount === keyCount)
+                                resolve(result);
+                        };
+                        var errorHandler = eventRejectHandler(reject);
+                        for (var i = 0; i < length; ++i) {
+                            var key = keys[i];
+                            if (key != null) {
+                                req = store.get(keys[i]);
+                                req._pos = i;
+                                req.onsuccess = successHandler;
+                                req.onerror = errorHandler;
+                                ++keyCount;
+                            }
+                        }
+                        if (keyCount === 0)
+                            resolve(result);
+                    });
+                },
+                get: function (_a) {
+                    var trans = _a.trans, key = _a.key;
+                    return new Promise(function (resolve, reject) {
+                        resolve = wrap(resolve);
+                        var store = trans.objectStore(tableName);
+                        var req = store.get(key);
+                        req.onsuccess = function (event) { return resolve(event.target.result); };
+                        req.onerror = eventRejectHandler(reject);
+                    });
+                },
+                query: query(hasGetAll),
+                openCursor: openCursor,
+                count: function (_a) {
+                    var query = _a.query, trans = _a.trans;
+                    var index = query.index, range = query.range;
+                    return new Promise(function (resolve, reject) {
+                        var store = trans.objectStore(tableName);
+                        var source = index.isPrimaryKey ? store : store.index(index.name);
+                        var idbKeyRange = makeIDBKeyRange(range);
+                        var req = idbKeyRange ? source.count(idbKeyRange) : source.count();
+                        req.onsuccess = wrap(function (ev) { return resolve(ev.target.result); });
+                        req.onerror = eventRejectHandler(reject);
+                    });
+                }
+            };
+        }
+        var _a = extractSchema(db, tmpTrans), schema = _a.schema, hasGetAll = _a.hasGetAll;
+        var tables = schema.tables.map(function (tableSchema) { return createDbCoreTable(tableSchema); });
+        var tableMap = {};
+        tables.forEach(function (table) { return tableMap[table.name] = table; });
+        return {
+            stack: "dbcore",
+            transaction: db.transaction.bind(db),
+            table: function (name) {
+                var result = tableMap[name];
+                if (!result)
+                    throw new Error("Table '" + name + "' not found");
+                return tableMap[name];
+            },
+            MIN_KEY: -Infinity,
+            MAX_KEY: getMaxKey(IdbKeyRange),
+            schema: schema
+        };
+    }
+
+    function createMiddlewareStack(stackImpl, middlewares) {
+        return middlewares.reduce(function (down, _a) {
+            var create = _a.create;
+            return (__assign(__assign({}, down), create(down)));
+        }, stackImpl);
+    }
+    function createMiddlewareStacks(middlewares, idbdb, _a, tmpTrans) {
+        var IDBKeyRange = _a.IDBKeyRange; _a.indexedDB;
+        var dbcore = createMiddlewareStack(createDBCore(idbdb, IDBKeyRange, tmpTrans), middlewares.dbcore);
+        return {
+            dbcore: dbcore
+        };
+    }
+    function generateMiddlewareStacks(_a, tmpTrans) {
+        var db = _a._novip;
+        var idbdb = tmpTrans.db;
+        var stacks = createMiddlewareStacks(db._middlewares, idbdb, db._deps, tmpTrans);
+        db.core = stacks.dbcore;
+        db.tables.forEach(function (table) {
+            var tableName = table.name;
+            if (db.core.schema.tables.some(function (tbl) { return tbl.name === tableName; })) {
+                table.core = db.core.table(tableName);
+                if (db[tableName] instanceof db.Table) {
+                    db[tableName].core = table.core;
+                }
+            }
+        });
+    }
+
+    function setApiOnPlace(_a, objs, tableNames, dbschema) {
+        var db = _a._novip;
+        tableNames.forEach(function (tableName) {
+            var schema = dbschema[tableName];
+            objs.forEach(function (obj) {
+                var propDesc = getPropertyDescriptor(obj, tableName);
+                if (!propDesc || ("value" in propDesc && propDesc.value === undefined)) {
+                    if (obj === db.Transaction.prototype || obj instanceof db.Transaction) {
+                        setProp(obj, tableName, {
+                            get: function () { return this.table(tableName); },
+                            set: function (value) {
+                                defineProperty(this, tableName, { value: value, writable: true, configurable: true, enumerable: true });
+                            }
+                        });
+                    }
+                    else {
+                        obj[tableName] = new db.Table(tableName, schema);
+                    }
+                }
+            });
+        });
+    }
+    function removeTablesApi(_a, objs) {
+        var db = _a._novip;
+        objs.forEach(function (obj) {
+            for (var key in obj) {
+                if (obj[key] instanceof db.Table)
+                    delete obj[key];
+            }
+        });
+    }
+    function lowerVersionFirst(a, b) {
+        return a._cfg.version - b._cfg.version;
+    }
+    function runUpgraders(db, oldVersion, idbUpgradeTrans, reject) {
+        var globalSchema = db._dbSchema;
+        var trans = db._createTransaction('readwrite', db._storeNames, globalSchema);
+        trans.create(idbUpgradeTrans);
+        trans._completion.catch(reject);
+        var rejectTransaction = trans._reject.bind(trans);
+        var transless = PSD.transless || PSD;
+        newScope(function () {
+            PSD.trans = trans;
+            PSD.transless = transless;
+            if (oldVersion === 0) {
+                keys(globalSchema).forEach(function (tableName) {
+                    createTable(idbUpgradeTrans, tableName, globalSchema[tableName].primKey, globalSchema[tableName].indexes);
+                });
+                generateMiddlewareStacks(db, idbUpgradeTrans);
+                DexiePromise.follow(function () { return db.on.populate.fire(trans); }).catch(rejectTransaction);
+            }
+            else
+                updateTablesAndIndexes(db, oldVersion, trans, idbUpgradeTrans).catch(rejectTransaction);
+        });
+    }
+    function updateTablesAndIndexes(_a, oldVersion, trans, idbUpgradeTrans) {
+        var db = _a._novip;
+        var queue = [];
+        var versions = db._versions;
+        var globalSchema = db._dbSchema = buildGlobalSchema(db, db.idbdb, idbUpgradeTrans);
+        var anyContentUpgraderHasRun = false;
+        var versToRun = versions.filter(function (v) { return v._cfg.version >= oldVersion; });
+        versToRun.forEach(function (version) {
+            queue.push(function () {
+                var oldSchema = globalSchema;
+                var newSchema = version._cfg.dbschema;
+                adjustToExistingIndexNames(db, oldSchema, idbUpgradeTrans);
+                adjustToExistingIndexNames(db, newSchema, idbUpgradeTrans);
+                globalSchema = db._dbSchema = newSchema;
+                var diff = getSchemaDiff(oldSchema, newSchema);
+                diff.add.forEach(function (tuple) {
+                    createTable(idbUpgradeTrans, tuple[0], tuple[1].primKey, tuple[1].indexes);
+                });
+                diff.change.forEach(function (change) {
+                    if (change.recreate) {
+                        throw new exceptions.Upgrade("Not yet support for changing primary key");
+                    }
+                    else {
+                        var store_1 = idbUpgradeTrans.objectStore(change.name);
+                        change.add.forEach(function (idx) { return addIndex(store_1, idx); });
+                        change.change.forEach(function (idx) {
+                            store_1.deleteIndex(idx.name);
+                            addIndex(store_1, idx);
+                        });
+                        change.del.forEach(function (idxName) { return store_1.deleteIndex(idxName); });
+                    }
+                });
+                var contentUpgrade = version._cfg.contentUpgrade;
+                if (contentUpgrade && version._cfg.version > oldVersion) {
+                    generateMiddlewareStacks(db, idbUpgradeTrans);
+                    trans._memoizedTables = {};
+                    anyContentUpgraderHasRun = true;
+                    var upgradeSchema_1 = shallowClone(newSchema);
+                    diff.del.forEach(function (table) {
+                        upgradeSchema_1[table] = oldSchema[table];
+                    });
+                    removeTablesApi(db, [db.Transaction.prototype]);
+                    setApiOnPlace(db, [db.Transaction.prototype], keys(upgradeSchema_1), upgradeSchema_1);
+                    trans.schema = upgradeSchema_1;
+                    var contentUpgradeIsAsync_1 = isAsyncFunction(contentUpgrade);
+                    if (contentUpgradeIsAsync_1) {
+                        incrementExpectedAwaits();
+                    }
+                    var returnValue_1;
+                    var promiseFollowed = DexiePromise.follow(function () {
+                        returnValue_1 = contentUpgrade(trans);
+                        if (returnValue_1) {
+                            if (contentUpgradeIsAsync_1) {
+                                var decrementor = decrementExpectedAwaits.bind(null, null);
+                                returnValue_1.then(decrementor, decrementor);
+                            }
+                        }
+                    });
+                    return (returnValue_1 && typeof returnValue_1.then === 'function' ?
+                        DexiePromise.resolve(returnValue_1) : promiseFollowed.then(function () { return returnValue_1; }));
+                }
+            });
+            queue.push(function (idbtrans) {
+                if (!anyContentUpgraderHasRun || !hasIEDeleteObjectStoreBug) {
+                    var newSchema = version._cfg.dbschema;
+                    deleteRemovedTables(newSchema, idbtrans);
+                }
+                removeTablesApi(db, [db.Transaction.prototype]);
+                setApiOnPlace(db, [db.Transaction.prototype], db._storeNames, db._dbSchema);
+                trans.schema = db._dbSchema;
+            });
+        });
+        function runQueue() {
+            return queue.length ? DexiePromise.resolve(queue.shift()(trans.idbtrans)).then(runQueue) :
+                DexiePromise.resolve();
+        }
+        return runQueue().then(function () {
+            createMissingTables(globalSchema, idbUpgradeTrans);
+        });
+    }
+    function getSchemaDiff(oldSchema, newSchema) {
+        var diff = {
+            del: [],
+            add: [],
+            change: []
+        };
+        var table;
+        for (table in oldSchema) {
+            if (!newSchema[table])
+                diff.del.push(table);
+        }
+        for (table in newSchema) {
+            var oldDef = oldSchema[table], newDef = newSchema[table];
+            if (!oldDef) {
+                diff.add.push([table, newDef]);
+            }
+            else {
+                var change = {
+                    name: table,
+                    def: newDef,
+                    recreate: false,
+                    del: [],
+                    add: [],
+                    change: []
+                };
+                if ((
+                '' + (oldDef.primKey.keyPath || '')) !== ('' + (newDef.primKey.keyPath || '')) ||
+                    (oldDef.primKey.auto !== newDef.primKey.auto && !isIEOrEdge))
+                 {
+                    change.recreate = true;
+                    diff.change.push(change);
+                }
+                else {
+                    var oldIndexes = oldDef.idxByName;
+                    var newIndexes = newDef.idxByName;
+                    var idxName = void 0;
+                    for (idxName in oldIndexes) {
+                        if (!newIndexes[idxName])
+                            change.del.push(idxName);
+                    }
+                    for (idxName in newIndexes) {
+                        var oldIdx = oldIndexes[idxName], newIdx = newIndexes[idxName];
+                        if (!oldIdx)
+                            change.add.push(newIdx);
+                        else if (oldIdx.src !== newIdx.src)
+                            change.change.push(newIdx);
+                    }
+                    if (change.del.length > 0 || change.add.length > 0 || change.change.length > 0) {
+                        diff.change.push(change);
+                    }
+                }
+            }
+        }
+        return diff;
+    }
+    function createTable(idbtrans, tableName, primKey, indexes) {
+        var store = idbtrans.db.createObjectStore(tableName, primKey.keyPath ?
+            { keyPath: primKey.keyPath, autoIncrement: primKey.auto } :
+            { autoIncrement: primKey.auto });
+        indexes.forEach(function (idx) { return addIndex(store, idx); });
+        return store;
+    }
+    function createMissingTables(newSchema, idbtrans) {
+        keys(newSchema).forEach(function (tableName) {
+            if (!idbtrans.db.objectStoreNames.contains(tableName)) {
+                createTable(idbtrans, tableName, newSchema[tableName].primKey, newSchema[tableName].indexes);
+            }
+        });
+    }
+    function deleteRemovedTables(newSchema, idbtrans) {
+        [].slice.call(idbtrans.db.objectStoreNames).forEach(function (storeName) {
+            return newSchema[storeName] == null && idbtrans.db.deleteObjectStore(storeName);
+        });
+    }
+    function addIndex(store, idx) {
+        store.createIndex(idx.name, idx.keyPath, { unique: idx.unique, multiEntry: idx.multi });
+    }
+    function buildGlobalSchema(db, idbdb, tmpTrans) {
+        var globalSchema = {};
+        var dbStoreNames = slice(idbdb.objectStoreNames, 0);
+        dbStoreNames.forEach(function (storeName) {
+            var store = tmpTrans.objectStore(storeName);
+            var keyPath = store.keyPath;
+            var primKey = createIndexSpec(nameFromKeyPath(keyPath), keyPath || "", false, false, !!store.autoIncrement, keyPath && typeof keyPath !== "string", true);
+            var indexes = [];
+            for (var j = 0; j < store.indexNames.length; ++j) {
+                var idbindex = store.index(store.indexNames[j]);
+                keyPath = idbindex.keyPath;
+                var index = createIndexSpec(idbindex.name, keyPath, !!idbindex.unique, !!idbindex.multiEntry, false, keyPath && typeof keyPath !== "string", false);
+                indexes.push(index);
+            }
+            globalSchema[storeName] = createTableSchema(storeName, primKey, indexes);
+        });
+        return globalSchema;
+    }
+    function readGlobalSchema(_a, idbdb, tmpTrans) {
+        var db = _a._novip;
+        db.verno = idbdb.version / 10;
+        var globalSchema = db._dbSchema = buildGlobalSchema(db, idbdb, tmpTrans);
+        db._storeNames = slice(idbdb.objectStoreNames, 0);
+        setApiOnPlace(db, [db._allTables], keys(globalSchema), globalSchema);
+    }
+    function verifyInstalledSchema(db, tmpTrans) {
+        var installedSchema = buildGlobalSchema(db, db.idbdb, tmpTrans);
+        var diff = getSchemaDiff(installedSchema, db._dbSchema);
+        return !(diff.add.length || diff.change.some(function (ch) { return ch.add.length || ch.change.length; }));
+    }
+    function adjustToExistingIndexNames(_a, schema, idbtrans) {
+        var db = _a._novip;
+        var storeNames = idbtrans.db.objectStoreNames;
+        for (var i = 0; i < storeNames.length; ++i) {
+            var storeName = storeNames[i];
+            var store = idbtrans.objectStore(storeName);
+            db._hasGetAll = 'getAll' in store;
+            for (var j = 0; j < store.indexNames.length; ++j) {
+                var indexName = store.indexNames[j];
+                var keyPath = store.index(indexName).keyPath;
+                var dexieName = typeof keyPath === 'string' ? keyPath : "[" + slice(keyPath).join('+') + "]";
+                if (schema[storeName]) {
+                    var indexSpec = schema[storeName].idxByName[dexieName];
+                    if (indexSpec) {
+                        indexSpec.name = indexName;
+                        delete schema[storeName].idxByName[dexieName];
+                        schema[storeName].idxByName[indexName] = indexSpec;
+                    }
+                }
+            }
+        }
+        if (typeof navigator !== 'undefined' && /Safari/.test(navigator.userAgent) &&
+            !/(Chrome\/|Edge\/)/.test(navigator.userAgent) &&
+            _global.WorkerGlobalScope && _global instanceof _global.WorkerGlobalScope &&
+            [].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1] < 604) {
+            db._hasGetAll = false;
+        }
+    }
+    function parseIndexSyntax(primKeyAndIndexes) {
+        return primKeyAndIndexes.split(',').map(function (index, indexNum) {
+            index = index.trim();
+            var name = index.replace(/([&*]|\+\+)/g, "");
+            var keyPath = /^\[/.test(name) ? name.match(/^\[(.*)\]$/)[1].split('+') : name;
+            return createIndexSpec(name, keyPath || null, /\&/.test(index), /\*/.test(index), /\+\+/.test(index), isArray(keyPath), indexNum === 0);
+        });
+    }
+
+    var Version =  (function () {
+        function Version() {
+        }
+        Version.prototype._parseStoresSpec = function (stores, outSchema) {
+            keys(stores).forEach(function (tableName) {
+                if (stores[tableName] !== null) {
+                    var indexes = parseIndexSyntax(stores[tableName]);
+                    var primKey = indexes.shift();
+                    if (primKey.multi)
+                        throw new exceptions.Schema("Primary key cannot be multi-valued");
+                    indexes.forEach(function (idx) {
+                        if (idx.auto)
+                            throw new exceptions.Schema("Only primary key can be marked as autoIncrement (++)");
+                        if (!idx.keyPath)
+                            throw new exceptions.Schema("Index must have a name and cannot be an empty string");
+                    });
+                    outSchema[tableName] = createTableSchema(tableName, primKey, indexes);
+                }
+            });
+        };
+        Version.prototype.stores = function (stores) {
+            var db = this.db;
+            this._cfg.storesSource = this._cfg.storesSource ?
+                extend(this._cfg.storesSource, stores) :
+                stores;
+            var versions = db._versions;
+            var storesSpec = {};
+            var dbschema = {};
+            versions.forEach(function (version) {
+                extend(storesSpec, version._cfg.storesSource);
+                dbschema = (version._cfg.dbschema = {});
+                version._parseStoresSpec(storesSpec, dbschema);
+            });
+            db._dbSchema = dbschema;
+            removeTablesApi(db, [db._allTables, db, db.Transaction.prototype]);
+            setApiOnPlace(db, [db._allTables, db, db.Transaction.prototype, this._cfg.tables], keys(dbschema), dbschema);
+            db._storeNames = keys(dbschema);
+            return this;
+        };
+        Version.prototype.upgrade = function (upgradeFunction) {
+            this._cfg.contentUpgrade = promisableChain(this._cfg.contentUpgrade || nop, upgradeFunction);
+            return this;
+        };
+        return Version;
+    }());
+
+    function createVersionConstructor(db) {
+        return makeClassConstructor(Version.prototype, function Version(versionNumber) {
+            this.db = db;
+            this._cfg = {
+                version: versionNumber,
+                storesSource: null,
+                dbschema: {},
+                tables: {},
+                contentUpgrade: null
+            };
+        });
+    }
+
+    function getDbNamesTable(indexedDB, IDBKeyRange) {
+        var dbNamesDB = indexedDB["_dbNamesDB"];
+        if (!dbNamesDB) {
+            dbNamesDB = indexedDB["_dbNamesDB"] = new Dexie$1(DBNAMES_DB, {
+                addons: [],
+                indexedDB: indexedDB,
+                IDBKeyRange: IDBKeyRange,
+            });
+            dbNamesDB.version(1).stores({ dbnames: "name" });
+        }
+        return dbNamesDB.table("dbnames");
+    }
+    function hasDatabasesNative(indexedDB) {
+        return indexedDB && typeof indexedDB.databases === "function";
+    }
+    function getDatabaseNames(_a) {
+        var indexedDB = _a.indexedDB, IDBKeyRange = _a.IDBKeyRange;
+        return hasDatabasesNative(indexedDB)
+            ? Promise.resolve(indexedDB.databases()).then(function (infos) {
+                return infos
+                    .map(function (info) { return info.name; })
+                    .filter(function (name) { return name !== DBNAMES_DB; });
+            })
+            : getDbNamesTable(indexedDB, IDBKeyRange).toCollection().primaryKeys();
+    }
+    function _onDatabaseCreated(_a, name) {
+        var indexedDB = _a.indexedDB, IDBKeyRange = _a.IDBKeyRange;
+        !hasDatabasesNative(indexedDB) &&
+            name !== DBNAMES_DB &&
+            getDbNamesTable(indexedDB, IDBKeyRange).put({ name: name }).catch(nop);
+    }
+    function _onDatabaseDeleted(_a, name) {
+        var indexedDB = _a.indexedDB, IDBKeyRange = _a.IDBKeyRange;
+        !hasDatabasesNative(indexedDB) &&
+            name !== DBNAMES_DB &&
+            getDbNamesTable(indexedDB, IDBKeyRange).delete(name).catch(nop);
+    }
+
+    function vip(fn) {
+        return newScope(function () {
+            PSD.letThrough = true;
+            return fn();
+        });
+    }
+
+    function idbReady() {
+        var isSafari = !navigator.userAgentData &&
+            /Safari\//.test(navigator.userAgent) &&
+            !/Chrom(e|ium)\//.test(navigator.userAgent);
+        if (!isSafari || !indexedDB.databases)
+            return Promise.resolve();
+        var intervalId;
+        return new Promise(function (resolve) {
+            var tryIdb = function () { return indexedDB.databases().finally(resolve); };
+            intervalId = setInterval(tryIdb, 100);
+            tryIdb();
+        }).finally(function () { return clearInterval(intervalId); });
+    }
+
+    function dexieOpen(db) {
+        var state = db._state;
+        var indexedDB = db._deps.indexedDB;
+        if (state.isBeingOpened || db.idbdb)
+            return state.dbReadyPromise.then(function () { return state.dbOpenError ?
+                rejection(state.dbOpenError) :
+                db; });
+        debug && (state.openCanceller._stackHolder = getErrorWithStack());
+        state.isBeingOpened = true;
+        state.dbOpenError = null;
+        state.openComplete = false;
+        var openCanceller = state.openCanceller;
+        function throwIfCancelled() {
+            if (state.openCanceller !== openCanceller)
+                throw new exceptions.DatabaseClosed('db.open() was cancelled');
+        }
+        var resolveDbReady = state.dbReadyResolve,
+        upgradeTransaction = null, wasCreated = false;
+        var tryOpenDB = function () { return new DexiePromise(function (resolve, reject) {
+            throwIfCancelled();
+            if (!indexedDB)
+                throw new exceptions.MissingAPI();
+            var dbName = db.name;
+            var req = state.autoSchema ?
+                indexedDB.open(dbName) :
+                indexedDB.open(dbName, Math.round(db.verno * 10));
+            if (!req)
+                throw new exceptions.MissingAPI();
+            req.onerror = eventRejectHandler(reject);
+            req.onblocked = wrap(db._fireOnBlocked);
+            req.onupgradeneeded = wrap(function (e) {
+                upgradeTransaction = req.transaction;
+                if (state.autoSchema && !db._options.allowEmptyDB) {
+                    req.onerror = preventDefault;
+                    upgradeTransaction.abort();
+                    req.result.close();
+                    var delreq = indexedDB.deleteDatabase(dbName);
+                    delreq.onsuccess = delreq.onerror = wrap(function () {
+                        reject(new exceptions.NoSuchDatabase("Database " + dbName + " doesnt exist"));
+                    });
+                }
+                else {
+                    upgradeTransaction.onerror = eventRejectHandler(reject);
+                    var oldVer = e.oldVersion > Math.pow(2, 62) ? 0 : e.oldVersion;
+                    wasCreated = oldVer < 1;
+                    db._novip.idbdb = req.result;
+                    runUpgraders(db, oldVer / 10, upgradeTransaction, reject);
+                }
+            }, reject);
+            req.onsuccess = wrap(function () {
+                upgradeTransaction = null;
+                var idbdb = db._novip.idbdb = req.result;
+                var objectStoreNames = slice(idbdb.objectStoreNames);
+                if (objectStoreNames.length > 0)
+                    try {
+                        var tmpTrans = idbdb.transaction(safariMultiStoreFix(objectStoreNames), 'readonly');
+                        if (state.autoSchema)
+                            readGlobalSchema(db, idbdb, tmpTrans);
+                        else {
+                            adjustToExistingIndexNames(db, db._dbSchema, tmpTrans);
+                            if (!verifyInstalledSchema(db, tmpTrans)) {
+                                console.warn("Dexie SchemaDiff: Schema was extended without increasing the number passed to db.version(). Some queries may fail.");
+                            }
+                        }
+                        generateMiddlewareStacks(db, tmpTrans);
+                    }
+                    catch (e) {
+                    }
+                connections.push(db);
+                idbdb.onversionchange = wrap(function (ev) {
+                    state.vcFired = true;
+                    db.on("versionchange").fire(ev);
+                });
+                idbdb.onclose = wrap(function (ev) {
+                    db.on("close").fire(ev);
+                });
+                if (wasCreated)
+                    _onDatabaseCreated(db._deps, dbName);
+                resolve();
+            }, reject);
+        }).catch(function (err) {
+            if (err && err.name === 'UnknownError' && state.PR1398_maxLoop > 0) {
+                state.PR1398_maxLoop--;
+                console.warn('Dexie: Workaround for Chrome UnknownError on open()');
+                return tryOpenDB();
+            }
+            else {
+                return DexiePromise.reject(err);
+            }
+        }); };
+        return DexiePromise.race([
+            openCanceller,
+            (typeof navigator === 'undefined' ? DexiePromise.resolve() : idbReady()).then(tryOpenDB)
+        ]).then(function () {
+            throwIfCancelled();
+            state.onReadyBeingFired = [];
+            return DexiePromise.resolve(vip(function () { return db.on.ready.fire(db.vip); })).then(function fireRemainders() {
+                if (state.onReadyBeingFired.length > 0) {
+                    var remainders_1 = state.onReadyBeingFired.reduce(promisableChain, nop);
+                    state.onReadyBeingFired = [];
+                    return DexiePromise.resolve(vip(function () { return remainders_1(db.vip); })).then(fireRemainders);
+                }
+            });
+        }).finally(function () {
+            state.onReadyBeingFired = null;
+            state.isBeingOpened = false;
+        }).then(function () {
+            return db;
+        }).catch(function (err) {
+            state.dbOpenError = err;
+            try {
+                upgradeTransaction && upgradeTransaction.abort();
+            }
+            catch (_a) { }
+            if (openCanceller === state.openCanceller) {
+                db._close();
+            }
+            return rejection(err);
+        }).finally(function () {
+            state.openComplete = true;
+            resolveDbReady();
+        });
+    }
+
+    function awaitIterator(iterator) {
+        var callNext = function (result) { return iterator.next(result); }, doThrow = function (error) { return iterator.throw(error); }, onSuccess = step(callNext), onError = step(doThrow);
+        function step(getNext) {
+            return function (val) {
+                var next = getNext(val), value = next.value;
+                return next.done ? value :
+                    (!value || typeof value.then !== 'function' ?
+                        isArray(value) ? Promise.all(value).then(onSuccess, onError) : onSuccess(value) :
+                        value.then(onSuccess, onError));
+            };
+        }
+        return step(callNext)();
+    }
+
+    function extractTransactionArgs(mode, _tableArgs_, scopeFunc) {
+        var i = arguments.length;
+        if (i < 2)
+            throw new exceptions.InvalidArgument("Too few arguments");
+        var args = new Array(i - 1);
+        while (--i)
+            args[i - 1] = arguments[i];
+        scopeFunc = args.pop();
+        var tables = flatten(args);
+        return [mode, tables, scopeFunc];
+    }
+    function enterTransactionScope(db, mode, storeNames, parentTransaction, scopeFunc) {
+        return DexiePromise.resolve().then(function () {
+            var transless = PSD.transless || PSD;
+            var trans = db._createTransaction(mode, storeNames, db._dbSchema, parentTransaction);
+            var zoneProps = {
+                trans: trans,
+                transless: transless
+            };
+            if (parentTransaction) {
+                trans.idbtrans = parentTransaction.idbtrans;
+            }
+            else {
+                try {
+                    trans.create();
+                    db._state.PR1398_maxLoop = 3;
+                }
+                catch (ex) {
+                    if (ex.name === errnames.InvalidState && db.isOpen() && --db._state.PR1398_maxLoop > 0) {
+                        console.warn('Dexie: Need to reopen db');
+                        db._close();
+                        return db.open().then(function () { return enterTransactionScope(db, mode, storeNames, null, scopeFunc); });
+                    }
+                    return rejection(ex);
+                }
+            }
+            var scopeFuncIsAsync = isAsyncFunction(scopeFunc);
+            if (scopeFuncIsAsync) {
+                incrementExpectedAwaits();
+            }
+            var returnValue;
+            var promiseFollowed = DexiePromise.follow(function () {
+                returnValue = scopeFunc.call(trans, trans);
+                if (returnValue) {
+                    if (scopeFuncIsAsync) {
+                        var decrementor = decrementExpectedAwaits.bind(null, null);
+                        returnValue.then(decrementor, decrementor);
+                    }
+                    else if (typeof returnValue.next === 'function' && typeof returnValue.throw === 'function') {
+                        returnValue = awaitIterator(returnValue);
+                    }
+                }
+            }, zoneProps);
+            return (returnValue && typeof returnValue.then === 'function' ?
+                DexiePromise.resolve(returnValue).then(function (x) { return trans.active ?
+                    x
+                    : rejection(new exceptions.PrematureCommit("Transaction committed too early. See http://bit.ly/2kdckMn")); })
+                : promiseFollowed.then(function () { return returnValue; })).then(function (x) {
+                if (parentTransaction)
+                    trans._resolve();
+                return trans._completion.then(function () { return x; });
+            }).catch(function (e) {
+                trans._reject(e);
+                return rejection(e);
+            });
+        });
+    }
+
+    function pad(a, value, count) {
+        var result = isArray(a) ? a.slice() : [a];
+        for (var i = 0; i < count; ++i)
+            result.push(value);
+        return result;
+    }
+    function createVirtualIndexMiddleware(down) {
+        return __assign(__assign({}, down), { table: function (tableName) {
+                var table = down.table(tableName);
+                var schema = table.schema;
+                var indexLookup = {};
+                var allVirtualIndexes = [];
+                function addVirtualIndexes(keyPath, keyTail, lowLevelIndex) {
+                    var keyPathAlias = getKeyPathAlias(keyPath);
+                    var indexList = (indexLookup[keyPathAlias] = indexLookup[keyPathAlias] || []);
+                    var keyLength = keyPath == null ? 0 : typeof keyPath === 'string' ? 1 : keyPath.length;
+                    var isVirtual = keyTail > 0;
+                    var virtualIndex = __assign(__assign({}, lowLevelIndex), { isVirtual: isVirtual, keyTail: keyTail, keyLength: keyLength, extractKey: getKeyExtractor(keyPath), unique: !isVirtual && lowLevelIndex.unique });
+                    indexList.push(virtualIndex);
+                    if (!virtualIndex.isPrimaryKey) {
+                        allVirtualIndexes.push(virtualIndex);
+                    }
+                    if (keyLength > 1) {
+                        var virtualKeyPath = keyLength === 2 ?
+                            keyPath[0] :
+                            keyPath.slice(0, keyLength - 1);
+                        addVirtualIndexes(virtualKeyPath, keyTail + 1, lowLevelIndex);
+                    }
+                    indexList.sort(function (a, b) { return a.keyTail - b.keyTail; });
+                    return virtualIndex;
+                }
+                var primaryKey = addVirtualIndexes(schema.primaryKey.keyPath, 0, schema.primaryKey);
+                indexLookup[":id"] = [primaryKey];
+                for (var _i = 0, _a = schema.indexes; _i < _a.length; _i++) {
+                    var index = _a[_i];
+                    addVirtualIndexes(index.keyPath, 0, index);
+                }
+                function findBestIndex(keyPath) {
+                    var result = indexLookup[getKeyPathAlias(keyPath)];
+                    return result && result[0];
+                }
+                function translateRange(range, keyTail) {
+                    return {
+                        type: range.type === 1  ?
+                            2  :
+                            range.type,
+                        lower: pad(range.lower, range.lowerOpen ? down.MAX_KEY : down.MIN_KEY, keyTail),
+                        lowerOpen: true,
+                        upper: pad(range.upper, range.upperOpen ? down.MIN_KEY : down.MAX_KEY, keyTail),
+                        upperOpen: true
+                    };
+                }
+                function translateRequest(req) {
+                    var index = req.query.index;
+                    return index.isVirtual ? __assign(__assign({}, req), { query: {
+                            index: index,
+                            range: translateRange(req.query.range, index.keyTail)
+                        } }) : req;
+                }
+                var result = __assign(__assign({}, table), { schema: __assign(__assign({}, schema), { primaryKey: primaryKey, indexes: allVirtualIndexes, getIndexByKeyPath: findBestIndex }), count: function (req) {
+                        return table.count(translateRequest(req));
+                    }, query: function (req) {
+                        return table.query(translateRequest(req));
+                    }, openCursor: function (req) {
+                        var _a = req.query.index, keyTail = _a.keyTail, isVirtual = _a.isVirtual, keyLength = _a.keyLength;
+                        if (!isVirtual)
+                            return table.openCursor(req);
+                        function createVirtualCursor(cursor) {
+                            function _continue(key) {
+                                key != null ?
+                                    cursor.continue(pad(key, req.reverse ? down.MAX_KEY : down.MIN_KEY, keyTail)) :
+                                    req.unique ?
+                                        cursor.continue(cursor.key.slice(0, keyLength)
+                                            .concat(req.reverse
+                                            ? down.MIN_KEY
+                                            : down.MAX_KEY, keyTail)) :
+                                        cursor.continue();
+                            }
+                            var virtualCursor = Object.create(cursor, {
+                                continue: { value: _continue },
+                                continuePrimaryKey: {
+                                    value: function (key, primaryKey) {
+                                        cursor.continuePrimaryKey(pad(key, down.MAX_KEY, keyTail), primaryKey);
+                                    }
+                                },
+                                primaryKey: {
+                                    get: function () {
+                                        return cursor.primaryKey;
+                                    }
+                                },
+                                key: {
+                                    get: function () {
+                                        var key = cursor.key;
+                                        return keyLength === 1 ?
+                                            key[0] :
+                                            key.slice(0, keyLength);
+                                    }
+                                },
+                                value: {
+                                    get: function () {
+                                        return cursor.value;
+                                    }
+                                }
+                            });
+                            return virtualCursor;
+                        }
+                        return table.openCursor(translateRequest(req))
+                            .then(function (cursor) { return cursor && createVirtualCursor(cursor); });
+                    } });
+                return result;
+            } });
+    }
+    var virtualIndexMiddleware = {
+        stack: "dbcore",
+        name: "VirtualIndexMiddleware",
+        level: 1,
+        create: createVirtualIndexMiddleware
+    };
+
+    function getObjectDiff(a, b, rv, prfx) {
+        rv = rv || {};
+        prfx = prfx || '';
+        keys(a).forEach(function (prop) {
+            if (!hasOwn(b, prop)) {
+                rv[prfx + prop] = undefined;
+            }
+            else {
+                var ap = a[prop], bp = b[prop];
+                if (typeof ap === 'object' && typeof bp === 'object' && ap && bp) {
+                    var apTypeName = toStringTag(ap);
+                    var bpTypeName = toStringTag(bp);
+                    if (apTypeName !== bpTypeName) {
+                        rv[prfx + prop] = b[prop];
+                    }
+                    else if (apTypeName === 'Object') {
+                        getObjectDiff(ap, bp, rv, prfx + prop + '.');
+                    }
+                    else if (ap !== bp) {
+                        rv[prfx + prop] = b[prop];
+                    }
+                }
+                else if (ap !== bp)
+                    rv[prfx + prop] = b[prop];
+            }
+        });
+        keys(b).forEach(function (prop) {
+            if (!hasOwn(a, prop)) {
+                rv[prfx + prop] = b[prop];
+            }
+        });
+        return rv;
+    }
+
+    function getEffectiveKeys(primaryKey, req) {
+        if (req.type === 'delete')
+            return req.keys;
+        return req.keys || req.values.map(primaryKey.extractKey);
+    }
+
+    var hooksMiddleware = {
+        stack: "dbcore",
+        name: "HooksMiddleware",
+        level: 2,
+        create: function (downCore) { return (__assign(__assign({}, downCore), { table: function (tableName) {
+                var downTable = downCore.table(tableName);
+                var primaryKey = downTable.schema.primaryKey;
+                var tableMiddleware = __assign(__assign({}, downTable), { mutate: function (req) {
+                        var dxTrans = PSD.trans;
+                        var _a = dxTrans.table(tableName).hook, deleting = _a.deleting, creating = _a.creating, updating = _a.updating;
+                        switch (req.type) {
+                            case 'add':
+                                if (creating.fire === nop)
+                                    break;
+                                return dxTrans._promise('readwrite', function () { return addPutOrDelete(req); }, true);
+                            case 'put':
+                                if (creating.fire === nop && updating.fire === nop)
+                                    break;
+                                return dxTrans._promise('readwrite', function () { return addPutOrDelete(req); }, true);
+                            case 'delete':
+                                if (deleting.fire === nop)
+                                    break;
+                                return dxTrans._promise('readwrite', function () { return addPutOrDelete(req); }, true);
+                            case 'deleteRange':
+                                if (deleting.fire === nop)
+                                    break;
+                                return dxTrans._promise('readwrite', function () { return deleteRange(req); }, true);
+                        }
+                        return downTable.mutate(req);
+                        function addPutOrDelete(req) {
+                            var dxTrans = PSD.trans;
+                            var keys = req.keys || getEffectiveKeys(primaryKey, req);
+                            if (!keys)
+                                throw new Error("Keys missing");
+                            req = req.type === 'add' || req.type === 'put' ? __assign(__assign({}, req), { keys: keys }) : __assign({}, req);
+                            if (req.type !== 'delete')
+                                req.values = __spreadArray([], req.values, true);
+                            if (req.keys)
+                                req.keys = __spreadArray([], req.keys, true);
+                            return getExistingValues(downTable, req, keys).then(function (existingValues) {
+                                var contexts = keys.map(function (key, i) {
+                                    var existingValue = existingValues[i];
+                                    var ctx = { onerror: null, onsuccess: null };
+                                    if (req.type === 'delete') {
+                                        deleting.fire.call(ctx, key, existingValue, dxTrans);
+                                    }
+                                    else if (req.type === 'add' || existingValue === undefined) {
+                                        var generatedPrimaryKey = creating.fire.call(ctx, key, req.values[i], dxTrans);
+                                        if (key == null && generatedPrimaryKey != null) {
+                                            key = generatedPrimaryKey;
+                                            req.keys[i] = key;
+                                            if (!primaryKey.outbound) {
+                                                setByKeyPath(req.values[i], primaryKey.keyPath, key);
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        var objectDiff = getObjectDiff(existingValue, req.values[i]);
+                                        var additionalChanges_1 = updating.fire.call(ctx, objectDiff, key, existingValue, dxTrans);
+                                        if (additionalChanges_1) {
+                                            var requestedValue_1 = req.values[i];
+                                            Object.keys(additionalChanges_1).forEach(function (keyPath) {
+                                                if (hasOwn(requestedValue_1, keyPath)) {
+                                                    requestedValue_1[keyPath] = additionalChanges_1[keyPath];
+                                                }
+                                                else {
+                                                    setByKeyPath(requestedValue_1, keyPath, additionalChanges_1[keyPath]);
+                                                }
+                                            });
+                                        }
+                                    }
+                                    return ctx;
+                                });
+                                return downTable.mutate(req).then(function (_a) {
+                                    var failures = _a.failures, results = _a.results, numFailures = _a.numFailures, lastResult = _a.lastResult;
+                                    for (var i = 0; i < keys.length; ++i) {
+                                        var primKey = results ? results[i] : keys[i];
+                                        var ctx = contexts[i];
+                                        if (primKey == null) {
+                                            ctx.onerror && ctx.onerror(failures[i]);
+                                        }
+                                        else {
+                                            ctx.onsuccess && ctx.onsuccess(req.type === 'put' && existingValues[i] ?
+                                                req.values[i] :
+                                                primKey
+                                            );
+                                        }
+                                    }
+                                    return { failures: failures, results: results, numFailures: numFailures, lastResult: lastResult };
+                                }).catch(function (error) {
+                                    contexts.forEach(function (ctx) { return ctx.onerror && ctx.onerror(error); });
+                                    return Promise.reject(error);
+                                });
+                            });
+                        }
+                        function deleteRange(req) {
+                            return deleteNextChunk(req.trans, req.range, 10000);
+                        }
+                        function deleteNextChunk(trans, range, limit) {
+                            return downTable.query({ trans: trans, values: false, query: { index: primaryKey, range: range }, limit: limit })
+                                .then(function (_a) {
+                                var result = _a.result;
+                                return addPutOrDelete({ type: 'delete', keys: result, trans: trans }).then(function (res) {
+                                    if (res.numFailures > 0)
+                                        return Promise.reject(res.failures[0]);
+                                    if (result.length < limit) {
+                                        return { failures: [], numFailures: 0, lastResult: undefined };
+                                    }
+                                    else {
+                                        return deleteNextChunk(trans, __assign(__assign({}, range), { lower: result[result.length - 1], lowerOpen: true }), limit);
+                                    }
+                                });
+                            });
+                        }
+                    } });
+                return tableMiddleware;
+            } })); }
+    };
+    function getExistingValues(table, req, effectiveKeys) {
+        return req.type === "add"
+            ? Promise.resolve([])
+            : table.getMany({ trans: req.trans, keys: effectiveKeys, cache: "immutable" });
+    }
+
+    function getFromTransactionCache(keys, cache, clone) {
+        try {
+            if (!cache)
+                return null;
+            if (cache.keys.length < keys.length)
+                return null;
+            var result = [];
+            for (var i = 0, j = 0; i < cache.keys.length && j < keys.length; ++i) {
+                if (cmp(cache.keys[i], keys[j]) !== 0)
+                    continue;
+                result.push(clone ? deepClone(cache.values[i]) : cache.values[i]);
+                ++j;
+            }
+            return result.length === keys.length ? result : null;
+        }
+        catch (_a) {
+            return null;
+        }
+    }
+    var cacheExistingValuesMiddleware = {
+        stack: "dbcore",
+        level: -1,
+        create: function (core) {
+            return {
+                table: function (tableName) {
+                    var table = core.table(tableName);
+                    return __assign(__assign({}, table), { getMany: function (req) {
+                            if (!req.cache) {
+                                return table.getMany(req);
+                            }
+                            var cachedResult = getFromTransactionCache(req.keys, req.trans["_cache"], req.cache === "clone");
+                            if (cachedResult) {
+                                return DexiePromise.resolve(cachedResult);
+                            }
+                            return table.getMany(req).then(function (res) {
+                                req.trans["_cache"] = {
+                                    keys: req.keys,
+                                    values: req.cache === "clone" ? deepClone(res) : res,
+                                };
+                                return res;
+                            });
+                        }, mutate: function (req) {
+                            if (req.type !== "add")
+                                req.trans["_cache"] = null;
+                            return table.mutate(req);
+                        } });
+                },
+            };
+        },
+    };
+
+    var _a;
+    function isEmptyRange(node) {
+        return !("from" in node);
+    }
+    var RangeSet = function (fromOrTree, to) {
+        if (this) {
+            extend(this, arguments.length ? { d: 1, from: fromOrTree, to: arguments.length > 1 ? to : fromOrTree } : { d: 0 });
+        }
+        else {
+            var rv = new RangeSet();
+            if (fromOrTree && ("d" in fromOrTree)) {
+                extend(rv, fromOrTree);
+            }
+            return rv;
+        }
+    };
+    props(RangeSet.prototype, (_a = {
+            add: function (rangeSet) {
+                mergeRanges(this, rangeSet);
+                return this;
+            },
+            addKey: function (key) {
+                addRange(this, key, key);
+                return this;
+            },
+            addKeys: function (keys) {
+                var _this = this;
+                keys.forEach(function (key) { return addRange(_this, key, key); });
+                return this;
+            }
+        },
+        _a[iteratorSymbol] = function () {
+            return getRangeSetIterator(this);
+        },
+        _a));
+    function addRange(target, from, to) {
+        var diff = cmp(from, to);
+        if (isNaN(diff))
+            return;
+        if (diff > 0)
+            throw RangeError();
+        if (isEmptyRange(target))
+            return extend(target, { from: from, to: to, d: 1 });
+        var left = target.l;
+        var right = target.r;
+        if (cmp(to, target.from) < 0) {
+            left
+                ? addRange(left, from, to)
+                : (target.l = { from: from, to: to, d: 1, l: null, r: null });
+            return rebalance(target);
+        }
+        if (cmp(from, target.to) > 0) {
+            right
+                ? addRange(right, from, to)
+                : (target.r = { from: from, to: to, d: 1, l: null, r: null });
+            return rebalance(target);
+        }
+        if (cmp(from, target.from) < 0) {
+            target.from = from;
+            target.l = null;
+            target.d = right ? right.d + 1 : 1;
+        }
+        if (cmp(to, target.to) > 0) {
+            target.to = to;
+            target.r = null;
+            target.d = target.l ? target.l.d + 1 : 1;
+        }
+        var rightWasCutOff = !target.r;
+        if (left && !target.l) {
+            mergeRanges(target, left);
+        }
+        if (right && rightWasCutOff) {
+            mergeRanges(target, right);
+        }
+    }
+    function mergeRanges(target, newSet) {
+        function _addRangeSet(target, _a) {
+            var from = _a.from, to = _a.to, l = _a.l, r = _a.r;
+            addRange(target, from, to);
+            if (l)
+                _addRangeSet(target, l);
+            if (r)
+                _addRangeSet(target, r);
+        }
+        if (!isEmptyRange(newSet))
+            _addRangeSet(target, newSet);
+    }
+    function rangesOverlap(rangeSet1, rangeSet2) {
+        var i1 = getRangeSetIterator(rangeSet2);
+        var nextResult1 = i1.next();
+        if (nextResult1.done)
+            return false;
+        var a = nextResult1.value;
+        var i2 = getRangeSetIterator(rangeSet1);
+        var nextResult2 = i2.next(a.from);
+        var b = nextResult2.value;
+        while (!nextResult1.done && !nextResult2.done) {
+            if (cmp(b.from, a.to) <= 0 && cmp(b.to, a.from) >= 0)
+                return true;
+            cmp(a.from, b.from) < 0
+                ? (a = (nextResult1 = i1.next(b.from)).value)
+                : (b = (nextResult2 = i2.next(a.from)).value);
+        }
+        return false;
+    }
+    function getRangeSetIterator(node) {
+        var state = isEmptyRange(node) ? null : { s: 0, n: node };
+        return {
+            next: function (key) {
+                var keyProvided = arguments.length > 0;
+                while (state) {
+                    switch (state.s) {
+                        case 0:
+                            state.s = 1;
+                            if (keyProvided) {
+                                while (state.n.l && cmp(key, state.n.from) < 0)
+                                    state = { up: state, n: state.n.l, s: 1 };
+                            }
+                            else {
+                                while (state.n.l)
+                                    state = { up: state, n: state.n.l, s: 1 };
+                            }
+                        case 1:
+                            state.s = 2;
+                            if (!keyProvided || cmp(key, state.n.to) <= 0)
+                                return { value: state.n, done: false };
+                        case 2:
+                            if (state.n.r) {
+                                state.s = 3;
+                                state = { up: state, n: state.n.r, s: 0 };
+                                continue;
+                            }
+                        case 3:
+                            state = state.up;
+                    }
+                }
+                return { done: true };
+            },
+        };
+    }
+    function rebalance(target) {
+        var _a, _b;
+        var diff = (((_a = target.r) === null || _a === void 0 ? void 0 : _a.d) || 0) - (((_b = target.l) === null || _b === void 0 ? void 0 : _b.d) || 0);
+        var r = diff > 1 ? "r" : diff < -1 ? "l" : "";
+        if (r) {
+            var l = r === "r" ? "l" : "r";
+            var rootClone = __assign({}, target);
+            var oldRootRight = target[r];
+            target.from = oldRootRight.from;
+            target.to = oldRootRight.to;
+            target[r] = oldRootRight[r];
+            rootClone[r] = oldRootRight[l];
+            target[l] = rootClone;
+            rootClone.d = computeDepth(rootClone);
+        }
+        target.d = computeDepth(target);
+    }
+    function computeDepth(_a) {
+        var r = _a.r, l = _a.l;
+        return (r ? (l ? Math.max(r.d, l.d) : r.d) : l ? l.d : 0) + 1;
+    }
+
+    var observabilityMiddleware = {
+        stack: "dbcore",
+        level: 0,
+        create: function (core) {
+            var dbName = core.schema.name;
+            var FULL_RANGE = new RangeSet(core.MIN_KEY, core.MAX_KEY);
+            return __assign(__assign({}, core), { table: function (tableName) {
+                    var table = core.table(tableName);
+                    var schema = table.schema;
+                    var primaryKey = schema.primaryKey;
+                    var extractKey = primaryKey.extractKey, outbound = primaryKey.outbound;
+                    var tableClone = __assign(__assign({}, table), { mutate: function (req) {
+                            var trans = req.trans;
+                            var mutatedParts = trans.mutatedParts || (trans.mutatedParts = {});
+                            var getRangeSet = function (indexName) {
+                                var part = "idb://" + dbName + "/" + tableName + "/" + indexName;
+                                return (mutatedParts[part] ||
+                                    (mutatedParts[part] = new RangeSet()));
+                            };
+                            var pkRangeSet = getRangeSet("");
+                            var delsRangeSet = getRangeSet(":dels");
+                            var type = req.type;
+                            var _a = req.type === "deleteRange"
+                                ? [req.range]
+                                : req.type === "delete"
+                                    ? [req.keys]
+                                    : req.values.length < 50
+                                        ? [[], req.values]
+                                        : [], keys = _a[0], newObjs = _a[1];
+                            var oldCache = req.trans["_cache"];
+                            return table.mutate(req).then(function (res) {
+                                if (isArray(keys)) {
+                                    if (type !== "delete")
+                                        keys = res.results;
+                                    pkRangeSet.addKeys(keys);
+                                    var oldObjs = getFromTransactionCache(keys, oldCache);
+                                    if (!oldObjs && type !== "add") {
+                                        delsRangeSet.addKeys(keys);
+                                    }
+                                    if (oldObjs || newObjs) {
+                                        trackAffectedIndexes(getRangeSet, schema, oldObjs, newObjs);
+                                    }
+                                }
+                                else if (keys) {
+                                    var range = { from: keys.lower, to: keys.upper };
+                                    delsRangeSet.add(range);
+                                    pkRangeSet.add(range);
+                                }
+                                else {
+                                    pkRangeSet.add(FULL_RANGE);
+                                    delsRangeSet.add(FULL_RANGE);
+                                    schema.indexes.forEach(function (idx) { return getRangeSet(idx.name).add(FULL_RANGE); });
+                                }
+                                return res;
+                            });
+                        } });
+                    var getRange = function (_a) {
+                        var _b, _c;
+                        var _d = _a.query, index = _d.index, range = _d.range;
+                        return [
+                            index,
+                            new RangeSet((_b = range.lower) !== null && _b !== void 0 ? _b : core.MIN_KEY, (_c = range.upper) !== null && _c !== void 0 ? _c : core.MAX_KEY),
+                        ];
+                    };
+                    var readSubscribers = {
+                        get: function (req) { return [primaryKey, new RangeSet(req.key)]; },
+                        getMany: function (req) { return [primaryKey, new RangeSet().addKeys(req.keys)]; },
+                        count: getRange,
+                        query: getRange,
+                        openCursor: getRange,
+                    };
+                    keys(readSubscribers).forEach(function (method) {
+                        tableClone[method] = function (req) {
+                            var subscr = PSD.subscr;
+                            if (subscr) {
+                                var getRangeSet = function (indexName) {
+                                    var part = "idb://" + dbName + "/" + tableName + "/" + indexName;
+                                    return (subscr[part] ||
+                                        (subscr[part] = new RangeSet()));
+                                };
+                                var pkRangeSet_1 = getRangeSet("");
+                                var delsRangeSet_1 = getRangeSet(":dels");
+                                var _a = readSubscribers[method](req), queriedIndex = _a[0], queriedRanges = _a[1];
+                                getRangeSet(queriedIndex.name || "").add(queriedRanges);
+                                if (!queriedIndex.isPrimaryKey) {
+                                    if (method === "count") {
+                                        delsRangeSet_1.add(FULL_RANGE);
+                                    }
+                                    else {
+                                        var keysPromise_1 = method === "query" &&
+                                            outbound &&
+                                            req.values &&
+                                            table.query(__assign(__assign({}, req), { values: false }));
+                                        return table[method].apply(this, arguments).then(function (res) {
+                                            if (method === "query") {
+                                                if (outbound && req.values) {
+                                                    return keysPromise_1.then(function (_a) {
+                                                        var resultingKeys = _a.result;
+                                                        pkRangeSet_1.addKeys(resultingKeys);
+                                                        return res;
+                                                    });
+                                                }
+                                                var pKeys = req.values
+                                                    ? res.result.map(extractKey)
+                                                    : res.result;
+                                                if (req.values) {
+                                                    pkRangeSet_1.addKeys(pKeys);
+                                                }
+                                                else {
+                                                    delsRangeSet_1.addKeys(pKeys);
+                                                }
+                                            }
+                                            else if (method === "openCursor") {
+                                                var cursor_1 = res;
+                                                var wantValues_1 = req.values;
+                                                return (cursor_1 &&
+                                                    Object.create(cursor_1, {
+                                                        key: {
+                                                            get: function () {
+                                                                delsRangeSet_1.addKey(cursor_1.primaryKey);
+                                                                return cursor_1.key;
+                                                            },
+                                                        },
+                                                        primaryKey: {
+                                                            get: function () {
+                                                                var pkey = cursor_1.primaryKey;
+                                                                delsRangeSet_1.addKey(pkey);
+                                                                return pkey;
+                                                            },
+                                                        },
+                                                        value: {
+                                                            get: function () {
+                                                                wantValues_1 && pkRangeSet_1.addKey(cursor_1.primaryKey);
+                                                                return cursor_1.value;
+                                                            },
+                                                        },
+                                                    }));
+                                            }
+                                            return res;
+                                        });
+                                    }
+                                }
+                            }
+                            return table[method].apply(this, arguments);
+                        };
+                    });
+                    return tableClone;
+                } });
+        },
+    };
+    function trackAffectedIndexes(getRangeSet, schema, oldObjs, newObjs) {
+        function addAffectedIndex(ix) {
+            var rangeSet = getRangeSet(ix.name || "");
+            function extractKey(obj) {
+                return obj != null ? ix.extractKey(obj) : null;
+            }
+            var addKeyOrKeys = function (key) { return ix.multiEntry && isArray(key)
+                ? key.forEach(function (key) { return rangeSet.addKey(key); })
+                : rangeSet.addKey(key); };
+            (oldObjs || newObjs).forEach(function (_, i) {
+                var oldKey = oldObjs && extractKey(oldObjs[i]);
+                var newKey = newObjs && extractKey(newObjs[i]);
+                if (cmp(oldKey, newKey) !== 0) {
+                    if (oldKey != null)
+                        addKeyOrKeys(oldKey);
+                    if (newKey != null)
+                        addKeyOrKeys(newKey);
+                }
+            });
+        }
+        schema.indexes.forEach(addAffectedIndex);
+    }
+
+    var Dexie$1 =  (function () {
+        function Dexie(name, options) {
+            var _this = this;
+            this._middlewares = {};
+            this.verno = 0;
+            var deps = Dexie.dependencies;
+            this._options = options = __assign({
+                addons: Dexie.addons, autoOpen: true,
+                indexedDB: deps.indexedDB, IDBKeyRange: deps.IDBKeyRange }, options);
+            this._deps = {
+                indexedDB: options.indexedDB,
+                IDBKeyRange: options.IDBKeyRange
+            };
+            var addons = options.addons;
+            this._dbSchema = {};
+            this._versions = [];
+            this._storeNames = [];
+            this._allTables = {};
+            this.idbdb = null;
+            this._novip = this;
+            var state = {
+                dbOpenError: null,
+                isBeingOpened: false,
+                onReadyBeingFired: null,
+                openComplete: false,
+                dbReadyResolve: nop,
+                dbReadyPromise: null,
+                cancelOpen: nop,
+                openCanceller: null,
+                autoSchema: true,
+                PR1398_maxLoop: 3
+            };
+            state.dbReadyPromise = new DexiePromise(function (resolve) {
+                state.dbReadyResolve = resolve;
+            });
+            state.openCanceller = new DexiePromise(function (_, reject) {
+                state.cancelOpen = reject;
+            });
+            this._state = state;
+            this.name = name;
+            this.on = Events(this, "populate", "blocked", "versionchange", "close", { ready: [promisableChain, nop] });
+            this.on.ready.subscribe = override(this.on.ready.subscribe, function (subscribe) {
+                return function (subscriber, bSticky) {
+                    Dexie.vip(function () {
+                        var state = _this._state;
+                        if (state.openComplete) {
+                            if (!state.dbOpenError)
+                                DexiePromise.resolve().then(subscriber);
+                            if (bSticky)
+                                subscribe(subscriber);
+                        }
+                        else if (state.onReadyBeingFired) {
+                            state.onReadyBeingFired.push(subscriber);
+                            if (bSticky)
+                                subscribe(subscriber);
+                        }
+                        else {
+                            subscribe(subscriber);
+                            var db_1 = _this;
+                            if (!bSticky)
+                                subscribe(function unsubscribe() {
+                                    db_1.on.ready.unsubscribe(subscriber);
+                                    db_1.on.ready.unsubscribe(unsubscribe);
+                                });
+                        }
+                    });
+                };
+            });
+            this.Collection = createCollectionConstructor(this);
+            this.Table = createTableConstructor(this);
+            this.Transaction = createTransactionConstructor(this);
+            this.Version = createVersionConstructor(this);
+            this.WhereClause = createWhereClauseConstructor(this);
+            this.on("versionchange", function (ev) {
+                if (ev.newVersion > 0)
+                    console.warn("Another connection wants to upgrade database '" + _this.name + "'. Closing db now to resume the upgrade.");
+                else
+                    console.warn("Another connection wants to delete database '" + _this.name + "'. Closing db now to resume the delete request.");
+                _this.close();
+            });
+            this.on("blocked", function (ev) {
+                if (!ev.newVersion || ev.newVersion < ev.oldVersion)
+                    console.warn("Dexie.delete('" + _this.name + "') was blocked");
+                else
+                    console.warn("Upgrade '" + _this.name + "' blocked by other connection holding version " + ev.oldVersion / 10);
+            });
+            this._maxKey = getMaxKey(options.IDBKeyRange);
+            this._createTransaction = function (mode, storeNames, dbschema, parentTransaction) { return new _this.Transaction(mode, storeNames, dbschema, _this._options.chromeTransactionDurability, parentTransaction); };
+            this._fireOnBlocked = function (ev) {
+                _this.on("blocked").fire(ev);
+                connections
+                    .filter(function (c) { return c.name === _this.name && c !== _this && !c._state.vcFired; })
+                    .map(function (c) { return c.on("versionchange").fire(ev); });
+            };
+            this.use(virtualIndexMiddleware);
+            this.use(hooksMiddleware);
+            this.use(observabilityMiddleware);
+            this.use(cacheExistingValuesMiddleware);
+            this.vip = Object.create(this, { _vip: { value: true } });
+            addons.forEach(function (addon) { return addon(_this); });
+        }
+        Dexie.prototype.version = function (versionNumber) {
+            if (isNaN(versionNumber) || versionNumber < 0.1)
+                throw new exceptions.Type("Given version is not a positive number");
+            versionNumber = Math.round(versionNumber * 10) / 10;
+            if (this.idbdb || this._state.isBeingOpened)
+                throw new exceptions.Schema("Cannot add version when database is open");
+            this.verno = Math.max(this.verno, versionNumber);
+            var versions = this._versions;
+            var versionInstance = versions.filter(function (v) { return v._cfg.version === versionNumber; })[0];
+            if (versionInstance)
+                return versionInstance;
+            versionInstance = new this.Version(versionNumber);
+            versions.push(versionInstance);
+            versions.sort(lowerVersionFirst);
+            versionInstance.stores({});
+            this._state.autoSchema = false;
+            return versionInstance;
+        };
+        Dexie.prototype._whenReady = function (fn) {
+            var _this = this;
+            return (this.idbdb && (this._state.openComplete || PSD.letThrough || this._vip)) ? fn() : new DexiePromise(function (resolve, reject) {
+                if (_this._state.openComplete) {
+                    return reject(new exceptions.DatabaseClosed(_this._state.dbOpenError));
+                }
+                if (!_this._state.isBeingOpened) {
+                    if (!_this._options.autoOpen) {
+                        reject(new exceptions.DatabaseClosed());
+                        return;
+                    }
+                    _this.open().catch(nop);
+                }
+                _this._state.dbReadyPromise.then(resolve, reject);
+            }).then(fn);
+        };
+        Dexie.prototype.use = function (_a) {
+            var stack = _a.stack, create = _a.create, level = _a.level, name = _a.name;
+            if (name)
+                this.unuse({ stack: stack, name: name });
+            var middlewares = this._middlewares[stack] || (this._middlewares[stack] = []);
+            middlewares.push({ stack: stack, create: create, level: level == null ? 10 : level, name: name });
+            middlewares.sort(function (a, b) { return a.level - b.level; });
+            return this;
+        };
+        Dexie.prototype.unuse = function (_a) {
+            var stack = _a.stack, name = _a.name, create = _a.create;
+            if (stack && this._middlewares[stack]) {
+                this._middlewares[stack] = this._middlewares[stack].filter(function (mw) {
+                    return create ? mw.create !== create :
+                        name ? mw.name !== name :
+                            false;
+                });
+            }
+            return this;
+        };
+        Dexie.prototype.open = function () {
+            return dexieOpen(this);
+        };
+        Dexie.prototype._close = function () {
+            var state = this._state;
+            var idx = connections.indexOf(this);
+            if (idx >= 0)
+                connections.splice(idx, 1);
+            if (this.idbdb) {
+                try {
+                    this.idbdb.close();
+                }
+                catch (e) { }
+                this._novip.idbdb = null;
+            }
+            state.dbReadyPromise = new DexiePromise(function (resolve) {
+                state.dbReadyResolve = resolve;
+            });
+            state.openCanceller = new DexiePromise(function (_, reject) {
+                state.cancelOpen = reject;
+            });
+        };
+        Dexie.prototype.close = function () {
+            this._close();
+            var state = this._state;
+            this._options.autoOpen = false;
+            state.dbOpenError = new exceptions.DatabaseClosed();
+            if (state.isBeingOpened)
+                state.cancelOpen(state.dbOpenError);
+        };
+        Dexie.prototype.delete = function () {
+            var _this = this;
+            var hasArguments = arguments.length > 0;
+            var state = this._state;
+            return new DexiePromise(function (resolve, reject) {
+                var doDelete = function () {
+                    _this.close();
+                    var req = _this._deps.indexedDB.deleteDatabase(_this.name);
+                    req.onsuccess = wrap(function () {
+                        _onDatabaseDeleted(_this._deps, _this.name);
+                        resolve();
+                    });
+                    req.onerror = eventRejectHandler(reject);
+                    req.onblocked = _this._fireOnBlocked;
+                };
+                if (hasArguments)
+                    throw new exceptions.InvalidArgument("Arguments not allowed in db.delete()");
+                if (state.isBeingOpened) {
+                    state.dbReadyPromise.then(doDelete);
+                }
+                else {
+                    doDelete();
+                }
+            });
+        };
+        Dexie.prototype.backendDB = function () {
+            return this.idbdb;
+        };
+        Dexie.prototype.isOpen = function () {
+            return this.idbdb !== null;
+        };
+        Dexie.prototype.hasBeenClosed = function () {
+            var dbOpenError = this._state.dbOpenError;
+            return dbOpenError && (dbOpenError.name === 'DatabaseClosed');
+        };
+        Dexie.prototype.hasFailed = function () {
+            return this._state.dbOpenError !== null;
+        };
+        Dexie.prototype.dynamicallyOpened = function () {
+            return this._state.autoSchema;
+        };
+        Object.defineProperty(Dexie.prototype, "tables", {
+            get: function () {
+                var _this = this;
+                return keys(this._allTables).map(function (name) { return _this._allTables[name]; });
+            },
+            enumerable: false,
+            configurable: true
+        });
+        Dexie.prototype.transaction = function () {
+            var args = extractTransactionArgs.apply(this, arguments);
+            return this._transaction.apply(this, args);
+        };
+        Dexie.prototype._transaction = function (mode, tables, scopeFunc) {
+            var _this = this;
+            var parentTransaction = PSD.trans;
+            if (!parentTransaction || parentTransaction.db !== this || mode.indexOf('!') !== -1)
+                parentTransaction = null;
+            var onlyIfCompatible = mode.indexOf('?') !== -1;
+            mode = mode.replace('!', '').replace('?', '');
+            var idbMode, storeNames;
+            try {
+                storeNames = tables.map(function (table) {
+                    var storeName = table instanceof _this.Table ? table.name : table;
+                    if (typeof storeName !== 'string')
+                        throw new TypeError("Invalid table argument to Dexie.transaction(). Only Table or String are allowed");
+                    return storeName;
+                });
+                if (mode == "r" || mode === READONLY)
+                    idbMode = READONLY;
+                else if (mode == "rw" || mode == READWRITE)
+                    idbMode = READWRITE;
+                else
+                    throw new exceptions.InvalidArgument("Invalid transaction mode: " + mode);
+                if (parentTransaction) {
+                    if (parentTransaction.mode === READONLY && idbMode === READWRITE) {
+                        if (onlyIfCompatible) {
+                            parentTransaction = null;
+                        }
+                        else
+                            throw new exceptions.SubTransaction("Cannot enter a sub-transaction with READWRITE mode when parent transaction is READONLY");
+                    }
+                    if (parentTransaction) {
+                        storeNames.forEach(function (storeName) {
+                            if (parentTransaction && parentTransaction.storeNames.indexOf(storeName) === -1) {
+                                if (onlyIfCompatible) {
+                                    parentTransaction = null;
+                                }
+                                else
+                                    throw new exceptions.SubTransaction("Table " + storeName +
+                                        " not included in parent transaction.");
+                            }
+                        });
+                    }
+                    if (onlyIfCompatible && parentTransaction && !parentTransaction.active) {
+                        parentTransaction = null;
+                    }
+                }
+            }
+            catch (e) {
+                return parentTransaction ?
+                    parentTransaction._promise(null, function (_, reject) { reject(e); }) :
+                    rejection(e);
+            }
+            var enterTransaction = enterTransactionScope.bind(null, this, idbMode, storeNames, parentTransaction, scopeFunc);
+            return (parentTransaction ?
+                parentTransaction._promise(idbMode, enterTransaction, "lock") :
+                PSD.trans ?
+                    usePSD(PSD.transless, function () { return _this._whenReady(enterTransaction); }) :
+                    this._whenReady(enterTransaction));
+        };
+        Dexie.prototype.table = function (tableName) {
+            if (!hasOwn(this._allTables, tableName)) {
+                throw new exceptions.InvalidTable("Table " + tableName + " does not exist");
+            }
+            return this._allTables[tableName];
+        };
+        return Dexie;
+    }());
+
+    var symbolObservable = typeof Symbol !== "undefined" && "observable" in Symbol
+        ? Symbol.observable
+        : "@@observable";
+    var Observable =  (function () {
+        function Observable(subscribe) {
+            this._subscribe = subscribe;
+        }
+        Observable.prototype.subscribe = function (x, error, complete) {
+            return this._subscribe(!x || typeof x === "function" ? { next: x, error: error, complete: complete } : x);
+        };
+        Observable.prototype[symbolObservable] = function () {
+            return this;
+        };
+        return Observable;
+    }());
+
+    function extendObservabilitySet(target, newSet) {
+        keys(newSet).forEach(function (part) {
+            var rangeSet = target[part] || (target[part] = new RangeSet());
+            mergeRanges(rangeSet, newSet[part]);
+        });
+        return target;
+    }
+
+    function liveQuery(querier) {
+        var hasValue = false;
+        var currentValue = undefined;
+        var observable = new Observable(function (observer) {
+            var scopeFuncIsAsync = isAsyncFunction(querier);
+            function execute(subscr) {
+                if (scopeFuncIsAsync) {
+                    incrementExpectedAwaits();
+                }
+                var exec = function () { return newScope(querier, { subscr: subscr, trans: null }); };
+                var rv = PSD.trans
+                    ?
+                        usePSD(PSD.transless, exec)
+                    : exec();
+                if (scopeFuncIsAsync) {
+                    rv.then(decrementExpectedAwaits, decrementExpectedAwaits);
+                }
+                return rv;
+            }
+            var closed = false;
+            var accumMuts = {};
+            var currentObs = {};
+            var subscription = {
+                get closed() {
+                    return closed;
+                },
+                unsubscribe: function () {
+                    closed = true;
+                    globalEvents.storagemutated.unsubscribe(mutationListener);
+                },
+            };
+            observer.start && observer.start(subscription);
+            var querying = false, startedListening = false;
+            function shouldNotify() {
+                return keys(currentObs).some(function (key) {
+                    return accumMuts[key] && rangesOverlap(accumMuts[key], currentObs[key]);
+                });
+            }
+            var mutationListener = function (parts) {
+                extendObservabilitySet(accumMuts, parts);
+                if (shouldNotify()) {
+                    doQuery();
+                }
+            };
+            var doQuery = function () {
+                if (querying || closed)
+                    return;
+                accumMuts = {};
+                var subscr = {};
+                var ret = execute(subscr);
+                if (!startedListening) {
+                    globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, mutationListener);
+                    startedListening = true;
+                }
+                querying = true;
+                Promise.resolve(ret).then(function (result) {
+                    hasValue = true;
+                    currentValue = result;
+                    querying = false;
+                    if (closed)
+                        return;
+                    if (shouldNotify()) {
+                        doQuery();
+                    }
+                    else {
+                        accumMuts = {};
+                        currentObs = subscr;
+                        observer.next && observer.next(result);
+                    }
+                }, function (err) {
+                    querying = false;
+                    hasValue = false;
+                    observer.error && observer.error(err);
+                    subscription.unsubscribe();
+                });
+            };
+            doQuery();
+            return subscription;
+        });
+        observable.hasValue = function () { return hasValue; };
+        observable.getValue = function () { return currentValue; };
+        return observable;
+    }
+
+    var domDeps;
+    try {
+        domDeps = {
+            indexedDB: _global.indexedDB || _global.mozIndexedDB || _global.webkitIndexedDB || _global.msIndexedDB,
+            IDBKeyRange: _global.IDBKeyRange || _global.webkitIDBKeyRange
+        };
+    }
+    catch (e) {
+        domDeps = { indexedDB: null, IDBKeyRange: null };
+    }
+
+    var Dexie = Dexie$1;
+    props(Dexie, __assign(__assign({}, fullNameExceptions), {
+        delete: function (databaseName) {
+            var db = new Dexie(databaseName, { addons: [] });
+            return db.delete();
+        },
+        exists: function (name) {
+            return new Dexie(name, { addons: [] }).open().then(function (db) {
+                db.close();
+                return true;
+            }).catch('NoSuchDatabaseError', function () { return false; });
+        },
+        getDatabaseNames: function (cb) {
+            try {
+                return getDatabaseNames(Dexie.dependencies).then(cb);
+            }
+            catch (_a) {
+                return rejection(new exceptions.MissingAPI());
+            }
+        },
+        defineClass: function () {
+            function Class(content) {
+                extend(this, content);
+            }
+            return Class;
+        }, ignoreTransaction: function (scopeFunc) {
+            return PSD.trans ?
+                usePSD(PSD.transless, scopeFunc) :
+                scopeFunc();
+        }, vip: vip, async: function (generatorFn) {
+            return function () {
+                try {
+                    var rv = awaitIterator(generatorFn.apply(this, arguments));
+                    if (!rv || typeof rv.then !== 'function')
+                        return DexiePromise.resolve(rv);
+                    return rv;
+                }
+                catch (e) {
+                    return rejection(e);
+                }
+            };
+        }, spawn: function (generatorFn, args, thiz) {
+            try {
+                var rv = awaitIterator(generatorFn.apply(thiz, args || []));
+                if (!rv || typeof rv.then !== 'function')
+                    return DexiePromise.resolve(rv);
+                return rv;
+            }
+            catch (e) {
+                return rejection(e);
+            }
+        },
+        currentTransaction: {
+            get: function () { return PSD.trans || null; }
+        }, waitFor: function (promiseOrFunction, optionalTimeout) {
+            var promise = DexiePromise.resolve(typeof promiseOrFunction === 'function' ?
+                Dexie.ignoreTransaction(promiseOrFunction) :
+                promiseOrFunction)
+                .timeout(optionalTimeout || 60000);
+            return PSD.trans ?
+                PSD.trans.waitFor(promise) :
+                promise;
+        },
+        Promise: DexiePromise,
+        debug: {
+            get: function () { return debug; },
+            set: function (value) {
+                setDebug(value, value === 'dexie' ? function () { return true; } : dexieStackFrameFilter);
+            }
+        },
+        derive: derive, extend: extend, props: props, override: override,
+        Events: Events, on: globalEvents, liveQuery: liveQuery, extendObservabilitySet: extendObservabilitySet,
+        getByKeyPath: getByKeyPath, setByKeyPath: setByKeyPath, delByKeyPath: delByKeyPath, shallowClone: shallowClone, deepClone: deepClone, getObjectDiff: getObjectDiff, cmp: cmp, asap: asap$1,
+        minKey: minKey,
+        addons: [],
+        connections: connections,
+        errnames: errnames,
+        dependencies: domDeps,
+        semVer: DEXIE_VERSION, version: DEXIE_VERSION.split('.')
+            .map(function (n) { return parseInt(n); })
+            .reduce(function (p, c, i) { return p + (c / Math.pow(10, i * 2)); }) }));
+    Dexie.maxKey = getMaxKey(Dexie.dependencies.IDBKeyRange);
+
+    if (typeof dispatchEvent !== 'undefined' && typeof addEventListener !== 'undefined') {
+        globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, function (updatedParts) {
+            if (!propagatingLocally) {
+                var event_1;
+                if (isIEOrEdge) {
+                    event_1 = document.createEvent('CustomEvent');
+                    event_1.initCustomEvent(STORAGE_MUTATED_DOM_EVENT_NAME, true, true, updatedParts);
+                }
+                else {
+                    event_1 = new CustomEvent(STORAGE_MUTATED_DOM_EVENT_NAME, {
+                        detail: updatedParts
+                    });
+                }
+                propagatingLocally = true;
+                dispatchEvent(event_1);
+                propagatingLocally = false;
+            }
+        });
+        addEventListener(STORAGE_MUTATED_DOM_EVENT_NAME, function (_a) {
+            var detail = _a.detail;
+            if (!propagatingLocally) {
+                propagateLocally(detail);
+            }
+        });
+    }
+    function propagateLocally(updateParts) {
+        var wasMe = propagatingLocally;
+        try {
+            propagatingLocally = true;
+            globalEvents.storagemutated.fire(updateParts);
+        }
+        finally {
+            propagatingLocally = wasMe;
+        }
+    }
+    var propagatingLocally = false;
+
+    if (typeof BroadcastChannel !== 'undefined') {
+        var bc_1 = new BroadcastChannel(STORAGE_MUTATED_DOM_EVENT_NAME);
+        if (typeof bc_1.unref === 'function') {
+            bc_1.unref();
+        }
+        globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, function (changedParts) {
+            if (!propagatingLocally) {
+                bc_1.postMessage(changedParts);
+            }
+        });
+        bc_1.onmessage = function (ev) {
+            if (ev.data)
+                propagateLocally(ev.data);
+        };
+    }
+    else if (typeof self !== 'undefined' && typeof navigator !== 'undefined') {
+        globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, function (changedParts) {
+            try {
+                if (!propagatingLocally) {
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.setItem(STORAGE_MUTATED_DOM_EVENT_NAME, JSON.stringify({
+                            trig: Math.random(),
+                            changedParts: changedParts,
+                        }));
+                    }
+                    if (typeof self['clients'] === 'object') {
+                        __spreadArray([], self['clients'].matchAll({ includeUncontrolled: true }), true).forEach(function (client) {
+                            return client.postMessage({
+                                type: STORAGE_MUTATED_DOM_EVENT_NAME,
+                                changedParts: changedParts,
+                            });
+                        });
+                    }
+                }
+            }
+            catch (_a) { }
+        });
+        if (typeof addEventListener !== 'undefined') {
+            addEventListener('storage', function (ev) {
+                if (ev.key === STORAGE_MUTATED_DOM_EVENT_NAME) {
+                    var data = JSON.parse(ev.newValue);
+                    if (data)
+                        propagateLocally(data.changedParts);
+                }
+            });
+        }
+        var swContainer = self.document && navigator.serviceWorker;
+        if (swContainer) {
+            swContainer.addEventListener('message', propagateMessageLocally);
+        }
+    }
+    function propagateMessageLocally(_a) {
+        var data = _a.data;
+        if (data && data.type === STORAGE_MUTATED_DOM_EVENT_NAME) {
+            propagateLocally(data.changedParts);
+        }
+    }
+
+    DexiePromise.rejectionMapper = mapError;
+    setDebug(debug, dexieStackFrameFilter);
+
+    var namedExports = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        Dexie: Dexie$1,
+        liveQuery: liveQuery,
+        'default': Dexie$1,
+        RangeSet: RangeSet,
+        mergeRanges: mergeRanges,
+        rangesOverlap: rangesOverlap
+    });
+
+    __assign(Dexie$1, namedExports, { default: Dexie$1 });
+
+    return Dexie$1;
+
+}));
+
+;e("t",module.exports);}}});
