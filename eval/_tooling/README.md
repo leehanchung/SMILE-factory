@@ -31,7 +31,7 @@ kept as a drop-in alternative; see `serve-vllm`.)
 | Piece | Choice | Notes |
 |-------|--------|-------|
 | Model | `Qwen/Qwen3.5-2B-Base` | `Qwen3_5ForConditionalGeneration`, Gated-DeltaNet + MoE |
-| Engine | **SGLang** 0.5.9 (`:30000`) | matches slime's RL rollout engine; vLLM 0.23 (`:8000`) alt |
+| Engine | **SGLang** 0.5.23 (`:30000`) | matches slime's RL rollout engine; vLLM 0.34.0 (`:8000`) alt |
 | Harness | **pi** (`pi-acp`) | a BenchFlow built-in ACP agent; talks OpenAI tool-calling |
 | Runtime | **BenchFlow** | runs the agent in a sandbox, drives the verifier, aggregates rewards |
 | Tasks | one dir per question | `task.md` + `verifier/` (gold answer kept out of `/app`) |
@@ -53,6 +53,7 @@ eval/
     scripts/serve_qwen.sh         start vLLM alternative (:8000)
     scripts/gen_tasks.py          dataset -> eval/benchmarks/<name>/tasks/
     scripts/smoke_pi.sh           agent -> engine end-to-end check (no Docker)
+    scripts/install_pi_config.sh  install pi's models.json (+ engine key, 0600)
     scripts/run_local.py          DEBUG fallback: pi -> engine direct (no BenchFlow)
     pi/models.json                pi provider config (-> ~/.pi/agent/models.json)
     docs/                         investigations (e.g. the BenchFlow proxy bug)
@@ -66,18 +67,28 @@ Add a benchmark = add a generator path in `scripts/gen_tasks.py`, then
 
 Already done on this machine (recorded here for reproducibility):
 
-1. **SGLang venv** (Python 3.12, SGLang 0.5.9):
-   `uv venv --python 3.12 ~/venvs/sglang-qwen && uv pip install "sglang[all]"`.
+1. **SGLang venv** (Python 3.12, SGLang 0.5.23):
+   `uv venv --python 3.12 ~/venvs/sglang-qwen && uv pip install --prerelease=allow "sglang[all]==0.5.23"`.
+   (`--prerelease=allow` because some SGLang dependencies only publish
+   pre-releases; uv older than 0.12.0 cannot resolve 0.5.23 without it.)
+   (Previously 0.5.9, which `pip-audit` flags with several PYSEC advisories fixed
+   in later releases; no compatibility reason pinned it. Re-check the Triton /
+   CuDNN-workaround flags below after upgrading an existing venv.)
    Serve with Triton attention + PyTorch sampling (`scripts/serve_sglang.sh`) to
    avoid flashinfer's nvcc JIT — the system CUDA is 11.7, too old for the RTX 4090
    (sm_89). Use `--tool-call-parser qwen3_coder` (the model's tool-call format).
-   (Optional vLLM alt: `uv pip install vllm ninja` in `~/venvs/vllm-qwen`.)
-2. **pi** (needs **Node ≥ 22**): `npm i -g @earendil-works/pi-coding-agent`;
+   (Optional vLLM alt: `uv pip install "vllm==0.34.0" "ninja==1.13.2"` in `~/venvs/vllm-qwen`.)
+2. **pi** (needs **Node ≥ 22.19**): `npm i -g @earendil-works/pi-coding-agent@1.5.2`;
    Node via `nvm install 22` (the system Node 21 is too old — pi's `undici` needs
    `markAsUncloneable`, added in Node 22).
 3. **BenchFlow** — install the **AI** project from git (the PyPI `benchflow`
    name is a different/older project):
-   `uv tool install "git+https://github.com/benchflow-ai/benchflow"`
+   `uv tool install "git+https://github.com/benchflow-ai/benchflow@5a29c66b07e169437f041cc8c7501a15b03f3793"`
+   (pinned to a commit — the default branch moves; bump the SHA deliberately).
+
+All versions above are exact pins (current as of 2026-11-17; the Python pins
+audit clean with `pip-audit`). Bump them deliberately, not by re-running an
+unpinned install.
 
 ## Run
 
@@ -118,6 +129,45 @@ host/local mode. This machine has no running Docker daemon (Docker Desktop is a
 dangling WSL symlink and there is no passwordless sudo to install a native one),
 so `make eval` is gated on **starting Docker Desktop** (with WSL integration
 enabled). Once `docker info` works, it runs unchanged.
+
+### Engine binding & API key
+
+`serve_sglang.sh` / `serve_qwen.sh` bind **`127.0.0.1`** by default (`HOST`
+overrides). That is enough for the normal flow: BenchFlow's LiteLLM proxy runs on
+the host and reaches the engine over loopback; containers only talk to the proxy.
+
+If something off-host or inside a container must reach the **engine directly**
+(e.g. `host.docker.internal:30000`), an unauthenticated OpenAI endpoint is open
+GPU compute, so both scripts refuse a non-loopback `HOST` unless
+`ALLOW_PUBLIC_BIND=1` confirms the port is behind a firewall/network policy or an
+authenticating reverse proxy covering every endpoint:
+
+- **SGLang** (`serve_sglang.sh`) is never given a key: SGLang 0.5.23 echoes its
+  resolved server args, `api_key` included, in the startup log and `/server_info`
+  ([sgl-project/sglang#37457](https://github.com/sgl-project/sglang/issues/37457)).
+  For authentication, keep SGLang on loopback and expose an authenticating
+  reverse proxy; `ENGINE_API_KEY` is then that proxy's token.
+- **vLLM** (`serve_qwen.sh`) also needs `ENGINE_API_KEY`, which it reads as
+  `VLLM_API_KEY` from the environment. Its key only guards some routes
+  (`/invocations` serves inference without it), hence the opt-in.
+
+Point the clients at the engine with `ENGINE_HOST=<that HOST>` (and
+`ENGINE_PORT`), or set `ENGINE_URL` outright for a remote engine: the Makefile
+derives one `ENGINE_URL` that `check-engine` probes, BenchFlow's proxy calls, and
+`scripts/install_pi_config.sh` writes as the provider `baseUrl` in
+`~/.pi/agent/models.json` for `make smoke` / `make eval-direct`. Export
+`ENGINE_API_KEY` too when the endpoint needs one: the Makefile hands it to
+BenchFlow as the agent's `OPENAI_API_KEY` through the environment (placeholder
+`dummy-key` when unset), and `install_pi_config.sh` writes it into the same 0600
+`models.json`. The key never appears in a process's argv.
+
+**The evaluated agent can read `ENGINE_API_KEY`.** BenchFlow copies
+`OPENAI_API_KEY` into the agent's sandbox (the agent calls the engine with it),
+so any benchmark prompt or tool call can read and exfiltrate it. Use a random,
+eval-only token, never a real provider key, and rotate it after runs on an
+exposed engine; `make check-engine` warns when the key looks like a provider key
+(`sk-...`). Proper isolation needs a host-side proxy that holds the engine
+credential and gives each run a disposable token; this harness does not ship one.
 
 Model routing: `model: vllm/qwen35-2b-base` + `agent_env.BENCHFLOW_PROVIDER_BASE_URL`.
 The run-configs point the host-side LiteLLM proxy at `http://localhost:30000/v1`

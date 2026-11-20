@@ -8,9 +8,9 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 PI="${PI:-$HOME/.npm-global/bin/pi}"
 export PATH="$HOME/.nvm/versions/node/v22.23.0/bin:$PATH"   # pi needs Node >= 22
 
-# pi reads ~/.pi/agent/models.json. Install our vLLM provider config there.
-mkdir -p "$HOME/.pi/agent"
-cp "$HERE/../pi/models.json" "$HOME/.pi/agent/models.json"
+# pi reads ~/.pi/agent/models.json; install our provider config (and the
+# engine key, if ENGINE_API_KEY is set) there.
+bash "$HERE/install_pi_config.sh"
 
 echo "node: $(node --version)"
 echo "pi:   $("$PI" --version 2>/dev/null)"

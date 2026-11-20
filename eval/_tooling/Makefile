@@ -26,7 +26,27 @@ CONCURRENCY ?= 5
 N ?= 50
 # ENGINE_PORT: local engine — SGLang 30000, vLLM 8000
 ENGINE_PORT ?= 30000
-ENGINE_URL ?= http://localhost:$(ENGINE_PORT)/v1
+# ENGINE_API_KEY: bearer key clients send to the engine endpoint: vLLM's key
+# (serve-vllm requires one for a non-loopback HOST), or the token of the
+# authenticating proxy in front of SGLang (serve_sglang.sh never hands SGLang a
+# key, since SGLang logs it). Optional for the default loopback-only engine.
+# Exported so recipes read it from the environment; it is never put on a command
+# line. Unset -> placeholder "dummy-key".
+ENGINE_API_KEY ?=
+export ENGINE_API_KEY
+# ENGINE_HOST: where clients reach the engine; set it to the HOST the serve
+# script was started with (e.g. ENGINE_HOST=::1). Wildcard binds map to loopback
+# (0.0.0.0 -> 127.0.0.1, :: -> ::1) and IPv6 literals get bracketed. A separate
+# knob because some shells export HOST as the machine's hostname.
+ENGINE_HOST ?= 127.0.0.1
+# ENGINE_URL: the one engine endpoint every path uses. check-engine probes
+# $(ENGINE_URL)/models; BenchFlow's host-side proxy and pi (install_pi_config.sh
+# sets models.json's baseUrl) call it. Derived from ENGINE_HOST/ENGINE_PORT;
+# override it outright for a remote engine.
+_engine_host = $(if $(filter-out 0.0.0.0,$(ENGINE_HOST)),$(if $(filter ::,$(ENGINE_HOST)),::1,$(ENGINE_HOST)),127.0.0.1)
+_engine_hostport = $(if $(findstring :,$(_engine_host)),[$(_engine_host)],$(_engine_host)):$(ENGINE_PORT)
+ENGINE_URL ?= http://$(_engine_hostport)/v1
+export ENGINE_URL
 # Token budget for the self-hosted model. CRITICAL: without an explicit maxTokens,
 # benchflow's pi-acp registers the model with maxTokens = its own _DEFAULT_MAX_TOKENS
 # (16384) and pi then asks SGLang for a completion that large — prompt+completion
@@ -41,14 +61,22 @@ MODEL_ID := $(patsubst vllm/%,%,$(MODEL))
 ENGINE_MODELS := [{"id":"$(MODEL_ID)","name":"$(MODEL_ID)","contextWindow":$(ENGINE_CONTEXT),"maxTokens":$(ENGINE_MAXTOK),"reasoning":false,"input":["text"]}]
 
 # Self-hosted models (BenchFlow's `vllm/` provider = any local OpenAI endpoint)
-# need the engine URL injected + a placeholder key + a model entry that caps
+# need the engine URL injected + the engine key (ENGINE_API_KEY, else a placeholder) + a model entry that caps
 # maxTokens (above), and a reachable engine. First-party agents/models
 # (claude/codex/…) bring their own auth + metadata, so skip all of it.
 ifneq ($(findstring vllm/,$(MODEL)),)
-  ENGINE_ENV := --agent-env BENCHFLOW_PROVIDER_BASE_URL=$(ENGINE_URL) --agent-env OPENAI_API_KEY=dummy-key --agent-env 'BENCHFLOW_PROVIDER_MODELS=$(ENGINE_MODELS)'
+  ENGINE_ENV := --agent-env BENCHFLOW_PROVIDER_BASE_URL=$(ENGINE_URL) --agent-env 'BENCHFLOW_PROVIDER_MODELS=$(ENGINE_MODELS)'
+  # The key reaches bench through its environment, not argv: for the vllm/
+  # provider BenchFlow inherits OPENAI_API_KEY from os.environ
+  # (benchflow/agents/env.py auto_inherit_env). A .env here would take precedence.
+  # BenchFlow also copies it INTO the agent sandbox, so the evaluated agent can
+  # read it: ENGINE_API_KEY must be a disposable eval-only token (README "Engine
+  # binding & API key").
+  ENGINE_KEY_ENV := OPENAI_API_KEY="$${ENGINE_API_KEY:-dummy-key}"
   ENGINE_DEP := check-engine
 else
   ENGINE_ENV :=
+  ENGINE_KEY_ENV :=
   ENGINE_DEP :=
 endif
 
@@ -67,7 +95,7 @@ help:
 
 # THE eval command: BenchFlow runs benchmarks/<BENCHMARK>/tasks with the chosen agent+model.
 eval: $(ENGINE_DEP)
-	bench eval run \
+	$(ENGINE_KEY_ENV) bench eval run \
 	  --tasks-dir $(EVAL)/benchmarks/$(BENCHMARK)/tasks \
 	  --agent $(AGENT) --model $(MODEL) \
 	  --sandbox $(SANDBOX) --concurrency $(CONCURRENCY) \
@@ -81,7 +109,7 @@ serve-vllm:
 	bash scripts/serve_qwen.sh
 
 gen:
-	uv run --with datasets python scripts/gen_tasks.py --benchmark $(BENCHMARK) --n $(N)
+	uv run --with 'datasets==5.2.0' python scripts/gen_tasks.py --benchmark $(BENCHMARK) --n $(N)
 
 gen-all:
 	$(MAKE) gen BENCHMARK=simpleqa N=$(N)
@@ -90,15 +118,23 @@ gen-all:
 smoke: check-engine
 	bash scripts/smoke_pi.sh
 
+# The key reaches curl on stdin (-H @-), never in its argv.
 check-engine:
-	@curl -sf -m 10 http://127.0.0.1:$(ENGINE_PORT)/v1/models >/dev/null \
-	  && echo "engine up on :$(ENGINE_PORT)" \
-	  || (echo "engine NOT reachable on :$(ENGINE_PORT) — run 'make serve' first" && exit 1)
+	@case "$${ENGINE_API_KEY:-}" in sk-*) echo "warning: ENGINE_API_KEY looks like a provider key; evaluated agents can read it, so use a disposable eval-only token" >&2 ;; esac
+	@url='$(ENGINE_URL)/models'; \
+	if [[ -n "$${ENGINE_API_KEY:-}" ]]; then \
+	  printf 'Authorization: Bearer %s\n' "$$ENGINE_API_KEY" | curl -sf -m 10 -H @- "$$url" >/dev/null; \
+	else \
+	  curl -sf -m 10 "$$url" >/dev/null; \
+	fi \
+	  && echo "engine up at $(ENGINE_URL)" \
+	  || (echo "engine NOT reachable at $(ENGINE_URL) — run 'make serve' first" && exit 1)
 
 # Docker-free DEBUG fallback (NOT BenchFlow): pi -> engine direct, same tasks+scorer.
 # For sanity-checking the model while the BenchFlow proxy bug is open
 # (docs/benchflow-engine-500.md). Not the official path.
 eval-direct: check-engine
+	bash scripts/install_pi_config.sh
 	python3 scripts/run_local.py --benchmark $(BENCHMARK) --n $(N)
 
 clean:
