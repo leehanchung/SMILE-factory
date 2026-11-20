@@ -1,10 +1,10 @@
-from functools import partial
-from http.server import ThreadingHTTPServer
-from pathlib import Path
 import sys
 import tempfile
 import threading
 import unittest
+from functools import partial
+from http.server import ThreadingHTTPServer
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import urlopen
 

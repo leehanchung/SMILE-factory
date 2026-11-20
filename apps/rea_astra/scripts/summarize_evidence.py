@@ -19,19 +19,21 @@ def summarize(path):
     for record in records:
         normalized = record.get("normalized_result", {})
         semantic = normalized.get("semantic_graph", {})
-        result.append({
-            "evidence_id": record["evidence_id"],
-            "operation": record["operation"],
-            "status": status,
-            "artifact_sha256": normalized.get("root_artifact_sha256"),
-            "source_selection": normalized.get("source_selection"),
-            "statistics": normalized.get("statistics"),
-            "electron_summary": normalized.get("summary"),
-            "application_coverage": normalized.get("graph", {}).get("coverage"),
-            "semantic_coverage": {k: v for k, v in semantic.get("coverage", {}).items() if k != "families"},
-            "semantic_unknown_count": len(semantic.get("unknowns", [])),
-            "limitations": record.get("limitations", []),
-        })
+        result.append(
+            {
+                "evidence_id": record["evidence_id"],
+                "operation": record["operation"],
+                "status": status,
+                "artifact_sha256": normalized.get("root_artifact_sha256"),
+                "source_selection": normalized.get("source_selection"),
+                "statistics": normalized.get("statistics"),
+                "electron_summary": normalized.get("summary"),
+                "application_coverage": normalized.get("graph", {}).get("coverage"),
+                "semantic_coverage": {k: v for k, v in semantic.get("coverage", {}).items() if k != "families"},
+                "semantic_unknown_count": len(semantic.get("unknowns", [])),
+                "limitations": record.get("limitations", []),
+            }
+        )
     return {"source_file": path.name, "source_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "records": result}
 
 

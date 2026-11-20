@@ -6,11 +6,8 @@ submitted context references acquire content. Feed-file serving is owned by the
 experiment service. Public downloads have byte/time caps and reject redirects.
 """
 
-from email.parser import BytesParser
-from email.policy import default
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import signal
@@ -18,10 +15,13 @@ import subprocess
 import tempfile
 import time
 import uuid
+import xml.etree.ElementTree as ET
+from email.parser import BytesParser
+from email.policy import default
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
-import xml.etree.ElementTree as ET
 
 from .store import now
 
@@ -38,12 +38,19 @@ class NoRedirect(HTTPRedirectHandler):
 
 def public_fetch(url, limit=MAX_FETCH):
     parsed = urlsplit(url)
-    if (parsed.scheme != "https" or parsed.hostname not in ALLOWED_HOSTS
-            or parsed.port not in (None, 443) or parsed.username or parsed.password):
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname not in ALLOWED_HOSTS
+        or parsed.port not in (None, 443)
+        or parsed.username
+        or parsed.password
+    ):
         raise ValueError("Unsupported public source URL")
     # No cookies, Authorization, ambient proxy settings, or redirect traversal.
     opener = build_opener(ProxyHandler({}), NoRedirect())
-    request = Request(url, headers={"User-Agent": "rea-astra-local/1.0", "Accept": "application/json, application/atom+xml, */*"})
+    request = Request(
+        url, headers={"User-Agent": "rea-astra-local/1.0", "Accept": "application/json, application/atom+xml, */*"}
+    )
     with opener.open(request, timeout=20) as response:
         if int(response.headers.get("Content-Length", "0")) > limit:
             raise ValueError("Public source exceeds download limit")
@@ -70,11 +77,28 @@ def clone_public(repo, destination, ref=None):
     repo = repo_name(repo)
     if ref and (not isinstance(ref, str) or ref.startswith("-") or len(ref) > 200):
         raise ValueError("Invalid branch")
-    env = {"PATH": os.defpath, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
-           "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "/usr/bin/false", "GIT_LFS_SKIP_SMUDGE": "1"}
-    command = ["git", "-c", "credential.helper=", "-c", "core.hooksPath=/dev/null",
-               "-c", "http.followRedirects=false", "-c", "protocol.file.allow=never",
-               "clone", "--depth=1", "--no-recurse-submodules"]
+    env = {
+        "PATH": os.defpath,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_ASKPASS": "/usr/bin/false",
+        "GIT_LFS_SKIP_SMUDGE": "1",
+    }
+    command = [
+        "git",
+        "-c",
+        "credential.helper=",
+        "-c",
+        "core.hooksPath=/dev/null",
+        "-c",
+        "http.followRedirects=false",
+        "-c",
+        "protocol.file.allow=never",
+        "clone",
+        "--depth=1",
+        "--no-recurse-submodules",
+    ]
     if ref:
         command += ["--branch", ref]
     command += ["--", "https://github.com/" + repo + ".git", str(destination)]
@@ -83,7 +107,11 @@ def clone_public(repo, destination, ref=None):
         deadline = time.monotonic() + 90
         try:
             while process.poll() is None:
-                size = sum(p.lstat().st_size for p in destination.rglob("*") if not p.is_symlink() and p.is_file()) if destination.exists() else 0
+                size = (
+                    sum(p.lstat().st_size for p in destination.rglob("*") if not p.is_symlink() and p.is_file())
+                    if destination.exists()
+                    else 0
+                )
                 if time.monotonic() > deadline or size > MAX_UPLOAD:
                     raise ValueError("Repository exceeds clone time or size limit")
                 time.sleep(0.1)
@@ -99,7 +127,9 @@ class SourceService:
     def __init__(self, hosted, fetch=public_fetch, clone=clone_public):
         self.hosted, self.store, self.fetch, self.clone = hosted, hosted.store, fetch, clone
         with self.store.connect() as db:
-            db.execute("CREATE TABLE IF NOT EXISTS source_resources (id TEXT PRIMARY KEY, workspace TEXT NOT NULL, data TEXT NOT NULL)")
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS source_resources (id TEXT PRIMARY KEY, workspace TEXT NOT NULL, data TEXT NOT NULL)"
+            )
 
     def json_fetch(self, url):
         return json.loads(self.fetch(url, 2 * 1024 * 1024))
@@ -128,7 +158,9 @@ class SourceService:
         content_type = h.headers.get("Content-Type", "")
         if "\r" in content_type or "\n" in content_type or not content_type.lower().startswith("multipart/form-data;"):
             raise ValueError("Expected multipart form-data")
-        message = BytesParser(policy=default).parsebytes(b"Content-Type: " + content_type.encode("ascii") + b"\r\nMIME-Version: 1.0\r\n\r\n" + raw)
+        message = BytesParser(policy=default).parsebytes(
+            b"Content-Type: " + content_type.encode("ascii") + b"\r\nMIME-Version: 1.0\r\n\r\n" + raw
+        )
         if not message.is_multipart() or message.defects:
             raise ValueError("Invalid multipart boundary")
         fields, files = {}, []
@@ -170,8 +202,15 @@ class SourceService:
                     path = self.store.file_path(thread["id"], item["path"])
                     if path.is_file():
                         stat = path.stat()
-                        entries.append({"name": path.name, "path": str(path), "size": stat.st_size,
-                                        "modified": stat.st_mtime, "is_dir": False})
+                        entries.append(
+                            {
+                                "name": path.name,
+                                "path": str(path),
+                                "size": stat.st_size,
+                                "modified": stat.st_mtime,
+                                "is_dir": False,
+                            }
+                        )
                 except (ValueError, OSError):
                     continue
         return entries
@@ -199,8 +238,12 @@ class SourceService:
         return data
 
     def arxiv(self, query):
-        match = re.fullmatch(r"(?:https://arxiv.org/(?:abs|pdf)/)?((?:\d{4}\.\d{4,5}|[a-z-]+/\d{7})(?:v\d+)?)(?:\.pdf)?", query)
-        args = {"id_list": match[1], "max_results": 10} if match else {"search_query": "all:" + query, "max_results": 10}
+        match = re.fullmatch(
+            r"(?:https://arxiv.org/(?:abs|pdf)/)?((?:\d{4}\.\d{4,5}|[a-z-]+/\d{7})(?:v\d+)?)(?:\.pdf)?", query
+        )
+        args = (
+            {"id_list": match[1], "max_results": 10} if match else {"search_query": "all:" + query, "max_results": 10}
+        )
         root = ET.fromstring(self.fetch("https://export.arxiv.org/api/query?" + urlencode(args), 2 * 1024 * 1024))
         ns = {"a": "http://www.w3.org/2005/Atom"}
         rows = []
@@ -208,12 +251,18 @@ class SourceService:
             identifier = entry.findtext("a:id", "", ns).rsplit("/abs/", 1)[-1]
             if not re.fullmatch(r"(?:\d{4}\.\d{4,5}|[a-z-]+/\d{7})(?:v\d+)?", identifier):
                 continue
-            rows.append({"id": identifier, "title": " ".join(entry.findtext("a:title", "", ns).split()),
-                         "abstract": entry.findtext("a:summary", "", ns).strip(),
-                         "authors": [a.findtext("a:name", "", ns) for a in entry.findall("a:author", ns)],
-                         "year": entry.findtext("a:published", "", ns)[:4],
-                         "categories": [c.get("term", "") for c in entry.findall("a:category", ns)],
-                         "url": "https://arxiv.org/abs/" + identifier, "pdf_url": "https://arxiv.org/pdf/" + identifier})
+            rows.append(
+                {
+                    "id": identifier,
+                    "title": " ".join(entry.findtext("a:title", "", ns).split()),
+                    "abstract": entry.findtext("a:summary", "", ns).strip(),
+                    "authors": [a.findtext("a:name", "", ns) for a in entry.findall("a:author", ns)],
+                    "year": entry.findtext("a:published", "", ns)[:4],
+                    "categories": [c.get("term", "") for c in entry.findall("a:category", ns)],
+                    "url": "https://arxiv.org/abs/" + identifier,
+                    "pdf_url": "https://arxiv.org/pdf/" + identifier,
+                }
+            )
         return rows
 
     def hf(self, kind, identifier):
@@ -223,7 +272,10 @@ class SourceService:
 
     def resources(self, workspace):
         with self.store.connect() as db:
-            return [json.loads(row[0]) for row in db.execute("SELECT data FROM source_resources WHERE workspace=?", (workspace,))]
+            return [
+                json.loads(row[0])
+                for row in db.execute("SELECT data FROM source_resources WHERE workspace=?", (workspace,))
+            ]
 
     def add_repository(self, workspace, value, ref=None):
         repo = repo_name(value)
@@ -242,10 +294,21 @@ class SourceService:
                 shutil.rmtree(destination)
             raise
         org, name = repo.split("/")
-        resource = {"id": "resource_" + uuid.uuid4().hex, "type": "github_repo", "name": repo,
-                    "org": org, "repo": name, "url": "https://github.com/" + repo, "visibility": "public",
-                    "description": metadata.get("description") or "", "added_at": now(), "ref": ref,
-                    "checkout_status": "ok", "checkout_path": str(destination), "health_status": "ok"}
+        resource = {
+            "id": "resource_" + uuid.uuid4().hex,
+            "type": "github_repo",
+            "name": repo,
+            "org": org,
+            "repo": name,
+            "url": "https://github.com/" + repo,
+            "visibility": "public",
+            "description": metadata.get("description") or "",
+            "added_at": now(),
+            "ref": ref,
+            "checkout_status": "ok",
+            "checkout_path": str(destination),
+            "health_status": "ok",
+        }
         with self.store.connect() as db:
             db.execute("INSERT INTO source_resources VALUES (?,?,?)", (resource["id"], workspace, json.dumps(resource)))
         return resource
@@ -267,13 +330,22 @@ class SourceService:
         message = body.get("message", "")
         refs.extend({"value": e["path"]} for e in self.entries() if e["path"] in message)
         if body.get("base_repo"):
-            refs.append({"resource_url": body["base_repo"], "resource_type": "github_repo", "ref": body.get("base_ref")})
+            refs.append(
+                {"resource_url": body["base_repo"], "resource_type": "github_repo", "ref": body.get("base_ref")}
+            )
         if len(refs) > 30:
             raise ValueError("At most 30 source references can be acquired per message")
         for ref in refs:
             if not isinstance(ref, dict):
                 raise ValueError("Invalid source context reference")
-            value = ref.get("resource_url") or ref.get("resourceUrl") or ref.get("value") or ref.get("path") or ref.get("checkout_path") or ref.get("checkoutPath")
+            value = (
+                ref.get("resource_url")
+                or ref.get("resourceUrl")
+                or ref.get("value")
+                or ref.get("path")
+                or ref.get("checkout_path")
+                or ref.get("checkoutPath")
+            )
             if not isinstance(value, str) or not value:
                 raise ValueError("Source reference must have a nonempty value")
             local_type = ref.get("type") if ref.get("type") in ("thread", "experiment") else None
@@ -294,7 +366,11 @@ class SourceService:
                 metadata = self.hf(kind, identifier)
                 if metadata.get("private") or metadata.get("gated"):
                     raise ValueError("Gated/private Hugging Face sources require unsupported credentials")
-                acquired.append(self.save(session, identifier.replace("/", "-") + ".json", json.dumps(metadata, indent=2).encode())["path"])
+                acquired.append(
+                    self.save(session, identifier.replace("/", "-") + ".json", json.dumps(metadata, indent=2).encode())[
+                        "path"
+                    ]
+                )
             elif value.startswith("https://arxiv.org/"):
                 hits = self.arxiv(value)
                 if not hits:
@@ -302,7 +378,10 @@ class SourceService:
                 hit = hits[0]
                 acquired.append(self.save(session, hit["id"] + ".json", json.dumps(hit, indent=2).encode())["path"])
                 acquired.append(self.save(session, hit["id"] + ".pdf", self.fetch(hit["pdf_url"], MAX_FETCH))["path"])
-            elif value.startswith("https://github.com/") or ref.get("resource_type", ref.get("resourceType")) == "github_repo":
+            elif (
+                value.startswith("https://github.com/")
+                or ref.get("resource_type", ref.get("resourceType")) == "github_repo"
+            ):
                 resource = self.add_repository(thread["workspace_id"], value, ref.get("ref"))
                 acquired.extend(self.copy_repository(session, resource["checkout_path"]))
             elif value.startswith("/"):
@@ -318,11 +397,17 @@ class SourceService:
                     with self.store.open_file(source_session, relative) as stream:
                         acquired.append(self.save(session, source.name, stream.read(MAX_UPLOAD + 1))["path"])
             else:
-                raise ValueError("Unsupported source reference: only selected local files, threads, experiments, GitHub, arXiv, and Hugging Face are supported")
+                raise ValueError(
+                    "Unsupported source reference: only selected local files, threads, experiments, GitHub, arXiv, and Hugging Face are supported"
+                )
             prepared[value] = acquired
             paths.extend(acquired)
         self.hosted.set_meta(session, source_inputs=prepared)
-        return "\n\nAcquired source files in your working directory:\n" + "\n".join("- " + p for p in paths) if paths else ""
+        return (
+            "\n\nAcquired source files in your working directory:\n" + "\n".join("- " + p for p in paths)
+            if paths
+            else ""
+        )
 
     def local_context(self, destination, kind, value, workspace=None):
         """Snapshot explicitly selected local conversations and copy artifacts.
@@ -343,12 +428,29 @@ class SourceService:
         related = [experiment] if experiment else []
         if kind == "thread":
             with self.store.connect() as db:
-                if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='hosted_experiments'").fetchone():
-                    related = [dict(row) for row in db.execute("SELECT * FROM hosted_experiments WHERE parent=? AND deleted=0", (source_session,))]
+                if db.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='hosted_experiments'"
+                ).fetchone():
+                    related = [
+                        dict(row)
+                        for row in db.execute(
+                            "SELECT * FROM hosted_experiments WHERE parent=? AND deleted=0", (source_session,)
+                        )
+                    ]
                     sessions.extend(row["worker"] for row in related)
-        snapshot = {"source_type": kind, "source_id": value, "workspace_id": source["workspace_id"],
-                    "title": source["title"], "captured_at": now(), "conversations": [], "artifacts": [],
-                    "experiments": [{key: exp.get(key) for key in ("eid", "title", "body", "display_label", "parent", "worker")} for exp in related]}
+        snapshot = {
+            "source_type": kind,
+            "source_id": value,
+            "workspace_id": source["workspace_id"],
+            "title": source["title"],
+            "captured_at": now(),
+            "conversations": [],
+            "artifacts": [],
+            "experiments": [
+                {key: exp.get(key) for key in ("eid", "title", "body", "display_label", "parent", "worker")}
+                for exp in related
+            ],
+        }
         acquired, total, count = [], 0, 0
         for current in dict.fromkeys(sessions):
             thread = self.store.get_thread(current)
@@ -357,11 +459,31 @@ class SourceService:
             # Bounded, explicit snapshots retain the newest 200 messages.
             with self.store.connect() as db:
                 message_count = db.execute("SELECT count(*) FROM messages WHERE thread_id=?", (current,)).fetchone()[0]
-                rows = list(reversed(db.execute("SELECT role,content,created_at,run_id FROM messages WHERE thread_id=? ORDER BY rowid DESC LIMIT 200", (current,)).fetchall()))
-            messages = [{**dict(row), "content": row["content"][:20000], "content_truncated": len(row["content"]) > 20000} for row in rows]
-            snapshot["conversations"].append({"thread_id": current, "title": thread["title"], "messages": messages,
-                                               "total_messages": message_count, "messages_truncated": message_count > len(messages),
-                                               "runs": [{key: run.get(key) for key in ("id", "status", "created_at", "finished_at", "error")} for run in self.store.list_runs(current)[-50:]]})
+                rows = list(
+                    reversed(
+                        db.execute(
+                            "SELECT role,content,created_at,run_id FROM messages WHERE thread_id=? ORDER BY rowid DESC LIMIT 200",
+                            (current,),
+                        ).fetchall()
+                    )
+                )
+            messages = [
+                {**dict(row), "content": row["content"][:20000], "content_truncated": len(row["content"]) > 20000}
+                for row in rows
+            ]
+            snapshot["conversations"].append(
+                {
+                    "thread_id": current,
+                    "title": thread["title"],
+                    "messages": messages,
+                    "total_messages": message_count,
+                    "messages_truncated": message_count > len(messages),
+                    "runs": [
+                        {key: run.get(key) for key in ("id", "status", "created_at", "finished_at", "error")}
+                        for run in self.store.list_runs(current)[-50:]
+                    ],
+                }
+            )
             for item in self.store.list_files(current):
                 # Don't recursively reattach earlier conversation snapshots.
                 if item["kind"] == "context":
@@ -373,9 +495,14 @@ class SourceService:
                 total += len(content)
                 if count > 200 or total > MAX_UPLOAD:
                     raise ValueError("Selected source artifacts exceed 200 files or 100 MiB")
-                local = str(source_path) if current == destination else self.save(destination, source_path.name, content, kind="context")["path"]
-                snapshot["artifacts"].append({"source_thread": current, "source_path": item["path"], "local_path": local,
-                                             "bytes": len(content)})
+                local = (
+                    str(source_path)
+                    if current == destination
+                    else self.save(destination, source_path.name, content, kind="context")["path"]
+                )
+                snapshot["artifacts"].append(
+                    {"source_thread": current, "source_path": item["path"], "local_path": local, "bytes": len(content)}
+                )
                 acquired.append(local)
         encoded = json.dumps(snapshot, indent=2).encode()
         if len(encoded) > 5 * 1024 * 1024:
@@ -438,7 +565,20 @@ class SourceService:
     def route(self, h, method, path, body):
         q = lambda key, fallback="": h.query.get(key, [fallback])[0]
         reply = lambda value, status=200: h.json(status, value)
-        owned = path in {"/api/upload", "/api/artifacts/browse", "/api/artifacts/search", "/api/artifacts/stat", "/api/arxiv/search", "/api/huggingface/search", "/api/huggingface/check", "/api/huggingface/status", "/api/team/github/search", "/api/team/github/my-repos", "/api/team/github/branches", "/api/team/github/connect"} or path.startswith("/api/team/resources")
+        owned = path in {
+            "/api/upload",
+            "/api/artifacts/browse",
+            "/api/artifacts/search",
+            "/api/artifacts/stat",
+            "/api/arxiv/search",
+            "/api/huggingface/search",
+            "/api/huggingface/check",
+            "/api/huggingface/status",
+            "/api/team/github/search",
+            "/api/team/github/my-repos",
+            "/api/team/github/branches",
+            "/api/team/github/connect",
+        } or path.startswith("/api/team/resources")
         if not owned:
             return False
         try:
@@ -452,13 +592,25 @@ class SourceService:
                 if q("path"):
                     entries = [e for e in entries if str(Path(e["path"]).parent) == q("path")]
                 offset, limit = max(0, int(q("offset", "0"))), min(200, max(1, int(q("limit", "200"))))
-                reply({"entries": entries[offset:offset + limit], "total": len(entries), "truncated": offset + limit < len(entries)})
+                reply(
+                    {
+                        "entries": entries[offset : offset + limit],
+                        "total": len(entries),
+                        "truncated": offset + limit < len(entries),
+                    }
+                )
             elif path == "/api/artifacts/search" and method == "GET":
                 entries = [e for e in self.entries() if q("q").lower() in e["name"].lower()]
                 reply({"results": entries[:200], "truncated": len(entries) > 200})
             elif path == "/api/artifacts/stat" and method == "GET":
                 entries = {e["path"]: e for e in self.entries()}
-                reply({"results": [{**entries.get(p, {"path": p}), "exists": p in entries} for p in q("paths").split(",")[:100]]})
+                reply(
+                    {
+                        "results": [
+                            {**entries.get(p, {"path": p}), "exists": p in entries} for p in q("paths").split(",")[:100]
+                        ]
+                    }
+                )
             elif path == "/api/arxiv/search" and method == "GET":
                 reply(self.arxiv(q("q")[:500]))
             elif path == "/api/huggingface/status" and method == "GET":
@@ -467,26 +619,61 @@ class SourceService:
                 kind = q("type", "model")
                 if kind not in {"model", "dataset"}:
                     raise ValueError("Unsupported Hugging Face source type")
-                reply(self.json_fetch("https://huggingface.co/api/" + kind + "s?" + urlencode({"search": q("query")[:300], "limit": 20, "full": "true", "sort": "downloads", "direction": -1})))
+                reply(
+                    self.json_fetch(
+                        "https://huggingface.co/api/"
+                        + kind
+                        + "s?"
+                        + urlencode(
+                            {
+                                "search": q("query")[:300],
+                                "limit": 20,
+                                "full": "true",
+                                "sort": "downloads",
+                                "direction": -1,
+                            }
+                        )
+                    )
+                )
             elif path == "/api/huggingface/check" and method == "GET":
                 item = self.hf(q("type", "model"), q("id"))
                 blocked = item.get("private") or item.get("gated")
                 reply({"accessible": not bool(blocked), "reason": "gated" if blocked else None})
             elif path == "/api/team/github/search" and method == "GET":
-                result = self.json_fetch("https://api.github.com/search/repositories?" + urlencode({"q": q("q")[:300] + " is:public", "per_page": 20}))
+                result = self.json_fetch(
+                    "https://api.github.com/search/repositories?"
+                    + urlencode({"q": q("q")[:300] + " is:public", "per_page": 20})
+                )
                 reply(result.get("items", []))
             elif path == "/api/team/github/my-repos" and method == "GET":
                 reply({"connected": False, "repos": []})
             elif path == "/api/team/github/connect":
-                reply({"error": "GitHub account credentials are unsupported; public repository search and import work without login"}, 501)
+                reply(
+                    {
+                        "error": "GitHub account credentials are unsupported; public repository search and import work without login"
+                    },
+                    501,
+                )
             elif path == "/api/team/github/branches" and method == "GET":
                 repo = repo_name(q("repo"))
                 metadata = self.github(repo)
                 branches = self.json_fetch("https://api.github.com/repos/" + repo + "/branches?per_page=100")
-                reply({"default_branch": metadata.get("default_branch"), "branches": [b["name"] for b in branches if q("q").lower() in b["name"].lower()]})
+                reply(
+                    {
+                        "default_branch": metadata.get("default_branch"),
+                        "branches": [b["name"] for b in branches if q("q").lower() in b["name"].lower()],
+                    }
+                )
             elif path == "/api/team/resources/preflight" and method == "POST":
                 metadata = self.github(body.get("url", ""))
-                reply({"exists": True, "detected_type": "github_repo", "access_status": "ok", "name": metadata["full_name"]})
+                reply(
+                    {
+                        "exists": True,
+                        "detected_type": "github_repo",
+                        "access_status": "ok",
+                        "name": metadata["full_name"],
+                    }
+                )
             elif path == "/api/team/resources" and method == "GET":
                 reply({"resources": self.resources(q("workspace_id"))})
             elif path == "/api/team/resources" and method == "POST":
@@ -494,7 +681,7 @@ class SourceService:
                     raise ValueError("Only public GitHub repository additions are supported here")
                 resource = self.add_repository(q("workspace_id"), body.get("url", ""))
                 reply({"resource": resource, "needs_github_connection": False})
-            elif (match := re.fullmatch(r"/api/team/resources/([^/]+)(/verify)?", path)):
+            elif match := re.fullmatch(r"/api/team/resources/([^/]+)(/verify)?", path):
                 resource = next((r for r in self.resources(q("workspace_id")) if r["id"] == match[1]), None)
                 if not resource:
                     reply({"error": "Resource not found"}, 404)
@@ -510,7 +697,7 @@ class SourceService:
             else:
                 reply({"error": "Method not supported"}, 405)
         except HTTPError as exc:
-            reply({"error": "Public source unavailable (HTTP %s); credentials are not used" % exc.code}, 502)
+            reply({"error": f"Public source unavailable (HTTP {exc.code}); credentials are not used"}, 502)
         except (URLError, TimeoutError, OSError) as exc:
             reply({"error": "Public source acquisition failed: " + str(exc)}, 502)
         except (ValueError, ET.ParseError) as exc:
