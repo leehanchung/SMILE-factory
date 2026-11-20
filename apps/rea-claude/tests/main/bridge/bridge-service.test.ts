@@ -232,15 +232,24 @@ describe("badge", () => {
     expect(internals.badgeCounts().get("c1")).toEqual({ attention: 9999, unread: 0 });
   });
 
-  it("Linux: attention count only; unread-only → 0", async () => {
+  it("Linux: flashes windows when attention rises, clears at 0; unread-only ignored (X21)", async () => {
     const { world, internals } = setup({ platform: "linux" });
     const a = world.addLab("c1");
+    const win = new FakeWin();
+    state.allWindows = [win];
     internals.handleBadgeCounts(asWc(a.wc), { attention: 4, unread: 2 });
     await settle(world);
-    expect(state.setBadgeCount).toHaveBeenLastCalledWith(4);
+    expect(win.flashes).toEqual([true]);
+    internals.handleBadgeCounts(asWc(a.wc), { attention: 3, unread: 2 });
+    await settle(world);
+    expect(win.flashes).toEqual([true]); // falling but non-zero: leave the hint
     internals.handleBadgeCounts(asWc(a.wc), { attention: 0, unread: 2 });
     await settle(world);
-    expect(state.setBadgeCount).toHaveBeenLastCalledWith(0);
+    expect(win.flashes).toEqual([true, false]);
+    internals.handleBadgeCounts(asWc(a.wc), { attention: 0, unread: 5 });
+    await settle(world);
+    expect(win.flashes).toEqual([true, false]);
+    expect(state.setBadgeCount).not.toHaveBeenCalled();
     expect(state.dock.setBadge).not.toHaveBeenCalled();
   });
 

@@ -23,7 +23,7 @@ your own cluster reached over SSH, or on a local dev stack. The desktop app:
 
 ## Running
 
-Requires Node 22+ and npm. macOS is the primary target; Linux and Windows code paths exist.
+Requires Node 22+ and npm. macOS is the primary target and needs macOS 13 Ventura or later (Electron 44+ dropped macOS 12); Linux and Windows code paths exist.
 
 ```bash
 make -C apps/rea-claude install
@@ -47,6 +47,21 @@ Environment switches:
 
 Sign-in uses the production gateway (`https://my.silico.run`) unless the
 "staging" developer setting is on. You need a Silico account.
+
+## Known advisories
+
+`npm audit --omit=dev` (the shipped app) is clean. `npm audit` reports 12 high
+findings, all from one dev/build-only advisory, accepted for now:
+
+- **picomatch `<=4.0.7`, [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)**
+  (ReDoS on attacker-controlled extglob patterns). Reached only through vite,
+  vitest, tinyglobby and electron-builder, which glob patterns from our own
+  build config. No patched release exists: the PR the advisory cites
+  (micromatch/picomatch#194) does not fix its own pattern, the other community
+  fix PRs are unreviewed, and a maintainer has disputed the report. When
+  picomatch `>=4.0.8` ships (or the advisory is withdrawn), add
+  `"picomatch": "^4.0.8"` to `overrides` in `package.json` and re-run
+  `npm audit`.
 
 ## Documentation
 

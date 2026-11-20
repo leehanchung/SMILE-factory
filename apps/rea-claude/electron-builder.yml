@@ -21,5 +21,7 @@ mac:
     - target: dir
   icon: resources/icon.png
   category: public.app-category.developer-tools
+  # Electron 44+ dropped macOS 12 (Chromium no longer supports Monterey).
+  minimumSystemVersion: "13.0"
   # Unsigned local builds.
   identity: null
