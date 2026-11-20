@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "requests>=2.34.2",
+#     "beautifulsoup4>=4.15.0",
+#     "lxml>=6.1.3",
+# ]
+# ///
 # Copyright 2023 Hanchung Lee
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,11 +30,13 @@ for LLM training from multiple online job boards and company career pages.
 Each discovered job posting is saved as an individual Markdown file in
 the `job_postings/` directory (sibling to this script).
 
-Usage:
-    python scripts/scrape_ai_trainer_jobs.py [--output-dir DIR] [--format md|json]
+Usage (from data/scrapers/):
+    uv run scrape_ai_trainer_jobs.py [--output-dir DIR] [--format md|json]
 
 Requirements:
-    pip install requests beautifulsoup4 lxml
+    Declared inline (PEP 723 `# /// script` block above); `uv run` installs
+    them into an ephemeral environment. Lower bounds exclude releases with
+    known CVEs.
 """
 
 from __future__ import annotations
