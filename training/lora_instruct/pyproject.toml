@@ -5,14 +5,14 @@ description = "LoRA SFT training recipe (HuggingFace PEFT + LoRA)"
 authors = [{ name = "Han Lee", email = "lee.hanchung@gmail.com" }]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11,<3.14"
 dependencies = [
-    "torch>=2.11.0",
-    "transformers>=5.0.0",
+    "torch>=2.13.0",
+    "transformers>=5.20.0",
     "peft>=0.19.0",
     "accelerate>=1.13.0",
     "bitsandbytes>=0.49.0",
-    "datasets>=4.8.0",
+    "datasets>=5.0.1",
     "sentencepiece>=0.2.0",
     "loralib>=0.1.2",
     "einops>=0.8.0",
@@ -25,7 +25,7 @@ dependencies = [
 #   uv sync --extra inference
 [project.optional-dependencies]
 inference = [
-    "vllm>=0.20.0",
+    "vllm>=0.32.0",
     "openai>=2.33.0",
     "tiktoken>=0.12.0",
     "num2words>=0.5.14",
@@ -42,6 +42,14 @@ dev = [
 [tool.uv]
 # App/scripts project (entry point is finetune.py), not an installable library.
 package = false
+# vllm (through 0.34.0) pins `setuptools>=78.1.1,<81` on Python >3.11, which
+# blocks the fixes for PYSEC-2026-3447 (>=83.0.0) and GHSA-xmj3-9gf7-h52w
+# (>=84.1.0). The cap only protects vllm's *source/editable* builds (ROCm
+# `setup.py develop` + CMake build-dir reuse; vllm PRs #17320, #28592, deferral
+# noted in #59315/#59427). We install prebuilt wheels, and neither vllm nor
+# triton imports setuptools/pkg_resources at runtime, so override it. Drop this
+# once vllm lifts the cap.
+override-dependencies = ["setuptools>=84.1.0"]
 
 [tool.pytest.ini_options]
 # Make the local `utils` package importable in tests without packaging.

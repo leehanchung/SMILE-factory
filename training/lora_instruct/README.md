@@ -45,6 +45,10 @@ under the hood. `--gradient_checkpointing` (on by default) further trades comput
 for memory. `--lora_target_modules` defaults to `all-linear` (PEFT auto-targets
 every linear layer, so it works across architectures).
 
+`--trust_remote_code` is **off by default** because it runs arbitrary Python
+from the model repo. Models with custom architectures (e.g. MPT-style models,
+see the MPT notebook) require it — only pass it for repos you trust.
+
 > Dependencies are managed with **uv** (`uv.lock`). `uv sync` installs the lean
 > training stack; the vllm/openai inference deps live in an optional extra
 > (`uv sync --extra inference`).

@@ -57,7 +57,7 @@ Requires `OPENAI_API_KEY` in environment or `.env` file.
 
 ## Code Conventions
 
-- Python 3.10+
+- Python 3.11+ (3.11–3.13 for `training/lora_instruct`)
 - Type hints on function signatures
 - `python-fire` for CLI interfaces (training knobs are `train()` args)
 - `python-dotenv` for environment variable loading

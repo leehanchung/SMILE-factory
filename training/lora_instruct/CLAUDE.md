@@ -21,7 +21,7 @@ cd training/lora_instruct/
 - This project uses **uv** (`pyproject.toml` + `uv.lock`), like the rest of the
   monorepo. `uv sync` installs the lean training stack; vllm/openai/tiktoken are
   in an optional `inference` extra (`uv sync --extra inference`). The CUDA build
-  of torch (`2.11.x`, cu13) comes straight from PyPI — no extra index needed, and
+  of torch (`2.14.x`, cu13) comes straight from PyPI — no extra index needed, and
   the system `nvcc` is irrelevant (torch wheels bundle their own CUDA runtime).
 - `finetune.py` reads its training config from CLI flags via `fire`. See the
   `train()` signature in `finetune.py` for the full list of knobs (batch size,
@@ -29,6 +29,22 @@ cd training/lora_instruct/
   prompt template, etc.). Default base precision is bf16; `--bits 4/8` enables
   quantized QLoRA via `bitsandbytes`. `--lora_target_modules` defaults to
   `all-linear`.
+- `--trust_remote_code` is **off by default**: it executes Python shipped in
+  the model repo. Pass it only for base models whose repo code you trust and
+  that need it (e.g. MPT-style custom architectures, as in `notebook/`).
+- `inference/deploy_local.sh` binds vLLM to `127.0.0.1` by default. Set
+  `VLLM_API_KEY` to require a bearer token (passed via the environment, never
+  argv); `inference/bench.py` sends `OPENAI_API_KEY` as the bearer, so set it to
+  the same value. A non-loopback `HOST` also needs `ALLOW_PUBLIC_BIND=1` and an
+  authenticating proxy or network policy in front: vLLM's key does not cover
+  every route (e.g. `/invocations`).
+- Resuming from a checkpoint that holds pickle files (a legacy
+  `adapter_model.bin`, or Trainer state such as `optimizer.pt` /
+  `rng_state.pth`) requires `LORA_TRUST_CHECKPOINT=1`: the torch 2.14 that vLLM
+  pins is affected by GHSA-v32g-mr63-3j83 even with `weights_only=True`. Only
+  set it for checkpoints you produced. The same switch lets `--base_model`
+  load pickle-only `pytorch_model.bin` weights; by default the base model must
+  ship safetensors (`use_safetensors=True`).
 - Default dataset is `yahma/alpaca-cleaned`; default prompt template is
   `alpaca` (see `templates/alpaca.json`).
 - Multi-GPU is **DDP via `torchrun --nproc_per_node=<N>`** (don't export

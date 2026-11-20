@@ -89,6 +89,52 @@ class TokenizerHelper:
         return tokenized_full_prompt
 
 
+TRUST_CHECKPOINT_ENV = "LORA_TRUST_CHECKPOINT"
+
+# Files torch.load / Trainer unpickle on resume: adapter_model.bin plus Trainer
+# state such as optimizer.pt, scheduler.pt and rng_state*.pth.
+PICKLE_SUFFIXES = (".bin", ".pt", ".pth", ".pkl", ".pickle", ".ckpt")
+
+
+def _pickle_files(checkpoint_dir: str) -> list[str]:
+    try:
+        names = os.listdir(checkpoint_dir)
+    except OSError:
+        return []
+    return sorted(n for n in names if n.endswith(PICKLE_SUFFIXES))
+
+
+def _require_trusted_checkpoint(checkpoint_dir: str) -> None:
+    """Only resume from a checkpoint holding pickle files when explicitly allowed.
+
+    vLLM 0.34 pins torch 2.14.0, where ``torch.load(weights_only=True)`` can
+    still read arbitrary local files from a crafted checkpoint
+    (GHSA-v32g-mr63-3j83, fixed in torch 2.15.0). That covers a legacy
+    ``adapter_model.bin`` and the Trainer state (``optimizer.pt``,
+    ``rng_state.pth``, ...) restored alongside a safetensors adapter, so the
+    whole checkpoint must be trusted. Opt in for checkpoints you produced.
+    """
+    pickles = _pickle_files(checkpoint_dir)
+    if pickles and os.environ.get(TRUST_CHECKPOINT_ENV) != "1":
+        raise SystemExit(
+            f"Refusing to resume from {checkpoint_dir}: it contains pickle files "
+            f"({', '.join(pickles)}) that torch<2.15 cannot load safely "
+            f"(GHSA-v32g-mr63-3j83). Set {TRUST_CHECKPOINT_ENV}=1 if you trust "
+            f"its source, or start from a safetensors-only adapter."
+        )
+
+
+def _base_model_use_safetensors() -> bool | None:
+    """``use_safetensors`` for the base-model load.
+
+    Without it, ``from_pretrained`` falls back to ``pytorch_model.bin`` via
+    ``torch.load``, which torch 2.14 cannot do safely (GHSA-v32g-mr63-3j83).
+    Require safetensors unless the caller trusts the source, in which case
+    return None to keep Transformers' default fallback.
+    """
+    return None if os.environ.get(TRUST_CHECKPOINT_ENV) == "1" else True
+
+
 def train(
     # model/data params
     base_model: str = "",  # the only required argument
@@ -128,6 +174,9 @@ def train(
     eval_samples: int = 0,  # >0: generate from N held-out prompts each eval
     eval_sample_new_tokens: int = 128,
     early_stopping_patience: int = 0,  # >0: stop after N evals w/o eval_loss improvement
+    # security: only enable for base models whose repo code you have reviewed/trust
+    # (runs arbitrary Python from the model repo, e.g. MPT-style custom architectures)
+    trust_remote_code: bool = False,
 ):
     assert base_model, (
         "Please specify a --base_model, e.g. --base_model='Qwen/Qwen2.5-1.5B'"
@@ -168,7 +217,9 @@ def train(
     prompter = Prompter(prompt_template_name)
 
     # ---- tokenizer ----
-    tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        base_model, trust_remote_code=trust_remote_code
+    )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"  # right pad for causal-LM training
@@ -190,7 +241,9 @@ def train(
         quantization_config=quantization_config,
         dtype=torch.bfloat16 if bits == 0 else None,
         device_map=device_map,
-        trust_remote_code=True,
+        trust_remote_code=trust_remote_code,
+        # Refuse pickle-only (.bin) base weights unless LORA_TRUST_CHECKPOINT=1.
+        use_safetensors=_base_model_use_safetensors(),
     )
 
     if quantization_config is not None:
@@ -227,6 +280,7 @@ def train(
         data = load_dataset(data_path)
 
     if resume_from_checkpoint:
+        _require_trusted_checkpoint(resume_from_checkpoint)
         checkpoint_name = os.path.join(
             resume_from_checkpoint, "adapter_model.safetensors"
         )
@@ -237,11 +291,10 @@ def train(
             print(f"Restarting from {checkpoint_name}")
             from safetensors.torch import load_file
 
-            adapters_weights = (
-                load_file(checkpoint_name)
-                if checkpoint_name.endswith(".safetensors")
-                else torch.load(checkpoint_name)
-            )
+            if checkpoint_name.endswith(".safetensors"):
+                adapters_weights = load_file(checkpoint_name)
+            else:
+                adapters_weights = torch.load(checkpoint_name, weights_only=True)
             set_peft_model_state_dict(model, adapters_weights)
         else:
             print(f"Checkpoint {checkpoint_name} not found")
