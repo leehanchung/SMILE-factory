@@ -414,6 +414,43 @@ def _run_git(
             ) from exc
 
 
+# Env var the askpass script reads the PAT from. The token is passed only
+# through the git subprocess's environment — it is never interpolated into
+# the script body, so tokens containing shell metacharacters (``'``, ``$``,
+# backticks, ...) can't break quoting or inject commands, and the token is
+# never written to disk.
+ASKPASS_TOKEN_ENV = "DELULU_GIT_ASKPASS_TOKEN"
+
+
+def _write_askpass_script(*, log_prompt: bool = False) -> str:
+    """Write a token-free ``GIT_ASKPASS`` script and return its path.
+
+    Git calls the script with the prompt as ``$1``: it answers ``git``
+    for the username prompt and prints ``$DELULU_GIT_ASKPASS_TOKEN``
+    (verbatim, via ``printf '%s\\n'``) for the password prompt. The file
+    is mode 0700; the caller is responsible for deleting it.
+    """
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".sh",
+        delete=False,
+        dir="/tmp",
+        prefix="git-askpass-",
+    ) as f:
+        f.write("#!/bin/sh\n")
+        if log_prompt:
+            # Log to stderr so we can confirm the script was actually
+            # invoked by git.
+            f.write('echo "ASKPASS: called with prompt: $1" >&2\n')
+        f.write('case "$1" in\n')
+        f.write("  Username*) printf '%s\\n' 'git' ;;\n")
+        f.write(f"  Password*) printf '%s\\n' \"${ASKPASS_TOKEN_ENV}\" ;;\n")
+        f.write("esac\n")
+        askpass_path = f.name
+    os.chmod(askpass_path, stat.S_IRWXU)
+    return askpass_path
+
+
 @contextmanager
 def _askpass_env(github_token: str | None):
     """Yield an env dict with ``GIT_ASKPASS`` configured for ``github_token``.
@@ -422,12 +459,13 @@ def _askpass_env(github_token: str | None):
     inherits the parent's env unchanged — the unauthenticated path
     stays free of any extra setup cost.
 
-    When the token is set, writes a tiny temp shell script to
-    ``/tmp`` that responds with ``git`` for the username prompt and
-    the token for the password prompt, sets ``GIT_ASKPASS`` to point
-    at it, and ``GIT_TERMINAL_PROMPT=0`` to refuse interactive
-    fallback. The script is deleted on context exit so the token
-    doesn't outlive the operation on disk.
+    When the token is set, writes a tiny token-free temp shell script
+    to ``/tmp`` (see ``_write_askpass_script``) that responds with
+    ``git`` for the username prompt and ``$DELULU_GIT_ASKPASS_TOKEN``
+    for the password prompt, puts the token in that env var, sets
+    ``GIT_ASKPASS`` to point at the script, and
+    ``GIT_TERMINAL_PROMPT=0`` to refuse interactive fallback. The
+    script is deleted on context exit.
 
     This mirrors the auth pattern in ``_push_with_askpass`` (used by
     /commit), which landed on GIT_ASKPASS after http.extraheader and
@@ -440,28 +478,13 @@ def _askpass_env(github_token: str | None):
         yield None
         return
 
-    # Single-quoted echo prevents shell expansion of the PAT.
-    # GitHub PATs are alphanumeric + underscores, so no metachar
-    # risk, but quoting is good hygiene for credential scripts.
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        suffix=".sh",
-        delete=False,
-        dir="/tmp",
-        prefix="git-askpass-",
-    ) as f:
-        f.write("#!/bin/sh\n")
-        f.write('case "$1" in\n')
-        f.write("  Username*) echo 'git' ;;\n")
-        f.write(f"  Password*) echo '{github_token}' ;;\n")
-        f.write("esac\n")
-        askpass_path = f.name
-    os.chmod(askpass_path, stat.S_IRWXU)
+    askpass_path = _write_askpass_script()
 
     try:
         yield {
             **os.environ,
             "GIT_ASKPASS": askpass_path,
+            ASKPASS_TOKEN_ENV: github_token,
             "GIT_TERMINAL_PROMPT": "0",
         }
     finally:
@@ -855,37 +878,13 @@ def _push_with_askpass(
     operates at git's credential-prompting layer instead of the
     URL-parsing layer.
 
-    The temp script is deleted in a ``finally`` block so the PAT
-    doesn't persist on disk beyond the push invocation.
+    The PAT is passed to the script only through the subprocess env
+    (``DELULU_GIT_ASKPASS_TOKEN``), never written into it; the temp
+    script is still deleted in a ``finally`` block.
     """
-    import stat
-    import tempfile
-
-    # The script provides username + password when git asks.
-    # GIT_ASKPASS is called with the prompt string as $1:
-    #   "Username for 'https://github.com': " → echo git
-    #   "Password for 'https://github.com': " → echo <pat>
-    # Single-quoted echo prevents shell expansion of the PAT.
-    # PATs are alphanumeric + underscores, so no metachar risk,
-    # but single quotes are a good habit for credential scripts.
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        suffix=".sh",
-        delete=False,
-        dir="/tmp",
-        prefix="git-askpass-",
-    ) as f:
-        f.write("#!/bin/sh\n")
-        # Log to stderr so we can confirm the script was actually
-        # invoked — previous failures had us wondering whether git
-        # was even calling GIT_ASKPASS.
-        f.write('echo "ASKPASS: called with prompt: $1" >&2\n')
-        f.write('case "$1" in\n')
-        f.write("  Username*) echo 'git' ;;\n")
-        f.write(f"  Password*) echo '{github_token}' ;;\n")
-        f.write("esac\n")
-        askpass_path = f.name
-    os.chmod(askpass_path, stat.S_IRWXU)
+    # The script answers the username/password prompts; the PAT reaches
+    # it only via the subprocess env (ASKPASS_TOKEN_ENV), never the file.
+    askpass_path = _write_askpass_script(log_prompt=True)
 
     # Capture the remote URL for diagnostics (sanitized — no PAT).
     try:
@@ -908,6 +907,7 @@ def _push_with_askpass(
             env={
                 **os.environ,
                 "GIT_ASKPASS": askpass_path,
+                ASKPASS_TOKEN_ENV: github_token,
                 # Suppress the fallback to /dev/tty if GIT_ASKPASS
                 # somehow fails. Without this, a broken script would
                 # hang the sandbox waiting for interactive input.
@@ -921,7 +921,7 @@ def _push_with_askpass(
             },
         )
     except subprocess.CalledProcessError as exc:
-        stderr = (exc.stderr or "").strip()
+        stderr = _scrub_pat((exc.stderr or "").strip(), github_token)
 
         # Take the LAST 2000 chars of stderr — the actual error
         # message and GitHub's response are at the end, not the
@@ -932,7 +932,7 @@ def _push_with_askpass(
         stderr_tail = stderr[-2000:] if len(stderr) > 2000 else stderr
         raise RuntimeError(
             f"git push origin {branch} failed (exit {exc.returncode}).\n"
-            f"Remote: {origin_url}\n"
+            f"Remote: {_scrub_pat(origin_url, github_token)}\n"
             f"GIT_ASKPASS: {askpass_path}\n"
             f"PAT length: {len(github_token)} chars\n"
             f"stderr (last 2000 chars, with GIT_TRACE):\n{stderr_tail}"

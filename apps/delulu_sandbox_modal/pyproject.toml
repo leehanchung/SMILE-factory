@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "Modal sandbox function that runs Claude Code for the delulu Discord bot"
 requires-python = ">=3.14"
 dependencies = [
-    "modal>=1.0",
-    "structlog>=24.0",
+    "modal>=1.6",
+    "structlog>=25.5",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.15",
-    "pytest>=8.0",
+    "ruff>=0.17",
+    "pytest>=9.0",
     "pytest-timeout>=2.3",
 ]
 
