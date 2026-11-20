@@ -1,12 +1,13 @@
 """Persistence and recovered contracts; provider checks are injectable fixtures."""
+
 import hashlib
 import importlib.util
 import json
-from pathlib import Path
 import tempfile
 import threading
-from types import SimpleNamespace
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import parse_qs, urlsplit
 
 from backend.settings import Service
@@ -30,8 +31,12 @@ class SettingsCase(unittest.TestCase):
         self.other = self.store.create_workspace("Destination")
         self.thread = self.store.create_thread(self.workspace["id"])
         self.meta = {}
-        self.hosted = SimpleNamespace(store=self.store, runner=SimpleNamespace(executable="codex"),
-                                      get_meta=lambda session: self.meta.get(session, {}), set_meta=self.set_meta)
+        self.hosted = SimpleNamespace(
+            store=self.store,
+            runner=SimpleNamespace(executable="codex"),
+            get_meta=lambda session: self.meta.get(session, {}),
+            set_meta=self.set_meta,
+        )
         self.checks = 0
         self.service = Service(self.hosted, self.provider)
 
@@ -52,7 +57,10 @@ class SettingsCase(unittest.TestCase):
 
     def test_folder_rename_archive_pin_persist_across_service_reload(self):
         workspace = self.workspace["id"]
-        self.assertEqual(self.route("/api/workspaces/" + workspace, "PATCH", {"display_name": "Renamed"})[1]["display_name"], "Renamed")
+        self.assertEqual(
+            self.route("/api/workspaces/" + workspace, "PATCH", {"display_name": "Renamed"})[1]["display_name"],
+            "Renamed",
+        )
         self.route("/api/workspaces/" + workspace + "/archive", "POST", {"archived": True})
         self.route("/api/orgs/local/folders/" + workspace + "/pin", "POST", {"pinned": True})
         restored = Service(self.hosted, self.provider)
@@ -63,11 +71,18 @@ class SettingsCase(unittest.TestCase):
     def test_move_transfers_thread_and_workers_without_moving_cwd(self):
         worker = self.store.create_thread(self.workspace["id"])
         with self.store.connect() as db:
-            db.execute("CREATE TABLE hosted_experiments (eid TEXT,workspace TEXT,parent TEXT,worker TEXT,deleted INTEGER)")
-            db.execute("INSERT INTO hosted_experiments VALUES (?,?,?,?,0)", ("exp", self.workspace["id"], self.thread["id"], worker["id"]))
+            db.execute(
+                "CREATE TABLE hosted_experiments (eid TEXT,workspace TEXT,parent TEXT,worker TEXT,deleted INTEGER)"
+            )
+            db.execute(
+                "INSERT INTO hosted_experiments VALUES (?,?,?,?,0)",
+                ("exp", self.workspace["id"], self.thread["id"], worker["id"]),
+            )
         cwd = self.store.thread_path(self.thread["id"])
         (cwd / "result.txt").write_text("retained")
-        result = self.route("/api/orgs/local/threads/" + self.thread["id"] + "/move", "POST", {"target_folder_id": self.other["id"]})
+        result = self.route(
+            "/api/orgs/local/threads/" + self.thread["id"] + "/move", "POST", {"target_folder_id": self.other["id"]}
+        )
         self.assertEqual(result[0], 200)
         self.assertEqual(self.store.get_thread(self.thread["id"])["workspace_id"], self.other["id"])
         self.assertEqual(self.store.get_thread(worker["id"])["workspace_id"], self.other["id"])
@@ -132,11 +147,13 @@ class SettingsCase(unittest.TestCase):
 
         gate = Gate()
         self.hosted.thread_features = SimpleNamespace(lock=gate)
-        for operation in (lambda: self.service.move(self.thread["id"], self.other["id"]),
-                          lambda: self.service.delete_workspace(self.other["id"], True)):
+        for operation in (
+            lambda: self.service.move(self.thread["id"], self.other["id"]),
+            lambda: self.service.delete_workspace(self.other["id"], True),
+        ):
             done, errors = threading.Event(), []
 
-            def run():
+            def run(operation=operation, errors=errors, done=done):
                 try:
                     operation()
                 except Exception as exc:
@@ -163,7 +180,9 @@ class SettingsCase(unittest.TestCase):
 
     def test_dispatching_queue_blocks_deletion_and_pending_rows_cascade(self):
         with self.store.connect() as db:
-            db.execute("CREATE TABLE hosted_queue (id TEXT, session TEXT REFERENCES threads(id) ON DELETE CASCADE, state TEXT)")
+            db.execute(
+                "CREATE TABLE hosted_queue (id TEXT, session TEXT REFERENCES threads(id) ON DELETE CASCADE, state TEXT)"
+            )
             db.execute("INSERT INTO hosted_queue VALUES ('q',?,'dispatching')", (self.thread["id"],))
         with self.assertRaisesRegex(ValueError, "dispatching"):
             self.service.delete_workspace(self.workspace["id"], True)
@@ -188,7 +207,9 @@ class SettingsCase(unittest.TestCase):
         restored = Service(self.hosted, self.provider)
         self.assertEqual(restored.instructions(), "Cite actual measurements.\n\nUse concise prose.")
         self.assertTrue(self.route("/api/settings/instructions?scope=user")[1]["exists"])
-        self.assertEqual(self.route("/api/settings/instructions?scope=org&org_id=other", "PUT", {"content": "bad"})[0], 400)
+        self.assertEqual(
+            self.route("/api/settings/instructions?scope=org&org_id=other", "PUT", {"content": "bad"})[0], 400
+        )
 
     def test_only_configured_model_is_advertised_no_fake_authenticated_provider(self):
         flags = self.route("/api/feature-flags")[1]
@@ -205,9 +226,11 @@ class SettingsCase(unittest.TestCase):
 
     def test_credentials_and_hosted_policies_are_explicitly_unsupported(self):
         self.assertEqual(self.route("/api/settings/env")[1]["vars"], [])
-        for endpoint, body in [("/api/settings/env", {"vars": [{"name": "TOKEN", "value": "fixture"}]}),
-                               ("/api/settings/sandbox", {"network_allowlist_enabled": True}),
-                               ("/api/orgs/local/privacy", {"training_opt_out": True})]:
+        for endpoint, body in [
+            ("/api/settings/env", {"vars": [{"name": "TOKEN", "value": "fixture"}]}),
+            ("/api/settings/sandbox", {"network_allowlist_enabled": True}),
+            ("/api/orgs/local/privacy", {"training_opt_out": True}),
+        ]:
             self.assertEqual(self.route(endpoint, "PUT", body)[0], 501)
         self.assertEqual(self.route("/api/integrations/verify", "POST", {"service": "claude"})[0], 501)
         self.assertEqual(self.checks, 0)
@@ -225,7 +248,7 @@ class LocalLoginBuildCase(unittest.TestCase):
             (source / "assets").mkdir(parents=True)
             original = "const login=`Sign in with GitHub`;const title=`Welcome to Silico`;if(!config.auth_required){originalLoginBranch();}"
             (source / "assets/main.js").write_text(original)
-            (source / "entry.html").write_text('<html><head><title>Silico</title></head><body></body></html>')
+            (source / "entry.html").write_text("<html><head><title>Silico</title></head><body></body></html>")
             build.build(root)
             output = (root / "hosted-preview/assets/main.js").read_text()
             self.assertIn("Open local workspace", output)
@@ -242,13 +265,13 @@ class LocalLoginBuildCase(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("build_hosted", script)
         build = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(build)
-        original = '{value:`link`,label:`Anyone with the link`,description:`Anyone can open this ${t} on the web`};{value:`org`,description:`Org members can open this ${t}`}'
+        original = "{value:`link`,label:`Anyone with the link`,description:`Anyone can open this ${t} on the web`};{value:`org`,description:`Org members can open this ${t}`}"
         output, changes = build.patch_presentation(original)
-        self.assertIn('value:`link`', output)
-        self.assertIn('value:`org`', output)
-        self.assertIn('Open this ${t} through its local URL on this computer', output)
-        self.assertIn('Available inside this local workspace', output)
-        self.assertNotIn('on the web', output)
+        self.assertIn("value:`link`", output)
+        self.assertIn("value:`org`", output)
+        self.assertIn("Open this ${t} through its local URL on this computer", output)
+        self.assertIn("Available inside this local workspace", output)
+        self.assertNotIn("on the web", output)
         self.assertEqual(len(changes), 3)
 
 

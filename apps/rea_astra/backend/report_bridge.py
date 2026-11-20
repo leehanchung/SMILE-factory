@@ -8,7 +8,6 @@ chat. Content remains in an opaque-origin sandbox.
 import re
 from html.parser import HTMLParser
 
-
 BRIDGE = r"""(() => {
   'use strict';
   const send = data => parent.postMessage(data, '*');
@@ -91,10 +90,10 @@ BRIDGE = r"""(() => {
 
 def inject_bridge(data):
     source = data.decode("utf-8", errors="replace")
-    script = '<script data-rea-bridge="1">' + BRIDGE + '</script>'
-    head = re.search(r"<head\b[^>]*>", source, re.I)
+    script = '<script data-rea-bridge="1">' + BRIDGE + "</script>"
+    head = re.search(r"<head\b[^>]*>", source, re.IGNORECASE)
     if head:
-        source = source[:head.end()] + script + source[head.end():]
+        source = source[: head.end()] + script + source[head.end() :]
     else:
         source = script + source
     return source.encode()
@@ -102,6 +101,7 @@ def inject_bridge(data):
 
 class MarkdownContent(HTMLParser):
     """Extract the text of our Markdown wrapper after native text editing."""
+
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.active = False

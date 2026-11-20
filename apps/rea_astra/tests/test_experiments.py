@@ -6,19 +6,18 @@ test. It actually computes and writes the artifacts asserted by these tests.
 
 import io
 import json
-from pathlib import Path
 import sys
 import tempfile
 import threading
 import unittest
-from urllib.request import Request, urlopen
 import zipfile
+from pathlib import Path
+from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.hosted import HostedAPI
 from backend.runner import RunManager
 from backend.store import Store
-
 
 EXECUTOR = """
 import json, pathlib, statistics, sys
@@ -58,13 +57,20 @@ class ExperimentTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.store = Store(self.temp.name)
-        self.runner = RunManager(self.store, command_factory=lambda *_: [sys.executable, "-c", EXECUTOR], timeout_seconds=10)
+        self.runner = RunManager(
+            self.store, command_factory=lambda *_: [sys.executable, "-c", EXECUTOR], timeout_seconds=10
+        )
         self.hosted = HostedAPI(self.store, self.runner)
         self.service = self.hosted.experiments
         self.workspace = self.store.list_workspaces()[0]["id"]
         self.parent = self.store.create_thread(self.workspace, "Planner")["id"]
         self.hosted.set_meta(self.parent, kind="planner", plan={"plan_id": "approved"}, plan_phase="review")
-        self.body = {"session_uuid": self.parent, "plan_id": "approved", "title": "Compute a mean", "body": "Compute the mean of 2, 4, 6, 8 and save reproducible code and results."}
+        self.body = {
+            "session_uuid": self.parent,
+            "plan_id": "approved",
+            "title": "Compute a mean",
+            "body": "Compute the mean of 2, 4, 6, 8 and save reproducible code and results.",
+        }
 
     def tearDown(self):
         self.hosted.close()
@@ -106,12 +112,18 @@ class ExperimentTests(unittest.TestCase):
         self.assertEqual(response.headers["X-Silico-App-Bridge"], "ready-v1")
         self.assertIn(b"silico-app-health-check", response.wfile.getvalue())
         self.assertIn(b"event.source !== parent", response.wfile.getvalue())
+
         def request(path, body=None):
             response = Response(path, "POST" if body is not None else "GET")
             self.assertTrue(self.service.route(response, response.command, path.split("?")[0], body or {}))
             return response
+
         state = request("/api/docs/state?ref=" + ref).payload
-        update = {"ref": ref, "base_sha": state["sha"], "content": state["content"].replace("Mean: 5", "Mean: 5 (verified)")}
+        update = {
+            "ref": ref,
+            "base_sha": state["sha"],
+            "content": state["content"].replace("Mean: 5", "Mean: 5 (verified)"),
+        }
         self.assertEqual(request("/api/docs/edits", update).payload["detail"]["reason"], "lease_lost")
         self.assertEqual(request("/api/docs/lease", {"ref": ref}).status, 200)
         edited = request("/api/docs/edits", update)
@@ -173,7 +185,9 @@ class ExperimentTests(unittest.TestCase):
         self.store.register_file(self.parent, "source-repository/example.py")
         exp, _ = self.launch_finished()
         self.assertEqual(self.store.file_path(exp["worker"], "uploads/input.csv").read_bytes(), b"value\n2\n4\n")
-        self.assertEqual(self.store.file_path(exp["worker"], "source-repository/example.py").read_text(), source.read_text())
+        self.assertEqual(
+            self.store.file_path(exp["worker"], "source-repository/example.py").read_text(), source.read_text()
+        )
 
     def test_unproduced_report_is_not_fabricated(self):
         worker = self.store.create_thread(self.workspace)["id"]
@@ -257,6 +271,7 @@ class ExperimentTests(unittest.TestCase):
             self.assertEqual(json.loads(archive.read("result.json")), {"mean": 5})
             self.assertIn("index.html", archive.namelist())
         from backend.experiments import ExperimentService
+
         reopened = ExperimentService(self.hosted)
         self.assertEqual(reopened.get(exp["eid"])["worker"], exp["worker"])
         self.assertEqual(reopened.row(exp)["status"], "completed")
@@ -324,7 +339,9 @@ class ExperimentTests(unittest.TestCase):
         done = self.runner.wait(run["id"], timeout=10)
         self.service.on_finish(done)
         self.service.on_finish(done)
-        revisions = [e for e in self.hosted.snapshot(exp["worker"], offset)["events"] if e["type"] == "artifact_revision"]
+        revisions = [
+            e for e in self.hosted.snapshot(exp["worker"], offset)["events"] if e["type"] == "artifact_revision"
+        ]
         self.assertEqual(len(revisions), 1)
         self.assertIsNone(revisions[0]["prev_revision_id"])
         self.assertEqual(revisions[0]["revision_id"], self.service.report(exp)["revision"])
@@ -333,8 +350,11 @@ class ExperimentTests(unittest.TestCase):
 
     def test_http_report_file_and_worker_contracts(self):
         from backend.server import ResearchHTTPServer, make_handler
+
         exp, _ = self.launch_finished()
-        server = ResearchHTTPServer(("127.0.0.1", 0), make_handler(self.store, self.runner, self.temp.name, self.hosted.route))
+        server = ResearchHTTPServer(
+            ("127.0.0.1", 0), make_handler(self.store, self.runner, self.temp.name, self.hosted.route)
+        )
         worker = threading.Thread(target=server.serve_forever, daemon=True)
         worker.start()
         origin = "http://127.0.0.1:" + str(server.server_port)
@@ -358,7 +378,12 @@ class ExperimentTests(unittest.TestCase):
                 snapshot = json.load(response)
                 self.assertEqual(snapshot["session_id"], exp["worker"])
                 self.assertTrue(any(e["type"] == "text" for e in snapshot["events"]))
-            request = Request(base + "/artifacts/primary/sharing", method="PUT", data=json.dumps({"visibility": "link"}).encode(), headers={"Origin": origin, "Content-Type": "application/json"})
+            request = Request(
+                base + "/artifacts/primary/sharing",
+                method="PUT",
+                data=json.dumps({"visibility": "link"}).encode(),
+                headers={"Origin": origin, "Content-Type": "application/json"},
+            )
             with urlopen(request) as response:
                 sharing = json.load(response)
             self.assertTrue(sharing["publication"]["url"].startswith(origin))
