@@ -1,0 +1,32 @@
+model:
+  id: Qwen/Qwen3-8B
+  revision: b968826d9c46dd6066d109eabc6255188de91218
+  attention_implementation: sdpa
+conditions: [no_skill_success, with_skill_success]
+training:
+  seed: 17
+  method: lora
+  rank: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+  precision: bf16
+  microbatch_size: 1
+  gradient_accumulation_steps: 8
+  effective_batch_size: 8
+  learning_rate: 0.0001
+  scheduler: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  epochs: 1.0
+  gradient_checkpointing: true
+  assistant_only_loss: true
+  cross_example_packing: false
+  max_sequence_tokens: 16384
+  flash_attention: false
+  save_best_and_latest: true
+wandb:
+  enabled_when_key_present: true
+  project: default-exp-exp_01ky0ztpc9eqn9g67e30pjt5k9
+  group: skillsbench-qwen3-8b-lora-minimal

@@ -1,0 +1,57 @@
+[project]
+name = "skillsbench-trajectory-transfer"
+version = "0.1.0"
+description = "Reproducible matched-trajectory SFT and transfer analysis for SkillsBench"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Han Lee", email = "lee.hanchung@gmail.com" }]
+dependencies = [
+  "pyyaml>=6.0.2,<7",
+]
+
+[project.optional-dependencies]
+train = [
+  "accelerate>=1.8,<2",
+  "datasets>=4,<5",
+  "peft>=0.19.1,<1",
+  "torch>=2.7,<3",
+  "transformers>=4.51,<6",
+  "trl>=0.20,<1",
+  "wandb>=0.21,<1",
+]
+eval = [
+  "lm-eval==0.4.9.2",
+  "openai>=1.100,<3",
+]
+dev = [
+  "pytest>=8,<10",
+  "ruff>=0.15,<1",
+]
+
+[project.scripts]
+skillsbench-corpus = "skillsbench_trajectory_transfer.corpus:main"
+skillsbench-overlap = "skillsbench_trajectory_transfer.overlap:main"
+skillsbench-train = "skillsbench_trajectory_transfer.train:main"
+skillsbench-evaluate = "skillsbench_trajectory_transfer.evaluate:main"
+skillsbench-analyze = "skillsbench_trajectory_transfer.analysis:main"
+skillsbench-report = "skillsbench_trajectory_transfer.report:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillsbench_trajectory_transfer"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "C", "B"]
+ignore = ["E501", "B008", "C901"]

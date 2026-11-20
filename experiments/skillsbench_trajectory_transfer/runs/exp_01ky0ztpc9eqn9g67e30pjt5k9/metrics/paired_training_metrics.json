@@ -1,0 +1,43 @@
+{
+  "seed": 17,
+  "global_steps_per_condition": 30,
+  "train_rows_per_condition": 238,
+  "validation_rows_per_condition": 105,
+  "loss_tokens_per_condition": 604737,
+  "conditions": {
+    "no_skill_success": {
+      "job_id": "136023025108",
+      "context_tokens_per_epoch": 3421171,
+      "training_runtime_seconds": 1356.0,
+      "job_elapsed_seconds": 1528,
+      "final_training_loss": 0.7785597264766693,
+      "validation_loss": [
+        {"optimizer_step": 7, "loss": 0.8914},
+        {"optimizer_step": 14, "loss": 0.7692},
+        {"optimizer_step": 21, "loss": 0.7557},
+        {"optimizer_step": 28, "loss": 0.7501},
+        {"optimizer_step": 30, "loss": 0.7501}
+      ],
+      "adapter_archive_bytes": 163006027,
+      "wandb_url": "https://wandb.ai/han/default-exp-exp_01ky0ztpc9eqn9g67e30pjt5k9/runs/iq0d7r5f"
+    },
+    "with_skill_success": {
+      "job_id": "796254214269",
+      "context_tokens_per_epoch": 3449546,
+      "training_runtime_seconds": 1392.0,
+      "job_elapsed_seconds": 1595,
+      "final_training_loss": 0.8089382568995158,
+      "validation_loss": [
+        {"optimizer_step": 7, "loss": 0.9189},
+        {"optimizer_step": 14, "loss": 0.8019},
+        {"optimizer_step": 21, "loss": 0.7892},
+        {"optimizer_step": 28, "loss": 0.7851},
+        {"optimizer_step": 30, "loss": 0.7852}
+      ],
+      "adapter_archive_bytes": 162979846,
+      "wandb_url": "https://wandb.ai/han/default-exp-exp_01ky0ztpc9eqn9g67e30pjt5k9/runs/k4juvf0j"
+    }
+  },
+  "final_validation_loss_difference_with_minus_without": 0.0351,
+  "training_input_condition_audit_passed": true
+}

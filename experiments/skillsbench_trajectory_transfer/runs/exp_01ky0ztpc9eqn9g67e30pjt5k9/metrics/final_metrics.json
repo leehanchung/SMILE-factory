@@ -1,0 +1,38 @@
+{
+  "verdict": "On short-horizon BFCL function calling, no positive transfer was detected versus the matched no-skill control; both trained arms were paired-significantly below base. Long-horizon transfer is unmeasured because Toolathlon was unavailable.",
+  "bfcl": {
+    "n": 2190,
+    "base": {"correct": 1386, "accuracy": 0.6328767123, "wilson_95": [0.6124724640, 0.6528156213]},
+    "no_skill": {"correct": 1360, "accuracy": 0.6210045662, "wilson_95": [0.6004909332, 0.6410944365]},
+    "with_skill": {"correct": 1341, "accuracy": 0.6123287671, "wilson_95": [0.5917433649, 0.6325207897]},
+    "deltas": {"with_minus_no_skill": -0.0086757991, "no_skill_minus_base": -0.0118721461, "with_minus_base": -0.0205479452},
+    "paired_bootstrap_95": {"with_minus_no_skill": [-0.0191780822, 0.0018264840], "no_skill_minus_base": [-0.0232876712, -0.0004566210], "with_minus_base": [-0.0315068493, -0.0095890411]},
+    "single_turn_accuracy": {"base": 0.8935251799, "no_skill": 0.8798561151, "with_skill": 0.8726618705},
+    "multi_turn_accuracy": {"base": 0.18, "no_skill": 0.17125, "with_skill": 0.16}
+  },
+  "ifeval_prompt_strict": {
+    "n": 541,
+    "base": {"correct": 440, "accuracy": 0.8133086876, "wilson_95": [0.7783059808, 0.8438933664]},
+    "no_skill": {"correct": 438, "accuracy": 0.8096118299, "wilson_95": [0.7743902933, 0.8404674687]},
+    "with_skill": {"correct": 438, "accuracy": 0.8096118299, "wilson_95": [0.7743902933, 0.8404674687]},
+    "deltas": {"with_minus_no_skill": 0.0, "no_skill_minus_base": -0.0036968577, "with_minus_base": -0.0036968577}
+  },
+  "ifeval_prompt_loose": {"base": 0.8521256932, "no_skill": 0.8484288355, "with_skill": 0.8465804067},
+  "mmlu_fixed500": {
+    "n": 500,
+    "base": {"correct": 252, "accuracy": 0.504, "wilson_95": [0.4603121544, 0.5476268509]},
+    "no_skill": {"correct": 255, "accuracy": 0.510, "wilson_95": [0.4662736879, 0.5535738253]},
+    "with_skill": {"correct": 257, "accuracy": 0.514, "wilson_95": [0.4702515116, 0.5575350069]},
+    "deltas": {"with_minus_no_skill": 0.004, "no_skill_minus_base": 0.006, "with_minus_base": 0.010}
+  },
+  "tool_restraint": {
+    "n_pairs": 120,
+    "no_tools_accuracy": {"base": 0.9583333333, "no_skill": 0.95, "with_skill": 0.9416666667},
+    "irrelevant_tools_accuracy": {"base": 0.9416666667, "no_skill": 0.925, "with_skill": 0.95},
+    "unnecessary_tool_call_rate": {"base": 0.0, "no_skill": 0.0, "with_skill": 0.0}
+  },
+  "toolathlon": {"status": "unavailable", "official_admission_attempts": 7, "accepted_submissions": 0, "score": null},
+  "overlap": {"eval_items": 3372, "exact_instruction_matches": 0, "exact_schema_matches": 0, "token_5gram_exact_matches": 0, "p95_token_5gram_jaccard": 0.0, "max_token_5gram_jaccard": 0.0058479532},
+  "training_power": {"matched_train_rows_per_arm": 238, "supervised_tokens_per_arm": 604737, "planned_cap_per_arm": 5000000, "cap_utilization": 0.1209474, "seed_count": 1},
+  "corpus_limitations": {"selected_loss_masked_marker_tokens": {"no_skill": 55, "with_skill": 583}, "history_compaction_exclusions": {"no_skill": 0, "with_skill": 5}, "verbatim_detection_guarantee_chars": 239, "paraphrase_detection": false}
+}

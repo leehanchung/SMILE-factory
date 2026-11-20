@@ -1,0 +1,327 @@
+{
+  "category_counts": {
+    "Academic": 3,
+    "Business": 3,
+    "Campus": 3,
+    "Daily": 3,
+    "E-commerce": 3,
+    "Finance": 3,
+    "Tech": 3
+  },
+  "difficulty_note": "Official per-task difficulty is missing for 20 of 21 selected tasks. Null is preserved; MCP-server count is recorded only as a complexity proxy.",
+  "name": "toolathlon_verified_stratified_21_v1",
+  "official_categories": [
+    "Academic",
+    "Business",
+    "Campus",
+    "Daily",
+    "E-commerce",
+    "Finance",
+    "Tech"
+  ],
+  "selection_note": "Evidence comes from official category documentation and pinned task_config.json files. The private evaluation service must still confirm runtime availability.",
+  "selection_status": "predeclared before any model output",
+  "task_count": 21,
+  "tasks": [
+    {
+      "category": "Academic",
+      "difficulty": null,
+      "mcp_server_count": 2,
+      "needed_mcp_servers": [
+        "filesystem",
+        "terminal"
+      ],
+      "official_category_evidence": "docs/tasks/aca/152",
+      "task_config_path": "tasks/finalpool/paper-checker/task_config.json",
+      "task_config_sha256": "280482d099f085b0f5790213b2a3d63f0ba00864777ffe8501263747b6632efa",
+      "task_id": "paper-checker"
+    },
+    {
+      "category": "Academic",
+      "difficulty": null,
+      "mcp_server_count": 2,
+      "needed_mcp_servers": [
+        "filesystem",
+        "pdf-tools"
+      ],
+      "official_category_evidence": "docs/tasks/aca/32",
+      "task_config_path": "tasks/finalpool/imagenet/task_config.json",
+      "task_config_sha256": "2b8b370b8147b71466dfeb2d0da8f12b8194059bdef572bd0678544e6d5578b0",
+      "task_id": "imagenet"
+    },
+    {
+      "category": "Academic",
+      "difficulty": null,
+      "mcp_server_count": 3,
+      "needed_mcp_servers": [
+        "filesystem",
+        "arxiv-latex",
+        "terminal"
+      ],
+      "official_category_evidence": "docs/tasks/aca/229",
+      "task_config_path": "tasks/finalpool/latex-prompt-box/task_config.json",
+      "task_config_sha256": "84a8f84a670197b72610f13260d7870e6207e3db8330258a9411821680ad9976",
+      "task_id": "latex-prompt-box"
+    },
+    {
+      "category": "Business",
+      "difficulty": null,
+      "mcp_server_count": 2,
+      "needed_mcp_servers": [
+        "filesystem",
+        "terminal"
+      ],
+      "official_category_evidence": "docs/tasks/office/131",
+      "task_config_path": "tasks/finalpool/privacy-desensitization/task_config.json",
+      "task_config_sha256": "e7fb0f05cd8c5460ed228c673cf7216d6549784dc90fb1ec7ed90747db4a3d7b",
+      "task_id": "privacy-desensitization"
+    },
+    {
+      "category": "Business",
+      "difficulty": null,
+      "mcp_server_count": 3,
+      "needed_mcp_servers": [
+        "excel",
+        "filesystem",
+        "terminal"
+      ],
+      "official_category_evidence": "docs/tasks/office/108",
+      "task_config_path": "tasks/finalpool/excel-data-transformation/task_config.json",
+      "task_config_sha256": "158206408da1b8bfac9fff9a50e906a78461485abb6e26e5e3edf5163182d7ca",
+      "task_id": "excel-data-transformation"
+    },
+    {
+      "category": "Business",
+      "difficulty": null,
+      "mcp_server_count": 4,
+      "needed_mcp_servers": [
+        "google-cloud",
+        "excel",
+        "terminal",
+        "filesystem"
+      ],
+      "official_category_evidence": "docs/tasks/office/144",
+      "task_config_path": "tasks/finalpool/flagged-transactions/task_config.json",
+      "task_config_sha256": "3715449d813706fc40a8c1143ccadffdd72fbd819dbbf76c2d8fc4e9f24f0722",
+      "task_id": "flagged-transactions"
+    },
+    {
+      "category": "Campus",
+      "difficulty": null,
+      "mcp_server_count": 2,
+      "needed_mcp_servers": [
+        "canvas",
+        "memory"
+      ],
+      "official_category_evidence": "docs/tasks/campus/190",
+      "task_config_path": "tasks/finalpool/canvas-list-test/task_config.json",
+      "task_config_sha256": "64da6e8d6d10ae93a6c579954e53ce36549e56bbfe8bb04c9e6acaf22bf9db22",
+      "task_id": "canvas-list-test"
+    },
+    {
+      "category": "Campus",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "google-cloud",
+        "excel",
+        "filesystem"
+      ],
+      "official_category_evidence": "docs/tasks/campus/149",
+      "task_config_path": "tasks/finalpool/academic-warning/task_config.json",
+      "task_config_sha256": "ea72091ac4f34277ac4560d0e9164a4daf2ed3cad5fc20188b44c6fe15550218",
+      "task_id": "academic-warning"
+    },
+    {
+      "category": "Campus",
+      "difficulty": null,
+      "mcp_server_count": 5,
+      "needed_mcp_servers": [
+        "filesystem",
+        "memory",
+        "excel",
+        "pdf-tools",
+        "fetch"
+      ],
+      "official_category_evidence": "docs/tasks/campus/34",
+      "task_config_path": "tasks/finalpool/course-schedule/task_config.json",
+      "task_config_sha256": "bbaa4d516d161ac12c783bf11b467ac969c223ac537dd500fccc1d366719d95a",
+      "task_id": "course-schedule"
+    },
+    {
+      "category": "Daily",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "filesystem",
+        "terminal",
+        "pdf-tools",
+        "excel"
+      ],
+      "official_category_evidence": "docs/tasks/daily/78",
+      "task_config_path": "tasks/finalpool/arrange-workspace/task_config.json",
+      "task_config_sha256": "df53a38fb39d3a2ba43f0a7ea73433836929be451a61a8b485c6177ae6a04312",
+      "task_id": "arrange-workspace"
+    },
+    {
+      "category": "Daily",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "filesystem",
+        "howtocook"
+      ],
+      "official_category_evidence": "docs/tasks/daily/182",
+      "task_config_path": "tasks/finalpool/cooking-guidance/task_config.json",
+      "task_config_sha256": "e65e5ba62ce27e9e21c4f07f2b04c5ee4e01ef468db2dc5bb9c9171e83355cb8",
+      "task_id": "cooking-guidance"
+    },
+    {
+      "category": "Daily",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "filesystem",
+        "howtocook",
+        "excel",
+        "terminal"
+      ],
+      "official_category_evidence": "docs/tasks/daily/181",
+      "task_config_path": "tasks/finalpool/dietary-health/task_config.json",
+      "task_config_sha256": "fe7d58a4829f0d228fa5f8e71db0eebd15b56175c3f4828b6bd78383af0382b3",
+      "task_id": "dietary-health"
+    },
+    {
+      "category": "E-commerce",
+      "difficulty": "medium",
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "woocommerce"
+      ],
+      "official_category_evidence": "docs/tasks/shopping/279",
+      "task_config_path": "tasks/finalpool/woocommerce-update-cover/task_config.json",
+      "task_config_sha256": "0681b43e1e6e1a934f3e5ec722e7d1d6f257356e6529716d57f22a2cc930b2c3",
+      "task_id": "woocommerce-update-cover"
+    },
+    {
+      "category": "E-commerce",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "woocommerce",
+        "filesystem"
+      ],
+      "official_category_evidence": "docs/tasks/shopping/304",
+      "task_config_path": "tasks/finalpool/inventory-sync/task_config.json",
+      "task_config_sha256": "ba687f6ca26b4324934c5c9fe69f8021678fb3c583bae7719de41f125da2be97",
+      "task_id": "inventory-sync"
+    },
+    {
+      "category": "E-commerce",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "woocommerce",
+        "emails",
+        "google_forms",
+        "filesystem"
+      ],
+      "official_category_evidence": "docs/tasks/shopping/266",
+      "task_config_path": "tasks/finalpool/woocommerce-customer-survey/task_config.json",
+      "task_config_sha256": "6133dd16ab75b0fac8ca9e476abdda79d2e760f5966a111f28828e07e90b42e7",
+      "task_id": "woocommerce-customer-survey"
+    },
+    {
+      "category": "Finance",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "filesystem",
+        "terminal",
+        "pdf-tools",
+        "google-cloud"
+      ],
+      "official_category_evidence": "docs/tasks/finance/143",
+      "task_config_path": "tasks/finalpool/price-comparison/task_config.json",
+      "task_config_sha256": "494624306b9f5f08ea8dcb82049945caf9000f99589860198a7856bfaea7c2cb",
+      "task_id": "price-comparison"
+    },
+    {
+      "category": "Finance",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "google-cloud",
+        "filesystem"
+      ],
+      "official_category_evidence": "docs/tasks/finance/141",
+      "task_config_path": "tasks/finalpool/ab-testing/task_config.json",
+      "task_config_sha256": "0aa31c181ad711e85d229afc2a19e644525d8c1810cca098b8b85fad31c9a66a",
+      "task_id": "ab-testing"
+    },
+    {
+      "category": "Finance",
+      "difficulty": null,
+      "mcp_server_count": 5,
+      "needed_mcp_servers": [
+        "filesystem",
+        "yahoo-finance",
+        "google_sheet",
+        "notion",
+        "terminal"
+      ],
+      "official_category_evidence": "docs/tasks/finance/223",
+      "task_config_path": "tasks/finalpool/quantitative-financial-analysis/task_config.json",
+      "task_config_sha256": "2e611564bd4e1eac20d1d0e85e32b500f6fb85480d6d299cbef76c13cfe0b179",
+      "task_id": "quantitative-financial-analysis"
+    },
+    {
+      "category": "Tech",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "git",
+        "terminal",
+        "filesystem",
+        "emails"
+      ],
+      "official_category_evidence": "docs/tasks/tech/42",
+      "task_config_path": "tasks/finalpool/git-bug-hunt/task_config.json",
+      "task_config_sha256": "0cb0c36f8e751da44c78c93c6444f354000ddab1d8ba0e0fd6b563cf5fd5210c",
+      "task_id": "git-bug-hunt"
+    },
+    {
+      "category": "Tech",
+      "difficulty": null,
+      "mcp_server_count": null,
+      "needed_mcp_servers": [
+        "filesystem",
+        "scholarly",
+        "arxiv_local",
+        "pdf-tools",
+        "fetch"
+      ],
+      "official_category_evidence": "docs/tasks/tech/160",
+      "task_config_path": "tasks/finalpool/logical-datasets-collection/task_config.json",
+      "task_config_sha256": "2d94e0b8112acd815e01f8f56aa0277dd864d264a92c8e35dd337ebf295ca74b",
+      "task_id": "logical-datasets-collection"
+    },
+    {
+      "category": "Tech",
+      "difficulty": null,
+      "mcp_server_count": 4,
+      "needed_mcp_servers": [
+        "terminal",
+        "filesystem",
+        "playwright_with_chunk",
+        "k8s"
+      ],
+      "official_category_evidence": "docs/tasks/tech/245",
+      "task_config_path": "tasks/finalpool/k8s-pr-preview-testing/task_config.json",
+      "task_config_sha256": "9d9e687a5259828a97af6e328a56ded37b5edf06408f68a4e437c3149c75db76",
+      "task_id": "k8s-pr-preview-testing"
+    }
+  ],
+  "tasks_per_category": 3,
+  "toolathlon_revision": "3b647e60713703d653584c23ff185e3b6cd67722"
+}

@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>No positive transfer to unfamiliar tool use from skill-curated trajectories: with-skill 61.2% vs no-skill 62.1% on BFCL v4 (single-seed Qwen3-8B LoRA pilot)</title>
+<meta name="silico-theme" content="native">
+<link data-silico-theme rel="preconnect" href="https://fonts.googleapis.com">
+<link data-silico-theme rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link data-silico-theme href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style data-silico-theme>
+/* Suisse Intl (self-hosted brand sans) — loaded from the Lab origin so the
+   report body matches the app; offline/gh-pages views fall back to the
+   system sans stack in --silico-font-body. */
+@font-face { font-family: 'Suisse Intl'; src: url('/fonts/SuisseIntl-Book.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Suisse Intl'; src: url('/fonts/SuisseIntl-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Suisse Intl'; src: url('/fonts/SuisseIntl-SemiBold.otf') format('opentype'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Suisse Intl'; src: url('/fonts/SuisseIntl-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+/* ============================================================
+   Silico Lab — published report design system.
+
+   Brand-defining rules (page bg, body font, base text color,
+   heading font, link color) use !important — these are the
+   visual identity and CANNOT drift.
+
+   Everything else (spacing, layout, component chrome) uses normal
+   specificity so worker-supplied <style> blocks below this one
+   can extend or override naturally via the CSS cascade.
+
+   Override paths for workers (see publish-results SKILL.md):
+   1. Vary a token: re-set --silico-* on a wrapper.
+   2. Extend a component: add rules in a <style> block at the
+      bottom of <head>.
+   3. Full opt-out (rare; module apps only):
+      <meta name="silico-theme" content="native"> on the page.
+
+   Canonical hex values — keep in sync with docs/styling.md,
+   web/src/index.css, debug-viewer.html, and templates.py.
+   ============================================================ */
+
+:root {
+  color-scheme: light !important;
+
+  /* Editorial 8 colorway — series colors, ordered for adjacent
+     contrast. Use for chart series and accent variety, NOT for
+     semantic state (success/warning/danger live below). */
+  --silico-ember:       #C4650D;
+  --silico-slate:       #4E728A;
+  --silico-forest:      #2E6E4E;
+  --silico-wheat:       #988453;
+  --silico-rose:        #B9605B;
+  --silico-pale-slate:  #7495AB;
+  --silico-olive:       #84713A;
+  --silico-graphite:    #31362E;
+  --silico-honey:       #DE9D50;
+  --silico-saffron:     #E9B551;
+  --silico-clay:        #EDD8C5;
+  --silico-mystic:      #E0E6EA;
+
+  /* Surface tokens. White is the canonical page + card surface so the
+     report reads consistent with the plan / figure surfaces (which sit
+     against the Lab's white chat panel). Hover/nested surfaces step to
+     a barely-darker gray so cards/code blocks stay differentiated. */
+  --silico-card:        #FFFFFF;
+  --silico-card-hover:  #F5F5F5;
+  /* Soft aside surface — a warm cream for callouts, findings, takeaways,
+     quotes, and review comments (replaces the old left-rule accents). */
+  --silico-surface-soft: #F6F3EC;
+  --silico-surface-line: #E8E3D7;
+  --silico-input:       #FFFFFF;
+
+  /* Chart-container floor. Prevents zero-height collapse when Plotly's
+     first-paint width-0 workaround kicks in and the iframe measures
+     before Plotly's second layout pass completes. Workers can raise
+     this on a wrapper if a specific chart needs more headroom. */
+  --silico-chart-min-height: 320px;
+
+  /* Text and lines. */
+  --silico-text:        #1D272A;
+  --silico-text-muted:  #7B7B7B;
+  --silico-border:      #B4B4B4;
+
+  /* Semantic colors — drawn from the Editorial 8 brand palette so
+     callouts read as part of the same visual language as the charts.
+     Success: forest (#2E6E4E). Warning: wheat (#988453) — earthy, not
+     the saturated amber/yellow used in product chrome. Danger: rose
+     (#B9605B) — the same "failure/regression" color used in the
+     Editorial 8 colorway. Each rule pairs the accent color with a
+     soft tinted background (~20% accent over cream) and a desaturated
+     border (~50% accent toward cream). */
+  --silico-link:           #C4650D;
+  --silico-link-hover:     #D07533;
+  --silico-success:        #2E6E4E;
+  --silico-success-soft:   #E2EDE6;
+  --silico-success-border: #B7CDBE;
+  --silico-warning:        #988453;
+  --silico-warning-soft:   #EBE0CA;
+  --silico-warning-border: #C9B98B;
+  --silico-danger:         #B9605B;
+  --silico-danger-soft:    #EAD7D2;
+  --silico-danger-border:  #D9ADA9;
+
+  /* Typography. Sans (Suisse Intl) carries running body, tables, and
+     values — readable for dense, number-heavy report content; Newsreader
+     serif is reserved for headings/figure titles, the editorial voice.
+     Hierarchy still comes mostly from size and weight. */
+  --silico-font-body:    'Suisse Intl', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --silico-font-serif:   'Newsreader', Georgia, serif;
+  --silico-font-mono:    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ============================================================
+   Brand identity — !important enforces.
+   ============================================================ */
+
+html, body {
+  background-color: var(--silico-card) !important;
+  color: var(--silico-text) !important;
+  font-family: var(--silico-font-body) !important;
+  /* Prevent page-level horizontal scroll from a chart wider than the
+     iframe. ``PLOTLY_CONFIG.responsive = False`` (set in apply_theme to
+     avoid the first-paint width-0 collapse bug) means Plotly emits the
+     chart div with an inline pixel width. If that width exceeds the
+     iframe's, the body grows horizontally and the iframe gets a page-
+     level horizontal scrollbar — disrupts the reading flow even for
+     readers viewing other parts of the page. Hiding overflow-x at the
+     page level forces wide content (charts, tables) to clip or scroll
+     inside their own container instead. Combined with ``.figure {
+     overflow-x: auto }`` below, a wide chart scrolls inside its card
+     rather than pushing the page. */
+  overflow-x: hidden;
+}
+body {
+  margin: 0;
+  /* Standalone (download / ``file://``) gets an even all-sides gutter; the
+     ``html.embedded`` override below restores today's iframe look. */
+  padding: 48px;
+  font-size: 15px;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums slashed-zero;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* In the results-page iframe: the horizontal gutter aligns with the panel's
+   own chrome (the experiment header + tab strip sit at ``px-4``/``pl-4`` = 16px),
+   so the report's left edge lines up under the experiment title rather than
+   floating further in. A little tighter on top than standalone since the viewer
+   toolbar sits above; the viewer collapses the report's first element's top
+   margin (``#__silico-constrain``) so this top value isn't doubled. */
+html.embedded body { padding: 24px 16px 88px; }
+/* Reserve the top-right corner for the Lab's floating report actions
+   (Edit / Review / Export ride INLINE with the report title, not a bar
+   above it — the float makes a long title wrap short of the buttons
+   instead of running under them). Framed views only; print hides it
+   below along with the controls themselves. */
+html.embedded {
+  /* Read by the layout script below AND the ::before rule — one value. */
+  --silico-actions-reserve: 290px;
+}
+html.embedded body::before {
+  content: '';
+  float: right;
+  /* Sized to the COMPACT control cluster (headerButton.ts text-xs recipe:
+     Edit · Review · Export · fullscreen ≈ 270px + breathing room). */
+  width: var(--silico-actions-reserve);
+  /* EXACTLY one h1 line (22px × 1.25 ≈ 27.5px) so a shared line never bites
+     the title's second line. */
+  height: 28px;
+}
+/* When the title would NOT fit beside the cluster on one line (measured by
+   the layout script below), the buttons take their OWN top line instead of
+   wrapping the title around them: the spacer becomes a full-width strip and
+   the whole document starts below the floating cluster. */
+html.embedded.actions-own-line body::before {
+  float: none;
+  display: block;
+  width: auto;
+  /* Taller than the shared-line reservation: the buttons (top 16px, ~26px
+     tall) end around y=42; the title starts at 24px padding + this height.
+     44px puts ~26px of air between the cluster and the title. */
+  height: 44px;
+}
+/* Serve-time opt-OUT of the reserve. The reserve keys on `embedded` — every
+   iframe — but only surfaces that float the pane actions over their frame
+   (the report) actually need it; a frame with no overlay (timeline checkpoint
+   previews, the checkpoint detail panel, visualization panes) rendered it as
+   a permanent blank band at the top — ~44-59px of dead space in every
+   timeline preview card, which the preview autofit also billed against its
+   height budget, clipping the card's tail (user report, 2026-07-17). Those
+   consumers fetch the feed-file endpoint with the `actions=0` query
+   (inject_lab_theme reserve_actions=False — the theme gets BAKED into app
+   pages, and the papers baker rejects pages that literally reference the
+   backend API path, so don't name it here), which bakes
+   `window.__silicoReserveActions=false`
+   ahead of this theme; the pre-paint script below stamps
+   `no-actions-reserve`. The srcDoc panes' twin is the opt-IN
+   `#silico-content.actions-reserved` (web/src/lib/iframeBridge.ts) —
+   checkpoint/widget panes never reserved there either. Keep the two in
+   mind together when changing either mechanism. */
+html.embedded.no-actions-reserve body::before,
+html.embedded.no-actions-reserve.actions-own-line body::before {
+  content: none;
+  display: none;
+}
+/* Without the strip, the first content child's own top margin (e.g.
+   .job-grid's 1em) is the only thing padding the frame's top edge — the
+   host card supplies its own padding, so zero the leading margin for a
+   flush, symmetric fit. */
+html.embedded.no-actions-reserve body > :first-child,
+html.embedded.no-actions-reserve body > :first-child > :first-child {
+  margin-top: 0;
+}
+* { box-sizing: border-box; }
+
+/* The ``body`` above owns the page gutter — the canonical report puts
+   content directly in <body> (see the publish-results skill). But workers
+   sometimes wrap everything in an extra top-level layout container
+   (``<main class="report">``, ``<article>``, ``.container``, ``.report``,
+   ``.wrapper``, ``.page``) and give it its OWN padding / max-width /
+   centering. That box double-stacks on the body gutter — e.g. a worker
+   ``.report { padding: 56px 28px 100px }`` on top of the body's
+   ``36px 0 96px`` — and reads as a lopsided, over-inset column.
+   Neutralize the wrapper's box so the single body gutter is the only one
+   that applies; the wrapper stays a transparent pass-through for its
+   children. ``!important`` is required because a worker class selector
+   (``.report``, 0,1,0) out-specifies these element selectors. */
+body > main,
+body > article,
+body > .container,
+body > .report,
+body > .wrapper,
+body > .page,
+body > .content {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* Headings — Newsreader serif in the brand primary text color
+   (#1D272A / `--silico-text`), the editorial voice over the sans body.
+   Hierarchy is carried by size and weight; no color accent. !important
+   enforces brand identity against any worker-emitted inline color/font. */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--silico-text) !important;
+  font-family: var(--silico-font-serif) !important;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+/* h1 deliberately matches h2's size and weight — the page title is a
+   landmark, but on the single-page report it's not louder than the
+   section headers below it. Hierarchy comes from position + the
+   .report-header wrapper, not from a typographic jump. */
+h1 { font-size: 22px; line-height: 1.25; font-weight: 500; margin: 0 0 0.5em; }
+h2 { font-size: 22px; line-height: 1.25; margin: 1.8em 0 0.5em; }
+h3 { font-size: 17px; line-height: 1.35; margin: 1.4em 0 0.5em; }
+h4 { font-size: 15px; line-height: 1.4;  margin: 1.2em 0 0.4em; }
+h5 { font-size: 14px; line-height: 1.4;  margin: 1em 0 0.4em; }
+h6 { font-size: 13px; line-height: 1.4;  margin: 1em 0 0.4em; }
+
+a {
+  color: var(--silico-link) !important;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+a:hover {
+  color: var(--silico-link-hover) !important;
+  border-bottom-color: currentColor;
+}
+
+/* ============================================================
+   Element-level defaults — cascade, no !important.
+   ============================================================ */
+
+p, li, dt, dd, figcaption {
+  color: var(--silico-text);
+  margin: 0 0 0.8em;
+}
+ul, ol { padding-left: 1.3em; margin: 0 0 0.9em; }
+li { margin: 0 0 0.55em; }
+
+small, .muted {
+  color: var(--silico-text-muted);
+  font-size: 13px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--silico-border);
+  margin: 2em 0;
+}
+
+strong { font-weight: 500; color: var(--silico-text); }
+em { font-style: italic; }
+
+/* Mono — body numerals are already tabular-nums, so don't wrap
+   numbers in <code>. Mono is for code/paths/identifiers only. */
+code, kbd, samp, pre, .mono {
+  font-family: var(--silico-font-mono);
+  font-size: 13px;
+  font-weight: 400;
+}
+pre {
+  background: var(--silico-card-hover);
+  padding: 12px 14px;
+  border-radius: 2px;
+  overflow: auto;
+  line-height: 1.5;
+  margin: 0 0 1em;
+}
+code {
+  background: var(--silico-card-hover);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+pre code { background: transparent; padding: 0; }
+strong code, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code, th code {
+  font-weight: 400;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+  margin: 0 0 1.2em;
+}
+th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--silico-text-muted);
+  border-bottom: 1px solid var(--silico-border);
+  padding: 8px 10px;
+  font-size: 12px;
+  background-color: var(--silico-card);
+}
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--silico-border);
+  color: var(--silico-text);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: 0; }
+tr:hover { background-color: var(--silico-card-hover); }
+
+blockquote {
+  /* A quiet editorial margin note — no box, no left-bar (whitespace over
+     chrome). Serif italic + indent set it apart from the sans body; a bold
+     lead-in ("Precondition") names it. */
+  margin: 1.2em 0;
+  padding: 0 0 0 16px;
+  font-family: var(--silico-font-serif);
+  font-style: italic;
+  color: var(--silico-text-muted);
+}
+blockquote strong { color: var(--silico-text); font-style: normal; font-weight: 600; }
+
+img, svg, video { max-width: 100%; height: auto; }
+figure { margin: 1em 0; }
+figcaption {
+  font-family: var(--silico-font-serif);
+  font-size: 13px;
+  color: var(--silico-text-muted);
+  margin-top: 0.4em;
+  font-style: italic;
+}
+
+input, select, textarea {
+  background-color: var(--silico-input);
+  color: var(--silico-text);
+  border: 1px solid var(--silico-border);
+  font-family: var(--silico-font-body);
+  padding: 6px 10px;
+  border-radius: 2px;
+}
+
+details {
+  background: var(--silico-card);
+  border: 1px solid var(--silico-border);
+  border-radius: 2px;
+  padding: 10px 14px;
+  margin: 0.8em 0;
+}
+details summary {
+  color: var(--silico-text);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* ============================================================
+   Semantic class hooks — the design system. Worker writes
+   <section class="figure">, <div class="stat-grid">, etc.,
+   and gets coherent in-product styling without writing CSS.
+   ============================================================ */
+
+/* Page header — title only. The Summary section immediately below
+   carries the headline number and verdict; a separate summary
+   paragraph in the header would duplicate that. No metadata block, no
+   stat cards, no callouts. Worker context (model, dataset, etc.) moves
+   into the Method section as prose; numbers move into Results as stat
+   cards or the Key Takeaways callout. No bottom border on the header
+   either — the spacing alone separates the title from the Summary. */
+.report-header {
+  margin: 0 0 2.4em;
+}
+.report-header h1 { margin: 0 0 0.4em; }
+
+/* @lab-iframe-skip:start — results-report CONTENT POLICY (hide page-level
+   stat-grids, header metadata, worker footers, all <hr>). These govern WHAT a
+   results report may contain and WHERE — not how components look. Plans and
+   checkpoints reuse this theme's design language but are NOT results reports
+   (a plan legitimately leads with a spec-sheet stat-grid), so the Lab's srcDoc
+   iframe theme strips everything between these markers; see iframeBridge.ts. */
+/* Report header is the title only. No summary paragraph, no metadata
+   blocks, no cards, no stat grids, no callouts. The worker is
+   forbidden by the SKILL guidance, but workers occasionally wrap or
+   substitute anyway — hiding them at the CSS level guarantees the header stays
+   editorial, not dashboard. Hide is preferable to "tone down" so a
+   stray .stat-grid in the header doesn't leak partial chrome.
+
+   Metadata-wrapper aliases (.meta-grid, .metadata, etc.) are included
+   below because workers historically substituted those for the now-
+   removed .experiment-meta. They're hidden the same way as cards. */
+.report-header > *:not(h1):not(.silico-byline) {
+  /* Hide everything in the header that isn't the page title. Workers
+     occasionally still emit a subtitle <p>, a "summary" line, an
+     experiment-meta <dl>, a tagline, or a stat-grid in the header
+     despite the SKILL contract. Catch-all hide guarantees the header
+     stays editorial regardless of what wrapper class or tag the worker
+     picks. The h1 itself is preserved; everything else collapses.
+     (.silico-byline is exempt: it's the theme's own provenance mark,
+     inserted after the h1 by the script below, not worker content.) */
+  display: none !important;
+}
+
+/* Catch metadata blocks emitted OUTSIDE the .report-header wrapper.
+   Workers sometimes write a <dl class="experiment-meta">, a
+   <div class="meta-grid">, or a "Model · Dataset · Date · Run" run-meta
+   pill row as a separate block right after the header instead of
+   inside it — outside the .report-header > *:not(h1) catch above. The
+   SKILL contract forbids metadata blocks anywhere on a results page
+   (experimental context lives in Method as prose; numbers live in
+   Results as stat cards), so hide any class containing "meta" at the
+   page-level or directly-after-header position. The substring match
+   ([class*="meta" i]) catches .experiment-meta / .meta-grid /
+   .metadata / .run-meta / .report-meta / .meta-block etc. in one
+   rule. The "metric" string doesn't contain "meta" so .stat-card,
+   .metric-card, etc. are not affected. */
+body > [class*="meta" i],
+body > [class*="subhead" i],
+body > [class*="subtitle" i],
+body > [class*="summary" i]:not(.summary-box):not([class*="summary-box" i]),
+body > [class*="tagline" i],
+body > [class*="lede" i],
+body > main > [class*="meta" i],
+body > main > [class*="subhead" i],
+body > main > [class*="subtitle" i],
+body > main > [class*="summary" i]:not(.summary-box):not([class*="summary-box" i]),
+body > main > [class*="tagline" i],
+body > main > [class*="lede" i],
+body > article > [class*="meta" i],
+body > article > [class*="subhead" i],
+body > article > [class*="subtitle" i],
+body > article > [class*="summary" i]:not(.summary-box):not([class*="summary-box" i]),
+body > article > [class*="tagline" i],
+body > article > [class*="lede" i],
+body > .container > [class*="meta" i],
+body > .container > [class*="subhead" i],
+body > .container > [class*="subtitle" i],
+body > .container > [class*="summary" i]:not(.summary-box):not([class*="summary-box" i]),
+body > .container > [class*="tagline" i],
+body > .container > [class*="lede" i],
+.report-header + [class*="meta" i],
+.report-header + [class*="subhead" i],
+.report-header + [class*="subtitle" i],
+.report-header + [class*="summary" i]:not(.summary-box):not([class*="summary-box" i]),
+.report-header + [class*="tagline" i],
+.report-header + [class*="lede" i],
+.report-header + p,
+.report-header + dl,
+.report-header + ul,
+.report-header + ol {
+  display: none !important;
+}
+
+/* Blanket-hide ALL <hr> on the report page. Section spacing alone
+   (2.4em on .section) provides the clearance between sections; the
+   report uses no horizontal rules for any visual structure. Workers
+   occasionally drop <hr> between the title and the first section,
+   directly after a section <h2>, between sections, or at the end of a
+   section — all become visual noise. A blanket hide is simpler than
+   enumerating every position and covers patterns workers haven't
+   invented yet. */
+hr {
+  display: none !important;
+}
+
+/* Strip any border or text-decoration on report headings. Workers
+   occasionally emit inline styles or class-based borders that paint
+   an underline below each section <h2>, redundant with the .section
+   margin and visually noisy. Defends against worker-injected
+   borders/underlines even when no <hr> is present. */
+h1, h2, h3, h4, h5, h6 {
+  border-bottom: 0 !important;
+  border-top: 0 !important;
+  text-decoration: none !important;
+}
+.section > h2::after,
+.section > h2::before,
+.report-header h1::after,
+.report-header h1::before {
+  display: none !important;
+}
+
+/* Stat grids and stat cards belong adjacent to the figures inside Results,
+   never as page-level dashboard chrome. The .report-header rules above
+   already hide stat grids tucked inside the header wrapper; these rules
+   catch the remaining leak — stat grids placed loose at the page level,
+   inside <main>/<article>/<header>/<footer>/<aside> wrappers, or inside
+   a .container chrome div. The positively-allowed location is anywhere
+   inside .section, which the regular .stat-grid rule above paints. */
+body > :is(main, article, .container) > :is(.stat-grid, .stats-grid, .metrics-grid, .kpi-grid, .stat-card, .metric-card, .kpi-card),
+body > :is(.stat-grid, .stats-grid, .metrics-grid, .kpi-grid, .stat-card, .metric-card, .kpi-card),
+body > :is(header, footer, aside) :is(.stat-grid, .stats-grid, .metrics-grid, .kpi-grid, .stat-card, .metric-card, .kpi-card) {
+  display: none !important;
+}
+
+/* Worker-emitted footers — "Built with Plotly," source/job/model
+   provenance lists, "Powered by" credits, "Generated by" lines,
+   any bottom-of-page metadata block. None of these belong on a
+   scientific report. The reader knows the technology; the workspace
+   surfaces the experiment ID; the Method section cites the relevant
+   git SHA if needed. Hide aggressively at the CSS level so a worker
+   who adds one anyway doesn't pollute the page. */
+body > footer,
+.report-footer,
+.page-footer,
+.report-attribution,
+.attribution,
+.credits,
+.report-credits,
+.powered-by,
+.made-with,
+.built-with,
+.plotly-credit,
+.report-source,
+.report-provenance,
+.provenance,
+.report-meta-footer {
+  display: none !important;
+}
+/* @lab-iframe-skip:end */
+
+/* Section wrapper. Worker uses <section class="section"> around each
+   top-level report section. Section names follow the deliverable (see
+   the publish-results skill); the styling here is structural, not
+   name-based. */
+.section {
+  margin: 2.4em 0;
+}
+.section > h2:first-child { margin-top: 0; }
+
+/* Figure — the two-block primitive. Worker writes:
+     <section class="figure">
+       <h3 class="figure-title">Figure N: <title></h3>
+       <p class="figure-description">...</p>
+       <p class="figure-findings">...</p>
+     </section>
+   The labels (1) Description / (2) Findings are rendered
+   automatically by CSS below — workers do NOT write them as prose.
+   Description combines what the figure tests + methodology + visual
+   description, written declaratively (not as a question). */
+/* Card chrome — matches the in-product hflow checkpoint card: 2px
+   juniper border at 40% opacity, 2px corner radius, soft cream fill,
+   subtle elevation via the same shadow stack the product uses
+   (`--shadow-card`). Padding (14px 18px) matches the in-product card
+   token; figures get slightly more horizontal breathing room since
+   chart content sits at full content width. */
+.figure {
+  /* Flat by design: a figure is a chart with a caption, not a card. No
+     border / background / shadow — the chart sits inline in the column and
+     the caption reads directly beneath it. Cards are reserved for scalar
+     metric grids (.stat-card). Margin alone separates one figure from the
+     next. */
+  margin: 1.6em 0 2em;
+  /* Wide Plotly charts — when a worker emits ``width=N`` larger than the
+     column — scroll horizontally here rather than overflowing the layout.
+     Combined with ``html, body { overflow-x: hidden }`` above, this is the
+     only place wide content can horizontal-scroll. */
+  overflow-x: auto;
+}
+/* Multiple ``.figure`` cards stack vertically by default (block flow),
+   and ``.figure + .figure { margin-top: 2.4em }`` keeps a clear gap.
+   If a worker wraps figures in a flex / grid container expecting
+   side-by-side layout, restore vertical stacking — the SKILL contract
+   is one figure per row in worker reports (narrower per-figure space
+   reads as dashboard, not editorial). */
+.section > .figure,
+.figure + .figure {
+  display: block;
+  width: auto;
+}
+/* Figure title — the editorial heading voice (serif), matching the section
+   headings above it so the figure reads as a titled landmark. Size + weight
+   carry the hierarchy; no color accent. (An ``h3.figure-title`` is already
+   caught by the heading rule; pin serif on the class so it holds on any
+   element.) */
+.figure-title {
+  font-family: var(--silico-font-serif);
+  font-size: 18px;
+  /* Match the base h1-h6 weight (500) so the title reads as consistent
+     with the section H2s above it and the body H3/H4 below. */
+  font-weight: 500;
+  color: var(--silico-text) !important;
+  margin: 0 0 0.8em;
+}
+/* Figure explanation — wraps description + findings as a single
+   cohesive caption block below the chart. Subtle neutral-gray
+   background visually separates the prose from the chart, so
+   readers don't mistake the text for chart labels or extend the
+   chart's color palette into the prose. The wrapping also makes
+   the explanation read as one unit ("here's what this figure
+   shows AND what it means") rather than two disconnected blocks. */
+.figure-explanation {
+  /* Caption sits directly beneath the chart as plain muted prose — no box,
+     no fill. The "Findings." prefix + the muted text size already separate
+     it from the chart; it doesn't need a tinted container. */
+  margin: 0.6em 0 0;
+}
+/* Description and findings — slightly smaller than body text but in
+   the brand body color so they read as a unified part of the report
+   voice. Forced `display: block` + 100% width so they stack as rows
+   regardless of any worker-emitted flex/grid wrapper around them.
+   Description reads as plain prose (no label). Findings gets a
+   "Findings. " prefix so the verdict paragraph is visually flagged —
+   readers scanning for the take-away can find it without re-reading
+   the description. */
+.figure-description,
+.figure-findings {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 0 0.5em;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--silico-text);
+}
+.figure-explanation .figure-findings { margin-bottom: 0; }
+/* If the worker wraps description + findings in a flex / grid
+   container instead of using .figure-explanation, force the children
+   to stack vertically. Each `.figure-description` and `.figure-findings`
+   gets its own row regardless of the parent's layout. */
+.figure-explanation,
+.figure > .figure-description,
+.figure > .figure-findings {
+  display: block;
+}
+.figure-findings::before {
+  content: 'Findings. ';
+  font-weight: 500;
+  color: var(--silico-text-muted);
+}
+
+/* Plotly + image children inside a .figure get a small top margin
+   below the figure title and a tight bottom margin so the explanation
+   sits close to the chart. The explanation card is the chart's caption
+   — visual proximity makes that relationship obvious. */
+.figure .js-plotly-plot,
+.figure > img,
+.figure > svg,
+.figure > .plot,
+.figure > .chart {
+  display: block;
+  margin: 0.6em 0 0.2em;
+}
+
+/* Chart-container floor — prevents Plotly first-paint collapse. The
+   token is overridable on a per-chart wrapper. Applies inside .figure
+   cards and to standalone .plot / .chart wrappers. */
+.figure .js-plotly-plot,
+.figure > .plot,
+.figure > .chart,
+.plot,
+.chart {
+  min-height: var(--silico-chart-min-height);
+}
+
+/* Vertical safety gap between consecutive figures. Even if one chart's
+   modebar, hover label, or legend overflows its container slightly,
+   it can't reach into the next figure's space. */
+.figure + .figure {
+  margin-top: 2.4em;
+}
+
+/* Plotly hover tooltips render inside the graph div; ensure they paint
+   above any visually adjacent chart when a tooltip extends to the edge
+   of the plot frame. */
+.js-plotly-plot .hoverlayer {
+  z-index: 10;
+}
+
+/* Plotly modebar — pinned to the top-right corner of the plot and
+   hidden by default. Fades in when the reader hovers the chart (or
+   focuses a button via keyboard), so the static page reads cleanly
+   without the controls competing with the data. Horizontal orientation
+   on top of the plot stays inside the chart container regardless of
+   iframe sizing; the cream-paper pill keeps icons readable when the
+   bar overlays data on hover. Pairs with `displayModeBar: 'hover'` on
+   the Python side. */
+.js-plotly-plot .modebar-container {
+  top: 6px;
+  right: 10px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.js-plotly-plot:hover .modebar-container,
+.js-plotly-plot .modebar-container:focus-within {
+  opacity: 1;
+}
+.js-plotly-plot .modebar {
+  /* Flat hover toolbar: no cream pill, no border — the chart sits flat on
+     the page, so the modebar shouldn't paint a box onto it. The dark icons
+     read fine against the light chart; this only shows on hover. */
+  background: transparent;
+  border: 0;
+  padding: 2px 4px;
+  /* Keep z-index above the plot SVG so the buttons sit on top of any
+     data the user has zoomed into the top-right corner. */
+  z-index: 5;
+}
+.js-plotly-plot .modebar-btn {
+  padding: 2px 4px;
+}
+/* Strip the "Produced with Plotly" logo button. Library attribution is
+   implementation detail, not part of the experiment's chrome. Newly-
+   generated reports pass `displaylogo: false` in their Plotly config and
+   never emit this button at all; this rule hides it in reports written
+   before that contract landed. */
+.js-plotly-plot .modebar-btn[data-attr="logo"],
+.js-plotly-plot a[data-title*="Plotly" i] {
+  display: none !important;
+}
+
+/* Figure caption — separate from the four-block prose, used when
+   a worker wants a short italic caption under the chart. */
+.caption, .figure-caption {
+  font-family: var(--silico-font-serif);
+  font-size: 13px;
+  color: var(--silico-text-muted);
+  margin: 0.4em 0 0.6em;
+  font-style: italic;
+}
+
+/* Stat grid — responsive auto-fit grid of metric cards. Sized to
+   read as compact reference data adjacent to the figure that
+   produced the numbers, not as a dashboard hero. */
+.stat-grid,
+.stats-grid,
+.metrics-grid,
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px 28px;
+  margin: 1.4em 0;
+  /* A single editorial rule over the whole strip — not one per card (8
+     hairlines read as a comb). Wrapped rows are separated by whitespace. */
+  border-top: 1.5px solid var(--silico-text);
+  padding-top: 16px;
+}
+.stat-card,
+.metric-card,
+.kpi-card,
+.result-card,
+.stat-grid > div,
+.stats-grid > div,
+.metrics-grid > div,
+.kpi-grid > div {
+  /* Editorial spec-strip cell: no box, no per-card rule (the grid carries one
+     rule above the whole strip). Label over value, separated by whitespace. */
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.stat-label,
+.metric-label,
+.stat-title,
+.metric-name,
+.kpi-label {
+  color: var(--silico-text-muted);
+  font-size: 11px;
+  margin: 0 0 6px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+/* Scalar value at a fixed size — no per-card clamp (the cqi clamp made values
+   render at different sizes across a row, which read as inconsistent). Sits
+   directly under its label; tabular numerals; wraps so a long value can't
+   overflow. Descriptive (non-scalar) values drop to the .text tier below. */
+.stat-value,
+.metric-value,
+.kpi-value {
+  color: var(--silico-text);
+  font-family: var(--silico-font-body);
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+/* Descriptive (non-scalar) values — a phrase, not a number — render at text
+   size so they never read as a giant headline. The figures skill adds
+   ``text`` to the value's class when the value isn't a short scalar. */
+.stat-value.text,
+.metric-value.text,
+.kpi-value.text {
+  font-size: 13px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+/* Defensive: neutralize accidental <code>/.mono/.num wrapping inside a
+   stat value. The body sans + tabular-nums already aligns numerals;
+   workers sometimes reflexively wrap numbers in <code> for emphasis,
+   which would force IBM Plex Mono and a syntax-tinted background.
+   Inherit instead so the design language survives the mistake. */
+.stat-value code,  .stat-value .mono,  .stat-value .num,
+.metric-value code, .metric-value .mono, .metric-value .num,
+.kpi-value code,    .kpi-value .mono,    .kpi-value .num {
+  font-family: inherit !important;
+  font-weight: inherit !important;
+  font-size: inherit !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+.stat-delta,
+.metric-delta {
+  font-size: 11px;
+  color: var(--silico-text-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.stat-delta.up,    .metric-delta.up    { color: var(--silico-success); }
+.stat-delta.down,  .metric-delta.down  { color: var(--silico-danger); }
+
+/* Status grid — categorical pass/fail, smoke-test, blocked/unblocked.
+   Reuses .stat-grid geometry; adds valence border coloring. */
+.status-grid,
+.job-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin: 1em 0;
+}
+.status-card,
+.job-card {
+  /* Pass/fail + job facts in a flat box; valence is the soft background, not
+     a left rule. */
+  padding: 8px 12px;
+  border: 1px solid var(--silico-surface-line);
+  border-radius: 6px;
+  background: var(--silico-surface-soft);
+}
+.status-label, .job-label { color: var(--silico-text-muted); font-size: 11px; font-style: italic; margin: 0 0 3px; }
+.status-value, .job-value { color: var(--silico-text); font-family: var(--silico-font-body); font-size: 15px; line-height: 1.25; font-weight: 500; }
+.status-note, .job-note   { color: var(--silico-text-muted); font-size: 11px; margin: 4px 0 0; }
+.status-card.good { background: var(--silico-success-soft); border-color: var(--silico-success-border); }
+.status-card.warn { background: var(--silico-warning-soft); border-color: var(--silico-warning-border); }
+.status-card.bad  { background: var(--silico-danger-soft); border-color: var(--silico-danger-border); }
+
+/* Takeaway — a cream pull-block for single-sentence findings. */
+.takeaway {
+  background: var(--silico-surface-soft);
+  border: 1px solid var(--silico-surface-line);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 1em 0;
+  font-family: var(--silico-font-serif);
+  font-style: italic;
+}
+
+/* Precondition — a left-ruled annotation for a gate on a plan step (the
+   falsifiable check that protects later steps). Deliberately not a card:
+   cards are reserved for scalar metric grids. Ember rule at 60%. */
+.precondition {
+  border-left: 2px solid rgba(196, 101, 13, 0.6);
+  padding: 2px 0 2px 10px;
+  margin: 0.75em 0;
+}
+
+/* Compact table — tighter spacing for small comparisons. */
+.compact-table { font-size: 12.5px; margin: 1em 0; }
+.compact-table th, .compact-table td { padding: 4px 6px; }
+
+/* Comparison — a simple before/after or A vs B. Two (or a few) labeled
+   sides read side by side, separated by a hairline; the shared geometry
+   with .stat-grid keeps the family consistent. For headline scalars before
+   vs after, prefer paired marks in a real figure; this is for the quick
+   side-by-side summary that doesn't warrant a chart. */
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0;
+  border: 1px solid rgba(180, 180, 180, 0.4);
+  border-radius: 2px;
+  background: var(--silico-card);
+  margin: 1em 0;
+  overflow: hidden;
+}
+.comparison-side,
+.comparison > div {
+  padding: 10px 14px;
+  border-left: 1px solid rgba(180, 180, 180, 0.4);
+  min-width: 0;
+}
+.comparison-side:first-child,
+.comparison > div:first-child { border-left: 0; }
+.comparison-label {
+  display: block;
+  color: var(--silico-text-muted);
+  font-size: 11px;
+  margin: 0 0 3px;
+  line-height: 1.3;
+}
+.comparison-value {
+  display: block;
+  color: var(--silico-text);
+  font-family: var(--silico-font-body);
+  font-size: 16px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.comparison-value code, .comparison-value .mono, .comparison-value .num {
+  font-family: inherit !important;
+  font-weight: inherit !important;
+  font-size: inherit !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+/* Mark the "after"/"B" side as the improved or current state. */
+.comparison-side.up   .comparison-value { color: var(--silico-success); }
+.comparison-side.down .comparison-value { color: var(--silico-danger); }
+
+/* Sparkline / mini-chart — block-level inline SVG/CSS charts. */
+.sparkline, .mini-chart { display: block; width: 100%; height: auto; margin: 1em 0; }
+
+/* Review thread — PR-style comment layout for critic findings. */
+.review-thread { display: flex; flex-direction: column; gap: 10px; margin: 1em 0; }
+.review-comment {
+  border: 1px solid rgba(180, 180, 180, 0.4);
+  border-radius: 2px;
+  background: var(--silico-card);
+  padding: 14px 16px;
+}
+.review-location { color: var(--silico-text-muted); font-size: 11px; font-style: italic; margin: 0 0 3px; }
+.review-context, .review-action { border-radius: 4px; padding: 8px 10px; margin: 8px 0; background: var(--silico-surface-soft); border: 1px solid var(--silico-surface-line); }
+
+/* Callouts — semantic boxes that match product warning/danger/
+   success conventions (soft bg + matching border, not just a
+   colored left rule). For neutral notes, use .callout / .note. */
+.callout,
+.note-box,
+.summary-box {
+  /* Neutral note: a quiet cream box. */
+  background: var(--silico-surface-soft);
+  border: 1px solid var(--silico-surface-line);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 1em 0;
+}
+.key-finding,
+.finding {
+  /* Key Takeaways leads Results as a verdict pull-block — a cream box with
+     bold per-bullet headlines carrying the scan. */
+  background: var(--silico-surface-soft);
+  border: 1px solid var(--silico-surface-line);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 1.2em 0;
+}
+/* Lists inside the cream callout family: zero the list's own top/bottom
+   margin (the box padding frames it) and give bullets breathing room so a
+   block of 2-4 findings reads as a scannable summary, not a packed
+   paragraph. The last bullet drops its trailing margin. Applied across the
+   family so a report with mixed boxes stays consistent. */
+.key-finding > ul, .key-finding > ol,
+.finding > ul, .finding > ol,
+.callout > ul, .callout > ol,
+.note-box > ul, .note-box > ol,
+.summary-box > ul, .summary-box > ol,
+.highlight-box > ul, .highlight-box > ol,
+.insight-box > ul, .insight-box > ol,
+.caveat > ul, .caveat > ol {
+  margin: 0;
+}
+.key-finding > ul > li, .finding > ul > li,
+.callout > ul > li, .note-box > ul > li, .summary-box > ul > li,
+.highlight-box > ul > li, .insight-box > ul > li, .caveat > ul > li {
+  margin: 0 0 0.7em;
+  line-height: 1.62;
+}
+.key-finding > ul > li:last-child, .finding > ul > li:last-child,
+.callout > ul > li:last-child, .note-box > ul > li:last-child,
+.summary-box > ul > li:last-child, .highlight-box > ul > li:last-child,
+.insight-box > ul > li:last-child, .caveat > ul > li:last-child {
+  margin-bottom: 0;
+}
+.warning-box {
+  border: 1px solid var(--silico-warning-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 1em 0;
+  background: var(--silico-warning-soft);
+  color: var(--silico-text);
+}
+/* A caveat is a trust-calibration aside, not an alert — neutral cream (the
+   note/key-finding family), not the warning palette; the bold lead names it. */
+.caveat {
+  border: 1px solid var(--silico-surface-line);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 1em 0;
+  background: var(--silico-surface-soft);
+  color: var(--silico-text);
+}
+.danger-box,
+.failure-box {
+  border: 1px solid var(--silico-danger-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 1em 0;
+  background: var(--silico-danger-soft);
+  color: var(--silico-text);
+}
+.highlight-box,
+.insight-box {
+  /* Emphasis as a quiet cream box. */
+  background: var(--silico-surface-soft);
+  border: 1px solid var(--silico-surface-line);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 1em 0;
+}
+
+/* Badges / chips / tags — small inline status pills. */
+.badge,
+.tag,
+.chip,
+.label-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--silico-card);
+  color: var(--silico-text-muted);
+  border: 1px solid var(--silico-border);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+.badge.success { color: var(--silico-success); border-color: var(--silico-success-border); background: var(--silico-success-soft); }
+.badge.warning { color: var(--silico-warning); border-color: var(--silico-warning-border); background: var(--silico-warning-soft); }
+.badge.danger  { color: var(--silico-danger);  border-color: var(--silico-danger-border);  background: var(--silico-danger-soft); }
+
+/* ============================================================
+   Plotly chart defaults — paint backgrounds, text, and gridlines
+   to match the brand. JS block below handles trace-color rescue
+   for figures that left Plotly's defaults in place.
+   ============================================================ */
+.js-plotly-plot .plotly .bg { fill: var(--silico-card); }
+.js-plotly-plot text { fill: var(--silico-text); }
+.js-plotly-plot .gridlayer line { stroke: var(--silico-border); }
+.js-plotly-plot .zerolinelayer line { stroke: var(--silico-border); stroke-width: 1px; }
+.js-plotly-plot span,
+.js-plotly-plot div,
+.hoverlayer div,
+.hoverlayer span,
+[class*="legend"] span,
+[class*="colorbar"] span {
+  color: inherit;
+}
+canvas { background-color: var(--silico-card); }
+
+/* ============================================================
+   Defensive overrides — catch generic-looking dark backgrounds
+   and Tailwind dark utility classes that bleed through from
+   third-party content. Trimmed from the previous defensive
+   sheet; the cascade above already wins for clean markup.
+   ============================================================ */
+[class*="bg-gray-9"],
+[class*="bg-slate-9"],
+[class*="bg-zinc-9"],
+[class*="bg-neutral-9"],
+[class*="bg-stone-9"],
+[class*="bg-gray-8"],
+[class*="bg-slate-8"],
+[class*="bg-zinc-8"],
+[class*="bg-neutral-8"],
+[class*="bg-stone-8"] {
+  background-color: var(--silico-card) !important;
+  color: var(--silico-text);
+}
+[class*="text-gray-4"],
+[class*="text-slate-4"],
+[class*="text-zinc-4"],
+[class*="text-neutral-4"],
+[class*="text-gray-5"],
+[class*="text-slate-5"] {
+  color: var(--silico-text-muted);
+}
+
+/* ============================================================
+   Print-to-PDF — cleanup for paper output. Plotly charts are
+   reflowed at `beforeprint` by the JS block below; these rules
+   handle the surrounding chrome.
+   ============================================================ */
+@page {
+  /* Generous-but-not-wasteful page margin. Browsers default to ~0.4in
+     in some configurations and ~1in in others; pinning 0.5in gives
+     consistent gutters across Chrome / Safari / Firefox print dialogs
+     while still leaving the user's dialog free to override. */
+  margin: 0.5in;
+}
+@media print {
+  /* The screen layout reserves 36px / 96px page padding; on paper the
+     `@page` margin already provides the gutter. Doubling them wastes
+     space and pushes content into a narrower column than the print
+     viewport supports. */
+  body {
+    padding: 0 !important;
+  }
+  /* The floating-actions corner reservation is screen chrome — on paper the
+     controls don't print, so the title takes the full measure. */
+  html.embedded body::before {
+    display: none !important;
+  }
+  /* Plotly modebar is meaningless on paper — hide it. */
+  .js-plotly-plot .modebar-container {
+    display: none !important;
+  }
+  /* Center the chart inside the figure card. JS pins the chart to a
+     fixed pixel width that fits A4 exactly (the narrower of the two
+     common papers); on US Letter the figure-content space is ~23px
+     wider, so without `margin: auto` the chart left-aligns and the
+     headroom shows as a right-side gap. Centering splits the
+     headroom evenly across both sides and reads as intentional
+     margin. */
+  .js-plotly-plot {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  /* Keep each figure on one page when it fits. A chart split across a
+     page break is unreadable, and the caption is meaningless if it
+     trails on the following page without the chart. */
+  .figure,
+  .key-finding,
+  .finding,
+  .callout,
+  .warning-box,
+  .caveat,
+  .danger-box,
+  .highlight-box,
+  .insight-box {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* Avoid a heading orphaned at the bottom of a page with its content
+     on the next. */
+  h1, h2, h3, h4, h5, h6 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  /* On screen the page hides overflow-x to contain wide charts inside
+     `.figure { overflow-x: auto }`. On paper the scrollbar affordance
+     doesn't exist; let the figure clip rather than render a scrollbar
+     stub or paint the chart into the page gutter. */
+  html, body {
+    overflow-x: visible !important;
+  }
+  .figure {
+    overflow-x: hidden !important;
+  }
+}
+
+/* ============================================================
+   Provenance — "Made with Silico" byline + colophon.
+   Rendered by the theme script below on STANDALONE documents only
+   (the ?silico_print=1 print tab, a downloaded HTML, a direct
+   open) — the artifacts that travel. Inside the Lab
+   (html.embedded) the surrounding chrome already carries the
+   identity, so nothing renders there.
+   ============================================================ */
+.silico-made-with {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--silico-font-body) !important;
+  font-size: 12px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.4;
+  color: var(--silico-text-muted) !important;
+  text-decoration: none !important;
+}
+.silico-made-with:hover { color: var(--silico-link) !important; }
+.silico-made-with img { height: 14px; width: auto; flex: none; }
+.silico-byline { margin: 0.4em 0 1.6em; }
+.silico-colophon {
+  margin-top: 56px;
+  padding-top: 14px;
+  border-top: 1px solid var(--silico-surface-line);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+</style>
+<script data-silico-theme>
+(function(){
+  // Mark <html> when framed (results-page iframe) so the stylesheet keeps
+  // today's tight top; standalone keeps the even gutter. Runs in <head>
+  // pre-paint (no flash); a cross-origin window.top read throwing = framed.
+  // Default to actions-OWN-LINE here, PRE-PAINT, alongside `embedded`. The
+  // shared-vs-own decision needs a width measurement (below) that can only
+  // run once the title exists and fonts settle — after first paint. Defaulting
+  // to own-line means the title paints BELOW the button band from frame one;
+  // the measurement then only ever DEMOTES a short title up to the shared
+  // line (a one-time upward collapse), never shoves a long title down (the
+  // jarring push the shared-line default caused).
+  // `no-actions-reserve` rides along when the server baked the opt-out global
+  // (inject_lab_theme reserve_actions=False — consumers whose frames never
+  // have actions floated over them; see the ::before rules above). Read here,
+  // pre-paint, so the reserve never flashes in.
+  function silicoEmbeddedClasses() {
+    var cls = ['embedded', 'actions-own-line'];
+    if (window.__silicoReserveActions === false) cls.push('no-actions-reserve');
+    document.documentElement.classList.add.apply(document.documentElement.classList, cls);
+  }
+  try {
+    if (window.self !== window.top) silicoEmbeddedClasses();
+  } catch (e) { silicoEmbeddedClasses(); }
+
+  // ---- Floating-actions layout: share the title line, or take a line ----
+  // The Lab floats the report actions (Edit / Review / Export) over the
+  // top-right corner this stylesheet reserves. If the TITLE's natural
+  // single-line width fits beside the cluster, they share the line; else
+  // `actions-own-line` turns the reserved corner into a full-width strip so
+  // the buttons sit on their own line and the title starts below at full
+  // width — no mid-title wrap around the buttons.
+  function silicoActionsLayout() {
+    var root = document.documentElement;
+    if (!root.classList.contains('embedded')) return;
+    var h = document.body && document.querySelector('h1,h2');
+    if (!h) return;
+    var reserve = parseFloat(getComputedStyle(root).getPropertyValue('--silico-actions-reserve')) || 290;
+    var probe = h.cloneNode(true);
+    probe.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;white-space:nowrap;width:auto;max-width:none';
+    document.body.appendChild(probe);
+    var natural = probe.getBoundingClientRect().width;
+    probe.remove();
+    // Toggle in ONE step (never a transient shared state → no flash): own-line
+    // iff the title's natural width won't fit beside the reserved cluster.
+    root.classList.toggle('actions-own-line', natural > h.clientWidth - reserve);
+  }
+  var actionsLayoutRaf = null;
+  function queueActionsLayout() {
+    if (actionsLayoutRaf) return;
+    actionsLayoutRaf = requestAnimationFrame(function () {
+      actionsLayoutRaf = null;
+      silicoActionsLayout();
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', queueActionsLayout);
+  } else {
+    queueActionsLayout();
+  }
+  // Re-measure once the report font (Newsreader) actually lands — measuring
+  // against the fallback face gives a wrong width and would settle to the
+  // wrong mode.
+  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueActionsLayout); } catch (e) {}
+  window.addEventListener('resize', queueActionsLayout);
+
+  // ---- Render guard: the single owner of responsive figure layout ----
+  // The first-paint width-0 collapse that once forced responsive:false is
+  // fixed here, centrally. Wrap Plotly.newPlot so the FIRST plot is deferred
+  // until the chart container has a nonzero width, then plot responsively and
+  // reflow on every container resize. This lets figures carry NO frozen
+  // geometry (margins / legend-offset / nticks) — Plotly's layout engine +
+  // automargin lay them out at the real display width. This script is in
+  // <head>, so it wraps newPlot before any inline call runs; if Plotly loads
+  // after us, the window.Plotly setter wraps it on assignment.
+  // ---- WebGL-context guard: downgrade SMALL 2D-GL scatter to SVG ----
+  // A browser allows only ~16 live WebGL contexts per page; each gl2d/gl3d
+  // subplot consumes one. Reports that pack many WebGL panels blow past the
+  // cap and the browser evicts the oldest contexts, so those panels render
+  // blank / broken-image. `scattergl`/`scatterpolargl` exist only to keep
+  // LARGE scatter fast; below ~1000 points the SVG `scatter`/`scatterpolar`
+  // form is visually and interactively identical and costs NO context. So we
+  // downgrade only the SMALL ones — freeing context budget for the panels that
+  // genuinely need WebGL (3D, big scatter). This is a pure, additive pass: a
+  // report with no small gl-scatter trace is untouched, and any error falls
+  // back to the original data. It does NOT touch scatter3d/surface/mesh3d
+  // (no SVG form) or genuinely large gl scatter (SVG would jank).
+  // Extracted as a named function + fenced markers so a unit test can exercise
+  // the real shipped source (see web .../pagesThemeGlDowngrade.test.ts).
+  /* __GL_DOWNGRADE_START__ */
+  var GL_DOWNGRADE_MAX = 1000;              // matches Plotly's own gl auto-promote boundary
+  function __silicoDowngradeSmallGL(data){
+    if (!Array.isArray(data)) return data;
+    var SWAP = { scattergl: 'scatter', scatterpolargl: 'scatterpolar' };
+    // Bytes per element for Plotly.py's base64 typed-array `dtype` codes, so a
+    // {dtype,bdata} payload's point count can be derived without decoding it.
+    var DTYPE_BYTES = { i1:1, u1:1, i2:2, u2:2, i4:4, u4:4, f4:4, i8:8, u8:8, f8:8, f2:2 };
+    // Point count. Arrays/typed-arrays expose .length directly. Plotly.py 6
+    // packs NumPy/pandas/Polars coordinates as {dtype, bdata:<base64>} — the
+    // COMMON generated-report case — so decode the element count from the
+    // base64 length instead of giving up; only a truly opaque value falls back
+    // to LARGE (Infinity), so we never downgrade a genuinely huge trace.
+    function pointCount(tr){
+      var keys = ['x','y','lat','lon','r','theta','a','b'], n = 0, seen = false;
+      for (var i = 0; i < keys.length; i++){
+        var v = tr[keys[i]];
+        if (v == null) continue;
+        seen = true;
+        if (typeof v.length === 'number') { n = Math.max(n, v.length); continue; }  // Array / typed array
+        if (v && typeof v.bdata === 'string' && DTYPE_BYTES[v.dtype]) {              // {dtype, bdata:<base64>}
+          var b = v.bdata, pad = b.charAt(b.length - 1) === '=' ? (b.charAt(b.length - 2) === '=' ? 2 : 1) : 0;
+          var bytes = Math.floor(b.length * 3 / 4) - pad;
+          n = Math.max(n, Math.floor(bytes / DTYPE_BYTES[v.dtype]));
+          continue;
+        }
+        return Infinity;                                                             // truly opaque -> large
+      }
+      return seen ? n : 0;
+    }
+    // Only convert traces whose SVG rendering is equivalent: an explicit
+    // markers/lines mode, and no gl-only-differing attrs (error bars, fill).
+    function convertible(tr){
+      if (typeof tr.mode !== 'string') return false;
+      if (!/^(markers|lines|markers\+lines|lines\+markers)$/.test(tr.mode.replace(/\s/g, ''))) return false;
+      if (tr.error_x || tr.error_y) return false;
+      if (tr.fill && tr.fill !== 'none') return false;
+      return pointCount(tr) <= GL_DOWNGRADE_MAX;
+    }
+    // Key a trace to the 2D-GL subplot it shares with others. Any GL-family
+    // trace we will NOT downgrade (a large/mode-less scattergl, or a different
+    // GL type like heatmapgl/pointcloud) blocks its whole subplot — otherwise
+    // we'd leave a mixed SVG-over-GL subplot that frees no context and reorders
+    // z-stacking into a separate layer. 3D scenes / splom / parcoords are their
+    // own isolated contexts, never share a 2D subplot, so they don't key here.
+    // `x1`/`y1`/`polar1` are Plotly aliases for `x`/`y`/`polar` — normalize so
+    // a sibling using either spelling still maps to the same subplot.
+    function glSubplotKey(tr){
+      var t = tr.type, norm = function(a, d){ a = a || d; return /^[xy]1$/.test(a) ? a.charAt(0) : a; };
+      if (t === 'scattergl' || t === 'heatmapgl' || t === 'contourgl' || t === 'pointcloud')
+        return 'xy:' + norm(tr.xaxis, 'x') + '/' + norm(tr.yaxis, 'y');
+      if (t === 'scatterpolargl')
+        return 'polar:' + (tr.subplot === 'polar1' ? 'polar' : (tr.subplot || 'polar'));
+      return null;
+    }
+    var blocked = {};
+    for (var i = 0; i < data.length; i++){
+      var t = data[i]; if (!t) continue;
+      var k = glSubplotKey(t);
+      if (k && !(SWAP[t.type] && convertible(t))) blocked[k] = true;
+    }
+    var changed = false;
+    var out = new Array(data.length);
+    for (var j = 0; j < data.length; j++){
+      var tr = data[j];
+      if (tr && SWAP[tr.type] && convertible(tr) && !blocked[glSubplotKey(tr)]){
+        var c = Object.assign({}, tr);   // clone only what we change; never mutate the caller's trace
+        c.type = SWAP[tr.type];
+        out[j] = c; changed = true;
+      } else {
+        out[j] = tr;
+      }
+    }
+    return changed ? out : data;           // reuse the original array when nothing changed
+  }
+  /* __GL_DOWNGRADE_END__ */
+
+  function installRenderGuard(P){
+    if (!P || P.__silicoGuarded || typeof P.newPlot !== 'function') return;
+    P.__silicoGuarded = true;
+    var realNewPlot = P.newPlot;
+    P.newPlot = function(gd, data, layout, config){
+      gd = (typeof gd === 'string') ? document.getElementById(gd) : gd;
+      if (!gd) return realNewPlot.apply(P, arguments);
+      // Free WebGL-context budget by downgrading small 2D-GL scatter to SVG
+      // before plotting (see __silicoDowngradeSmallGL). Never let a bug here
+      // break rendering — fall back to the original data on any error.
+      try { data = __silicoDowngradeSmallGL(data); } catch(e){}
+      // The page <h3 class="figure-title"> carries the title; strip any inline
+      // Plotly title pre-plot so it never double-renders. Merge so sibling
+      // title props the worker set (font, x, ...) are preserved.
+      layout = Object.assign({}, layout || {});
+      layout.title = Object.assign({}, layout.title || {}, { text: '' });
+      // Respect the figure's own responsive choice. New figures set
+      // responsive:true (PLOTLY_CONFIG); legacy figures baked responsive:false
+      // froze geometry for a fixed canvas, so we leave them un-reflowed (just
+      // deferred to a correct first width — a strict improvement, not a change
+      // to their layout).
+      var wantsResponsive = !(config && config.responsive === false);
+      var plotted = false, lastW = -1, ro = null;
+      var settle; var done = new Promise(function(res){ settle = res; });
+      function pump(){
+        if (!plotted){
+          if (gd.clientWidth <= 0) return;                  // hidden / zero-width: wait
+          plotted = true; lastW = gd.clientWidth;
+          var p;
+          try { p = realNewPlot.call(P, gd, data, layout, config); }
+          catch(e){ console.warn('silico render guard: newPlot failed', e); settle(gd); return; }
+          // Brand-style THIS chart now (idempotent) — covers a late plot (e.g.
+          // a chart in a closed <details> opened after the theme's styling
+          // timers and 10s observer have expired) that fixPlotly would miss.
+          // Resolving only after the real plot keeps to_html's
+          // .then(addFrames/animate/post_script) chain correct.
+          Promise.resolve(p).then(function(){
+            try { fixPlotly(); } catch(e){}
+            if (!wantsResponsive && ro) { ro.disconnect(); ro = null; }
+            settle(gd);
+          }, function(){ settle(gd); });
+          return;
+        }
+        // Reflow responsive figures only, and only when the width actually
+        // changed — avoids the ResizeObserver feedback loop (Plots.resize
+        // itself resizes the observed node).
+        if (wantsResponsive && gd.clientWidth > 0 && gd.clientWidth !== lastW){
+          lastW = gd.clientWidth;
+          try { P.Plots.resize(gd); } catch(e){}
+        }
+      }
+      try {
+        ro = new ResizeObserver(function(){
+          if (window.requestAnimationFrame) window.requestAnimationFrame(pump);
+          else pump();
+        });
+        ro.observe(gd);
+      } catch(e){ pump(); }                                  // no ResizeObserver: plot now
+      pump();
+      return done;
+    };
+  }
+  if (!window.__silicoPlotlyHook) {
+    window.__silicoPlotlyHook = true;
+    if (window.Plotly) {
+      installRenderGuard(window.Plotly);
+    } else {
+      // CDN fallback: pages generated by plotly.py 6.9.0 reference
+      // cdn.plot.ly/plotly-3.7.0.min.js, which the CDN does not serve
+      // (403) — the include fails and every inline Plotly.newPlot call
+      // would throw. Until the real library assigns window.Plotly, the
+      // getter returns a stub that queues newPlot calls. A stub call can
+      // only mean the page's own include failed (inline calls run after
+      // their blocking <script> settles), so the first one loads a
+      // known-good bundle; when it assigns window.Plotly the setter
+      // replays the queue through the guarded newPlot. Chartless pages
+      // never touch the stub and load nothing extra.
+      try {
+        var _silicoPlotly;
+        var _plotlyQueue = [], _plotlyRescued = false;
+        function rescuePlotly(){
+          if (_plotlyRescued) return;
+          _plotlyRescued = true;
+          var s = document.createElement('script');
+          s.src = 'https://cdn.plot.ly/plotly-3.6.0.min.js';
+          (document.head || document.documentElement).appendChild(s);
+        }
+        var _plotlyStub = {
+          newPlot: function(){
+            var entry = { args: arguments, res: null, rej: null };
+            entry.promise = new Promise(function(res, rej){ entry.res = res; entry.rej = rej; });
+            // Keep a rejected replay from surfacing as an unhandled
+            // rejection when the page ignored newPlot's return value.
+            entry.promise.catch(function(){});
+            _plotlyQueue.push(entry);
+            rescuePlotly();
+            return entry.promise;
+          },
+        };
+        Object.defineProperty(window, 'Plotly', {
+          configurable: true,
+          enumerable: true,
+          get: function(){ return _silicoPlotly || _plotlyStub; },
+          set: function(v){
+            _silicoPlotly = v;
+            installRenderGuard(v);
+            var pending = _plotlyQueue.splice(0);
+            for (var i = 0; i < pending.length; i++) (function(entry){
+              try { Promise.resolve(v.newPlot.apply(v, entry.args)).then(entry.res, entry.rej); }
+              catch(e){ entry.rej(e); }
+            })(pending[i]);
+          },
+        });
+      } catch(e){ /* defineProperty blocked: charts still render, just un-guarded */ }
+    }
+  }
+
+  // Chart `paper_bgcolor` / `plot_bgcolor`: transparent so the chart sits
+  // flat in the page column with no cream panel or frame around it (cards
+  // are reserved for scalar metric grids). Keep in lock-step with the
+  // Python apply_theme constants in /figures.
+  var card='rgba(0,0,0,0)', text='#1D272A', grid='#B4B4B4', muted='#7B7B7B';
+
+  /* Editorial 8 colorway — keep in sync with the CSS custom properties
+     above and with docs/styling.md. Each color is sourced from goodfire.ai's
+     stylesheet: ember (brand), slate (cool counterpart), forest (success),
+     wheat (earthy mid), rose (dusty accent), pale-slate (secondary cool),
+     olive (deep mid), graphite (anchor dark). */
+  var COLORWAY = [
+    '#C4650D', '#4E728A', '#2E6E4E', '#988453',
+    '#B9605B', '#7495AB', '#84713A', '#31362E'
+  ];
+
+  /* Sequential colorscale — tinted tan through honey to ember. Suitable
+     for heatmaps, density plots, and any unsigned magnitude.
+
+     Caps at ember (#C4650D), not deep brown — heatmap cell text rendered
+     in body color (#1D272A) must stay legible on every cell, and a
+     darker high end pushes the darkest cells into illegible territory.
+
+     The 0% anchor is `#F0E2D0` (soft tan), NOT the plot background
+     `#F6F5F0`. A pure-background 0% makes zero-value cells invisible:
+     they blend into the cream chart paper and a reader can't tell a
+     missing cell from a zero cell. Starting at a visibly-tinted tone
+     (~15% contrast over background) gives every cell a readable value.
+     Keep in lock-step with the Python SEQUENTIAL constant in
+     `/figures` skill's apply_theme. */
+  var SEQUENTIAL = [
+    [0.00, '#F0E2D0'],
+    [0.35, '#EDD8C5'],
+    [0.65, '#DE9D50'],
+    [1.00, '#C4650D']
+  ];
+
+  /* Diverging colorscale — slate (cool, negative) through cream (zero) to
+     ember (warm, positive). Suitable for correlations, log ratios, signed
+     deltas. */
+  var DIVERGING = [
+    [0.00, '#4E728A'],
+    [0.25, '#8FBCD8'],
+    [0.50, '#F6F5F0'],
+    [0.75, '#DE9D50'],
+    [1.00, '#C4650D']
+  ];
+
+  /* Plotly's default D3 colorway — when a worker hasn't pinned colors, every
+     trace inherits one of these. Detecting them lets us retroactively
+     restyle on-load without clobbering worker-chosen colors. Lowercase
+     because Plotly may return either case. */
+  var PLOTLY_DEFAULT = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+  ];
+  var PLOTLY_DEFAULT_SET = {};
+  PLOTLY_DEFAULT.forEach(function(c){ PLOTLY_DEFAULT_SET[c.toLowerCase()] = true; });
+
+  function isPlotlyDefaultColor(c){
+    if (typeof c !== 'string') return false;
+    return !!PLOTLY_DEFAULT_SET[c.toLowerCase()];
+  }
+
+  /* Walk traces and restyle any whose color matches a Plotly default with
+     the matching brand color (by trace index modulo). Non-destructive:
+     worker-chosen colors stay. Heatmaps/contours get the brand sequential
+     scale if they're still on Plotly's default. */
+  function recolorTraces(el){
+    if (!window.Plotly || !el._fullData) return;
+    el._fullData.forEach(function(trace, i){
+      var update = null;
+      var lineCol = trace.line && trace.line.color;
+      var markerCol = trace.marker && trace.marker.color;
+      var brandCol = COLORWAY[i % COLORWAY.length];
+
+      if (isPlotlyDefaultColor(lineCol) || isPlotlyDefaultColor(markerCol)) {
+        update = update || {};
+        if (isPlotlyDefaultColor(lineCol))   update['line.color']   = brandCol;
+        if (isPlotlyDefaultColor(markerCol)) update['marker.color'] = brandCol;
+      }
+      /* Heatmaps/contours: Plotly's auto-default for these is RdBu / Viridis.
+         We can't reliably detect "user didn't set this" without inspecting
+         _fullData vs data, but `colorscale` on data is undefined if the user
+         didn't specify. Restyle in that case — but also skip when the
+         trace opts into a layout coloraxis (`coloraxis='coloraxis'|'coloraxis2'`
+         from e.g. `px.imshow(corr, color_continuous_scale=DIVERGING)`), since
+         the layout-level guard at fixPlotly() handles that path and writing
+         trace.colorscale here would leave the trace carrying both signals
+         (Plotly.js precedence picks coloraxis, but the state contradicts
+         the worker's intent and would silently flip if a worker later
+         dropped coloraxis). Mirrors the round-22 Python guard in
+         figures/SKILL.md: "directly on the trace OR via a coloraxis
+         reference — either signal means 'worker knows what they want'." */
+      if ((trace.type === 'heatmap' || trace.type === 'contour' ||
+           trace.type === 'histogram2d' || trace.type === 'histogram2dcontour') &&
+          (!el.data || !el.data[i] ||
+           (!el.data[i].colorscale && !el.data[i].coloraxis))) {
+        update = update || {};
+        update['colorscale'] = [SEQUENTIAL];
+      }
+      if (update) {
+        try { window.Plotly.restyle(el, update, [i]); }
+        catch(e){ /* sandbox / pre-plot */ }
+      }
+    });
+  }
+
+  function fixPlotly(){
+    document.querySelectorAll('.js-plotly-plot').forEach(function(el){
+      if(window.Plotly && el._fullLayout){
+        try{
+          var update = {
+            'paper_bgcolor': card, 'plot_bgcolor': card,
+            'font.color': text,
+            /* Plot text is data, not the editorial voice — sans, not serif.
+               Re-applied here so already-baked figures recover at view time. */
+            'font.family': "'Suisse Intl', -apple-system, BlinkMacSystemFont, Arial, sans-serif",
+            'xaxis.gridcolor': grid, 'yaxis.gridcolor': grid,
+            /* Zeroline shares the gridline color and width — the origin is
+               already implied by the data and an emphasized line just adds
+               visual noise. Matching the gridline makes the chart frame
+               read as one neutral lattice. */
+            'xaxis.zerolinecolor': grid, 'yaxis.zerolinecolor': grid,
+            'xaxis.zerolinewidth': 1, 'yaxis.zerolinewidth': 1,
+            /* `nticks=8` is applied per-axis below — only to continuous
+               axes, never categorical ones (see the gate before relayout). */
+            /* `automargin=True` lets Plotly grow margins to accommodate
+               axis titles + rotated tick labels without clipping. */
+            'xaxis.automargin': true, 'yaxis.automargin': true,
+            /* Strip the chart's Plotly-level title — the page renders
+               <h3 class="figure-title"> above the chart, so any inline
+               title is duplicate chrome. Workers who set a title in
+               their figure code (or use px.* constructors that auto-
+               populate one) have it cleared here too. */
+            'title.text': '',
+            /* Hide oversized bar/annotation text rather than letting
+               it overflow the bar or rotate vertically (illegible). */
+            'uniformtext.minsize': 10,
+            'uniformtext.mode': 'hide',
+            /* Horizontal modebar overlaying the top-right of the plot.
+               Vertical orientation in a reserved right-margin column was
+               prone to clipping when iframes applied `overflow: hidden`,
+               so the buttons disappeared entirely. Horizontal on top of
+               the plot is always inside the container. */
+            'modebar.orientation': 'h',
+            'modebar.bgcolor': 'rgba(0,0,0,0)',
+            /* Use body text color (dark navy) rather than muted grey —
+               grey on cream paper is too low-contrast for readers to
+               notice the controls are there. */
+            'modebar.color': text,
+            'modebar.activecolor': '#C4650D',
+            'legend.bgcolor': card, 'legend.font.color': text,
+            /* Pin legend title above the entries. Plotly's default for
+               horizontal legends puts the title to the left of the first
+               entry, where a non-empty title bleeds into the items. */
+            'legend.title.side': 'top',
+            /* RETROFIT the legend to container-anchored on every report, old
+               and new. New figures already bake this in apply_theme; legacy
+               figures baked a fixed paper offset (y=-0.32) + a 160px entrywidth
+               that collides with the x-axis title on rotated-tick charts.
+               Re-anchoring to the container's bottom edge makes the legend
+               reserve its own band instead (the structural fix), and clearing
+               the entry width lets entries size to their text. Deterministic
+               one-shot — runs once after the plot via the render guard, not the
+               old timer race. Setting legend.* on a no-legend chart is a no-op.
+               (`null` resets an attribute to its Plotly default.) */
+            'legend.orientation': 'h',
+            'legend.xref': 'container', 'legend.x': 0, 'legend.xanchor': 'left',
+            'legend.yref': 'container', 'legend.y': 0, 'legend.yanchor': 'bottom',
+            'legend.entrywidth': null, 'legend.entrywidthmode': null,
+            'legend.tracegroupgap': null,
+            'hoverlabel.bgcolor': '#FFFFFF', 'hoverlabel.font.color': text,
+            'hoverlabel.bordercolor': grid,
+            /* Apply brand palette as the default colorway. New traces and
+               anything not explicitly colored will pick from this. */
+            'colorway': COLORWAY,
+            /* Layout-level default colorscales — Plotly uses these for any
+               trace that opts into `coloraxis` without pinning its own
+               colorscale, and for the default of new continuous traces.
+               These are template defaults, not active overrides, so they
+               cannot clobber a worker-pinned `coloraxis.colorscale`. */
+            'colorscale.sequential': SEQUENTIAL,
+            'colorscale.sequentialminus': SEQUENTIAL,
+            'colorscale.diverging': DIVERGING,
+            'coloraxis.colorbar.outlinecolor': grid,
+            'coloraxis.colorbar.tickcolor': muted,
+            'coloraxis.colorbar.tickfont.color': text,
+            /* Place the colorbar title above the gradient rather than
+               rotated 90° on the right edge. Plotly's default `side: 'right'`
+               stacks the title against the same axis as the tick labels and
+               long titles collide with the numbers. Top-side keeps title
+               and ticks in separate horizontal lanes. */
+            'coloraxis.colorbar.title.side': 'top',
+            /* Pin colorbar geometry; combined with the right-margin reserved
+               below, the bar + tick labels + title fit instead of clipping past
+               the SVG's right edge — the long-standing "figure cut off on the
+               right." A colorbar sits in the right margin (paper x≈1.02) and
+               `automargin` does not grow the margin for it. */
+            'coloraxis.colorbar.thickness': 14,
+            'coloraxis.colorbar.len': 1.0,
+            'coloraxis.colorbar.x': 1.0,
+            'coloraxis.colorbar.xanchor': 'left',
+            'coloraxis.colorbar.xpad': 8,
+            'coloraxis.colorbar.outlinewidth': 0
+          };
+          /* Mirror the round-21 Python apply_theme gate: only paint
+             `coloraxis.colorscale=SEQUENTIAL` when the worker hasn't
+             pinned a colorscale themselves. Check `el.layout` (the
+             explicit user-set values, not `_fullLayout` which carries
+             Plotly's resolved defaults), matching the trace-level
+             pattern at line 858 above. Without this gate every
+             `px.imshow(corr, color_continuous_scale=DIVERGING)` chart
+             has its DIVERGING clobbered at view time, collapsing
+             sign-in-hue semantics for correlation matrices and
+             signed-delta heatmaps. */
+          var workerPinnedColoraxis =
+            el.layout && el.layout.coloraxis && el.layout.coloraxis.colorscale;
+          if (!workerPinnedColoraxis) {
+            update['coloraxis.colorscale'] = SEQUENTIAL;
+          }
+          /* Reserve right-margin for the colorbar (mirrors Python apply_theme
+             margin_r=92) so it doesn't clip. Gated on a colorbar actually being
+             present — coloraxis, or a heatmap/contour trace — so plain line/bar
+             charts keep their tight margin. Never shrink a larger worker margin. */
+          var hasColorbar = !!(el.layout && el.layout.coloraxis) ||
+            (el._fullData || []).some(function(t){ return t && (t.type === 'heatmap' || t.type === 'heatmapgl' || t.type === 'contour'); });
+          if (hasColorbar) {
+            var curR = (el.layout && el.layout.margin && el.layout.margin.r) || 0;
+            update['margin.r'] = Math.max(92, curR);
+          }
+          /* Tick density is left to Plotly. With figures responsive at their
+             real render width, Plotly fits the tick count to the available
+             space (and never subsamples a categorical axis). Re-pinning
+             nticks=8 here would clobber that on new figures. */
+          window.Plotly.relayout(el, update);
+        }catch(e){ console.warn('silico theme: Plotly relayout failed', e); }
+        /* Suppress inline labels on bar / pie traces — they either
+           rotate vertically (illegible) or compete visually with the
+           axis ticks. Values still come from hover tooltips and from
+           the Description block. Idempotent: Plotly accepts the same
+           restyle target repeatedly. */
+        try {
+          /* Mirror the Python apply_theme split (round 19): textposition
+             applies to both bar and pie, but insidetextorientation is
+             ONLY valid on pie / funnelarea / sunburst / icicle / treemap.
+             Plotly.js logs a warning rather than throwing for unknown
+             attributes (unlike Python plotly which raises), but emitting
+             warning noise on every chart load is sloppy when the fix
+             matches the Python side exactly. */
+          var nTraces = el._fullData ? el._fullData.length : 0;
+          for (var i = 0; i < nTraces; i++) {
+            var t = el._fullData[i];
+            if (!t) continue;
+            if (t.type === 'bar' || t.type === 'pie') {
+              try {
+                window.Plotly.restyle(el, { 'textposition': 'none' }, [i]);
+              } catch(_) { /* per-trace failure */ }
+            }
+            if (t.type === 'pie') {
+              try {
+                window.Plotly.restyle(el, { 'insidetextorientation': 'horizontal' }, [i]);
+              } catch(_) { /* per-trace failure */ }
+            }
+          }
+        } catch(e) { /* sandbox */ }
+        /* Tables: tighten the frame and drop the toImage button at
+           view time, mirroring the Python apply_theme table override.
+           Reports baked before that override shipped carry the wide
+           canonical margins (l=96 for axis titles, b=100/110 for the
+           below-plot legend) — neither applies to tables, and the
+           ~170px of wasted budget pushes the figure past the iframe
+           cap where Plotly clips rows. Re-applying tight margins
+           here recovers those reports at view time. Idempotent. */
+        try {
+          var hasTable = (el._fullData || []).some(function(t){
+            return t && t.type === 'table';
+          });
+          if (hasTable) {
+            window.Plotly.relayout(el, {
+              'margin.t': 40, 'margin.r': 24, 'margin.b': 24, 'margin.l': 24,
+              'modebar.remove': ['lasso2d', 'select2d', 'autoScale2d', 'toImage'],
+            });
+          }
+        } catch(e) { /* per-table failure */ }
+        /* Heatmaps / contours: lock cells to square aspect ratio at
+           view time, mirroring the Python apply_theme heatmap fix.
+           Without scaleanchor, Plotly stretches cells to the full
+           figure width × height, which renders square matrices as
+           wide-short rectangles in the 900×400 iframe. Re-applying
+           scaleanchor here recovers reports baked before that fix
+           shipped. We deliberately do NOT grow the figure height
+           here (the Python side does that at publish time using
+           matrix dimensions read from z); the runtime fix is
+           limited to the safe ``scaleanchor`` relayout. */
+        try {
+          var hasHeatmap = (el._fullData || []).some(function(t){
+            return t && (t.type === 'heatmap' || t.type === 'heatmapgl' || t.type === 'contour');
+          });
+          if (hasHeatmap) {
+            /* Only set scaleanchor if the worker hasn't already pinned
+               one — check ``el.layout`` (the explicit user-set values)
+               rather than ``_fullLayout`` which carries Plotly's
+               resolved defaults. Same pattern as the coloraxis guard
+               below. */
+            var workerPinnedScale =
+              el.layout && el.layout.yaxis && el.layout.yaxis.scaleanchor;
+            if (!workerPinnedScale) {
+              window.Plotly.relayout(el, {
+                'yaxis.scaleanchor': 'x',
+                'yaxis.scaleratio': 1,
+              });
+            }
+            /* Trace-level colorbar (heatmaps that pin `colorscale` directly
+               rather than via `coloraxis`) gets the same title-on-top
+               treatment as the layout-level coloraxis above. We iterate
+               `_fullData` because it carries Plotly's resolved trace types,
+               but the `i` we pass to `restyle` is the same index the
+               worker-supplied `data` array uses — Plotly keeps the two
+               arrays index-aligned, so a restyle at index `i` targets the
+               same trace whichever array the reader inspects.
+               `heatmapgl` is included for old reports — the figures skill
+               defaults 2D traces to SVG now, but reports baked before that
+               contract landed may still carry the `*gl` variant. */
+            (el._fullData || []).forEach(function(t, i){
+              if (!t) return;
+              if (t.type !== 'heatmap' && t.type !== 'heatmapgl' && t.type !== 'contour') return;
+              if (t.coloraxis) return;
+              try {
+                window.Plotly.restyle(el, { 'colorbar.title.side': 'top', 'colorbar.thickness': 14, 'colorbar.len': 1.0, 'colorbar.x': 1.0, 'colorbar.xanchor': 'left', 'colorbar.xpad': 8, 'colorbar.outlinewidth': 0 }, [i]);
+              } catch(_) { /* per-trace failure */ }
+            });
+          }
+        } catch(e) { /* per-heatmap failure */ }
+        /* Log-axis annotation safety net: when an axis has type='log',
+           append " (log)" to its title and turn on minor decade ticks.
+           Plotly's log ticks at powers of 10 are visually subtle and
+           readers miss the scale — making it explicit on the axis itself
+           prevents misreading a 2x change as a 100x change. Mirrors the
+           Python-side treatment in /figures apply_theme so charts that
+           bypassed apply_theme still get the cue. Idempotent: we skip
+           if "(log" is already in the title. */
+        try {
+          var fl = el._fullLayout || {};
+          var logUpdates = {};
+          Object.keys(fl).forEach(function(key) {
+            if (!/^[xy]axis\d*$/.test(key)) return;
+            var ax = fl[key];
+            if (!ax || ax.type !== 'log') return;
+            var titleText = (ax.title && ax.title.text) ? ax.title.text : '';
+            if (!/\(log/i.test(titleText)) {
+              logUpdates[key + '.title.text'] = titleText
+                ? titleText + ' (log)'
+                : '(log scale)';
+            }
+            logUpdates[key + '.minor.ticks'] = 'outside';
+            logUpdates[key + '.minor.ticklen'] = 3;
+            logUpdates[key + '.minor.tickcolor'] = grid;
+            logUpdates[key + '.minor.showgrid'] = false;
+          });
+          if (Object.keys(logUpdates).length) {
+            window.Plotly.relayout(el, logUpdates);
+          }
+        } catch(e) { /* sandbox / pre-plot */ }
+        recolorTraces(el);
+      }
+    });
+    document.querySelectorAll('.js-plotly-plot rect.bg').forEach(function(r){
+      r.setAttribute('fill', card);
+    });
+  }
+  // Force any dark backgrounds to the light theme color (luminance-based)
+  var bg='#FFFFFF';
+  var bgScanSelector=[
+    'body', 'main', '.container',
+    'section', 'article', 'header', 'footer', 'nav', 'aside',
+    'details', 'summary', 'blockquote',
+    'table', 'figure', 'figcaption',
+    '[data-theme]', '[data-background]',
+    '[style*="background"]', '[class*="bg-"]',
+    '[class*="card"]', '[class*="panel"]', '[class*="box"]',
+    '[class*="callout"]', '[class*="summary"]', '[class*="highlight"]',
+    '[class*="finding"]', '[class*="warning"]', '[class*="note"]',
+    '[class*="metric"]', '[class*="stat"]', '[class*="result"]',
+    '[class*="badge"]', '[class*="chip"]'
+  ].join(', ');
+  function shouldSkipBackgroundFix(el){
+    return el.closest('.js-plotly-plot') || el.closest('pre') || el.closest('code') ||
+      el.tagName==='CANVAS' || el.tagName==='SVG' || el.closest('svg');
+  }
+  function maybeFixDarkBackground(el){
+    if(shouldSkipBackgroundFix(el)) return;
+    var cs=getComputedStyle(el).backgroundColor;
+    if(!cs || cs==='transparent' || cs==='rgba(0, 0, 0, 0)') return;
+    var m=cs.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if(!m) return;
+    var lum=(0.299*(+m[1]) + 0.587*(+m[2]) + 0.114*(+m[3])) / 255;
+    if(lum < 0.3) el.style.backgroundColor=bg;
+  }
+  function fixDarkBackgrounds(root){
+    var scanRoot=root && root.nodeType===1 ? root : document.body;
+    if(scanRoot.matches && scanRoot.matches(bgScanSelector)) maybeFixDarkBackground(scanRoot);
+    scanRoot.querySelectorAll(bgScanSelector).forEach(maybeFixDarkBackground);
+  }
+  var pendingRoots=new Set();
+  function queueBackgroundFix(root){
+    if(root && root.nodeType===1) pendingRoots.add(root);
+  }
+  function flushThemeFixes(){
+    var roots=Array.from(pendingRoots);
+    fixPlotly();
+    if(!roots.length) roots=[document.body];
+    pendingRoots=new Set();
+    roots.forEach(function(root){
+      fixDarkBackgrounds(root);
+    });
+  }
+  if(document.readyState==='complete') flushThemeFixes();
+  else window.addEventListener('load', flushThemeFixes);
+  // Debounced MutationObserver — auto-disconnects after 10s.
+  // The theme is embedded at the end of <head>, so this synchronous
+  // script runs while `document.body` is still null. Observing null
+  // throws an uncaught TypeError that aborts the rest of the IIFE
+  // (including the print handlers below) — defer until DOMContentLoaded
+  // when body isn't already present.
+  var timer;
+  var obs=new MutationObserver(function(mutations){
+    clearTimeout(timer);
+    mutations.forEach(function(mutation){
+      if(mutation.type==='attributes') queueBackgroundFix(mutation.target);
+      if(mutation.type==='childList'){
+        queueBackgroundFix(mutation.target);
+        Array.prototype.forEach.call(mutation.addedNodes, queueBackgroundFix);
+      }
+    });
+    timer=setTimeout(flushThemeFixes, 200);
+  });
+  function startObserving(){
+    obs.observe(document.body, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:['class', 'style']
+    });
+    setTimeout(function(){ obs.disconnect(); }, 10000);
+  }
+  if (document.body) startObserving();
+  else document.addEventListener('DOMContentLoaded', startObserving);
+  [500,1500,3000].forEach(function(d){
+    setTimeout(fixPlotly, d);
+  });
+
+  /* Print-to-PDF chart reflow. Worker reports emit charts with
+     `config.responsive=false` (in the worker `/figures` SKILL) to dodge
+     the first-paint width-0 collapse bug in the Lab iframe. That config
+     also skips Plotly's window-resize listener, so the chart's SVG
+     width stays pinned to the value measured at first paint — when the
+     print medium kicks in the chart overflows the @page gutter and
+     gets clipped by `.figure { overflow-x: hidden }` in the print CSS.
+     PRINT_CHART_WIDTH = 657px. Sized to fit A4 @ 0.5in margins exactly
+     (the narrower of the two common papers): 8.27in − 1in margins =
+     7.27in = ~697px page content, minus figure chrome (18px*2 padding +
+     2px*2 border = 40px) = 657px chart area. US Letter @ 0.5in margins
+     has ~680px of figure-content space, so the 657 chart sits with
+     ~23px of headroom on Letter; the `.js-plotly-plot { margin: auto }`
+     rule in the print CSS centers the chart so the headroom splits
+     evenly across both sides rather than left-aligning with a 23px
+     right gap. Going wider (to fill Letter exactly) would clip A4 on
+     the right, which is worse than a small symmetric margin. */
+  var PRINT_CHART_WIDTH = 657;
+
+  /* Plotly emits the chart wrapper with `style="width: 100%"`, which
+     makes it fluid against its parent. Even when we call
+     `Plotly.relayout(el, {width: N, autosize: false})`, Plotly re-
+     measures the container during the relayout — the container reports
+     its current 100%-of-parent width (e.g. 1616px on a wide monitor),
+     which silently clobbers our explicit N back to 1616. Pinning
+     `el.style.width` BEFORE the relayout makes the container
+     measurement return our target value, so the relayout sticks. */
+  function resizeChartTo(el, width, height){
+    if (!window.Plotly || !el._fullLayout || !width || !height) return false;
+    try {
+      el.style.width = width + 'px';
+      el.style.height = height + 'px';
+      window.Plotly.relayout(el, {
+        width: width,
+        height: height,
+        autosize: false,
+      });
+      return true;
+    } catch (e) {
+      console.warn('silico theme: chart resize failed', e);
+      return false;
+    }
+  }
+
+  /* Restore a chart to its initial fluid `width: 100%` styling and let
+     Plotly autosize-measure the container again. Used by `afterprint`
+     so the screen-side chart picks back up the full container width
+     after the print snapshot. Height is left untouched because the
+     worker-pinned per-figure height is the correct screen value too. */
+  function restoreChartFluid(el){
+    if (!window.Plotly || !el._fullLayout) return false;
+    try {
+      el.style.width = '100%';
+      window.Plotly.relayout(el, {
+        width: null,
+        autosize: true,
+      });
+      return true;
+    } catch (e) {
+      console.warn('silico theme: chart restore failed', e);
+      return false;
+    }
+  }
+
+  /* Both `beforeprint` and the `matchMedia('print')` change listener
+     trigger these — matchMedia is a backup for browsers that don't
+     reliably fire `beforeprint`. The `_silicoPrintPinned` flag makes
+     the second call a no-op so Plotly only redraws once per chart
+     per print cycle. */
+  function pinChartsForPrint(){
+    document.querySelectorAll('.js-plotly-plot').forEach(function(el){
+      if (!el._fullLayout || el._silicoPrintPinned) return;
+      if (resizeChartTo(el, PRINT_CHART_WIDTH, el._fullLayout.height)) {
+        el._silicoPrintPinned = true;
+      }
+    });
+  }
+  function unpinChartsFromPrint(){
+    document.querySelectorAll('.js-plotly-plot').forEach(function(el){
+      if (!el._fullLayout || !el._silicoPrintPinned) return;
+      if (restoreChartFluid(el)) {
+        delete el._silicoPrintPinned;
+      }
+    });
+  }
+  window.addEventListener('beforeprint', pinChartsForPrint);
+  window.addEventListener('afterprint', unpinChartsFromPrint);
+  /* afterprint doesn't always fire reliably in Chrome — particularly
+     when the user cancels the print dialog or uses "Save as PDF" with
+     certain destinations. matchMedia('print') transitions are more
+     reliable. Wire it as a belt-and-suspenders restore path. */
+  if (window.matchMedia) {
+    var printMql = window.matchMedia('print');
+    var onPrintChange = function(e) {
+      if (e.matches) pinChartsForPrint();
+      else unpinChartsFromPrint();
+    };
+    if (printMql.addEventListener) printMql.addEventListener('change', onPrintChange);
+    else if (printMql.addListener) printMql.addListener(onPrintChange);
+  }
+
+  /* ---- Provenance: "Made with Silico" byline + colophon ----------------
+     Standalone documents only — the print tab, a downloaded HTML, a direct
+     open. Embedded serves skip it: the Lab chrome already says where the
+     report lives, and export paths that print an embedded frame provide
+     their own colophon in the outer document. */
+  /* Goodfire flame mark, 56px PNG data URI (from web/public/goodfire-icon.png).
+     KEEP IN SYNC with web/src/assets/goodfireMark.ts (the React export surfaces).
+     The Silico coil logo is deprecated -- Goodfire brand mark only. */
+  var GOODFIRE_MARK =
+    '<img src="data:image/png;base64,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" alt="">';
+    '</svg>';
+  function silicoMadeWith(text){
+    var a = document.createElement('a');
+    a.className = 'silico-made-with';
+    a.href = 'https://www.goodfire.ai/silico';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = GOODFIRE_MARK;
+    a.appendChild(document.createTextNode(text));
+    return a;
+  }
+  function silicoProvenance(){
+    if (document.documentElement.classList.contains('embedded')) return;
+    if (!document.body || document.getElementById('__silico-colophon')) return;
+    // Machine-readable provenance for saved copies; a page that names its
+    // own generator keeps it.
+    if (document.head && !document.querySelector('meta[name="generator"]')) {
+      var meta = document.createElement('meta');
+      meta.name = 'generator';
+      meta.content = 'Silico \u2014 goodfire.ai/silico';
+      document.head.appendChild(meta);
+    }
+    var h = document.querySelector('h1');
+    if (h && h.parentNode) {
+      var byline = document.createElement('div');
+      byline.className = 'silico-byline';
+      byline.appendChild(silicoMadeWith('Made with Silico'));
+      h.parentNode.insertBefore(byline, h.nextSibling);
+    }
+    var colophon = document.createElement('div');
+    colophon.className = 'silico-colophon';
+    colophon.id = '__silico-colophon';
+    // \u00B7 = · — escaped so a saved copy renders right even when opened
+    // without a charset declaration (e.g. file:// with no <meta charset>).
+    colophon.appendChild(silicoMadeWith('Made with Silico \u00B7 goodfire.ai/silico'));
+    document.body.appendChild(colophon);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', silicoProvenance);
+  else silicoProvenance();
+
+})();
+</script>
+
+</head>
+<body>
+  <header class="report-header">
+    <h1>No positive transfer to unfamiliar tool use from skill-curated trajectories: with-skill 61.2% vs no-skill 62.1% on BFCL v4 (single-seed Qwen3-8B LoRA pilot)</h1>
+  </header>
+
+  <section class="section">
+    <h2>Question</h2>
+    <p>SkillsBench trajectories can be collected with or without curated skill files in the agent's environment. We asked whether fine-tuning Qwen3-8B on successful trajectories collected <em>with</em> skills transfers better to unfamiliar tool use than fine-tuning on matched successful trajectories collected <em>without</em> skills. The pilot tested four things:</p>
+    <ol type="a">
+      <li><strong>Transfer.</strong> Does the with-skill arm beat the no-skill arm on the expanded BFCL v4 function-calling benchmark (2,190 items, tools unseen in training)?</li>
+      <li><strong>Preservation.</strong> Do the trained arms hold base-model capability on IFEval, a fixed 500-item MMLU slice, and a tool-restraint probe?</li>
+      <li><strong>Cleanliness.</strong> Is the training corpus free of eval contamination and residual explicit skill text?</li>
+      <li><strong>Agentic holdout.</strong> Does the difference show up on a predeclared 21-task Toolathlon subset? (This leg returned no data; see the Toolathlon section.)</li>
+    </ol>
+  </section>
+
+  <section class="section" data-sources="experiments/experiment-1/results/bfcl_results.json;experiments/experiment-1/results/final_metrics.json;experiments/experiment-1/src/run_eval_panel.py;experiments/experiment-1/src/analyze_results.py">
+    <h2>Transfer to unfamiliar tool use</h2>
+
+    <div class="key-finding">
+      <ul>
+        <li><strong>No positive short-horizon transfer detected.</strong> On BFCL v4 (2,190 shared items) the with-skill arm scored 61.23% vs no-skill's 62.10%: paired Δ = −0.87pp, 95% CI [−1.92, +0.18]. The interval includes zero.</li>
+        <li><strong>Both trained arms are detectably below base on BFCL.</strong> No-skill − base = −1.19pp [−2.33, −0.05]; with-skill − base = −2.05pp [−3.15, −0.96]. This is a short-horizon function-calling result; long-horizon transfer is unmeasured.</li>
+        <li><strong>Preservation is tied.</strong> IFEval strict 81.33 / 80.96 / 80.96% and MMLU 50.4 / 51.0 / 51.4% (base / no-skill / with-skill) are statistically indistinguishable, and no arm makes unnecessary tool calls on the restraint probe (rate 0 for all three, n = 120 pairs).</li>
+        <li><strong>The null is low-power, not a refutation.</strong> One seed, 238 matched training rows per arm (604,737 supervised tokens, 12.1% of the planned 5M-token cap), and two corpus asymmetries that plausibly bias toward null (see the corpus audit).</li>
+      </ul>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">BFCL v4, base (n=2,190)</div>
+        <div class="stat-value">63.29%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">BFCL v4, trained no skills</div>
+        <div class="stat-value">62.10%</div>
+        <div class="stat-delta down">−1.19pp vs base</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">BFCL v4, trained with skills</div>
+        <div class="stat-value">61.23%</div>
+        <div class="stat-delta down">−0.87pp vs no-skill</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Multi-turn accuracy, all arms (n=800)</div>
+        <div class="stat-value">18.0 / 17.1 / 16.0%</div>
+      </div>
+    </div>
+
+    <section class="figure" data-sources="experiments/experiment-1/figures/bfcl_overall_transfer/plot.py;experiments/experiment-1/build_report.py;experiments/experiment-1/results/bfcl_results.json">
+      <h3 class="figure-title">Figure 1: Overall BFCL v4 accuracy by checkpoint</h3>
+      <div class="plot"><div style="height:280px; width:100%;">                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.6.0.min.js" integrity="sha256-QaOVwtVY0T02VaHrr6pnoHLCwayMJp4O5n4YyaE3rJk=" crossorigin="anonymous"></script>                <div id="bf1d3fd6-5cf6-446f-9da6-064745358c10" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("bf1d3fd6-5cf6-446f-9da6-064745358c10")) {                    Plotly.newPlot(                        "bf1d3fd6-5cf6-446f-9da6-064745358c10",                        [{"error_x":{"array":[1.993890900000006],"arrayminus":[2.0404248299999983],"color":"#31362E","symmetric":false,"thickness":1.6,"type":"data","width":7},"hovertemplate":"\u003cb\u003eBase\u003c\u002fb\u003e\u003cbr\u003e1386\u002f2190 correct\u003cbr\u003eaccuracy %{x:.2f}%\u003cbr\u003e95% Wilson CI [61.25, 65.28]\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#31362E","size":12},"mode":"markers","showlegend":false,"x":[63.28767123],"y":["Base"],"type":"scatter","cliponaxis":true},{"error_x":{"array":[2.008987029999998],"arrayminus":[2.0513632999999976],"color":"#4E728A","symmetric":false,"thickness":1.6,"type":"data","width":7},"hovertemplate":"\u003cb\u003eTrained, no skills\u003c\u002fb\u003e\u003cbr\u003e1360\u002f2190 correct\u003cbr\u003eaccuracy %{x:.2f}%\u003cbr\u003e95% Wilson CI [60.05, 64.11]\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#4E728A","size":12},"mode":"markers","showlegend":false,"x":[62.10045662],"y":["Trained, no skills"],"type":"scatter","cliponaxis":true},{"error_x":{"array":[2.019202260000008],"arrayminus":[2.0585402199999936],"color":"#C4650D","symmetric":false,"thickness":1.6,"type":"data","width":7},"hovertemplate":"\u003cb\u003eTrained, with skills\u003c\u002fb\u003e\u003cbr\u003e1341\u002f2190 correct\u003cbr\u003eaccuracy %{x:.2f}%\u003cbr\u003e95% Wilson CI [59.17, 63.25]\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C4650D","size":12},"mode":"markers","showlegend":false,"x":[61.23287670999999],"y":["Trained, with skills"],"type":"scatter","cliponaxis":true}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"yaxis":{"title":{"text":"Checkpoint","font":{"size":13}},"autorange":"reversed","tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside"},"xaxis":{"title":{"text":"BFCL v4 accuracy (%), 95% Wilson CI","font":{"size":13}},"tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside","autotickangles":[0,30]},"margin":{"t":40,"r":24,"b":24,"l":24,"autoexpand":true},"font":{"color":"#1D272A","family":"'Suisse Intl', -apple-system, BlinkMacSystemFont, Arial, sans-serif","size":13},"legend":{"font":{"color":"#1D272A","size":12},"title":{"side":"top"},"bgcolor":"rgba(0,0,0,0)","orientation":"h","xref":"container","x":0,"xanchor":"left","yref":"container","y":0,"yanchor":"bottom"},"hoverlabel":{"font":{"family":"ui-monospace, Menlo, monospace","size":12,"color":"#1D272A"},"bgcolor":"#FFFFFF","bordercolor":"#B4B4B4"},"modebar":{"orientation":"h","bgcolor":"rgba(0,0,0,0)","color":"#1D272A","activecolor":"#C4650D","remove":["lasso2d","select2d","autoScale2d"]},"uniformtext":{"minsize":10,"mode":"hide"},"height":280,"paper_bgcolor":"rgba(0,0,0,0)","plot_bgcolor":"rgba(0,0,0,0)","title":{},"colorway":["#C4650D","#4E728A","#2E6E4E","#988453","#B9605B","#7495AB","#84713A","#31362E"]},                        {"responsive": true, "displayModeBar": "hover", "displaylogo": false, "toImageButtonOptions": {"format": "png", "filename": "figure", "scale": 2}}                    )                };            </script>        </div></div>
+      <div class="figure-explanation">
+        <p class="figure-description">
+          Accuracy on the expanded BFCL v4 panel (2,190 items: 7 single-turn/irrelevance categories, n = 1,390, plus 4 multi-turn categories, n = 800) for the base model and the two trained arms. Error bars are 95% Wilson intervals; scores are the official BFCL aggregate counts.
+        </p>
+        <p class="figure-findings">
+          The ordering is base &gt; no-skill &gt; with-skill: 63.29% &gt; 62.10% &gt; 61.23%. Task-paired bootstrap—not overlap of the displayed per-arm Wilson intervals—is the inferential test: with-skill minus no-skill is −0.87pp [−1.92, +0.18], while with-skill minus base is −2.05pp [−3.15, −0.96]. Thus no positive matched-control transfer is detected, and both LoRAs are detectably below base on this short-horizon panel.
+        </p>
+      </div>
+    </section>
+
+    <section class="figure" data-sources="experiments/experiment-1/figures/bfcl_categories_three_way/plot.py;experiments/experiment-1/build_report.py;experiments/experiment-1/results/bfcl_results.json">
+      <h3 class="figure-title">Figure 2: BFCL accuracy by category</h3>
+      <div class="plot"><div style="height:560px; width:100%;">                            <div id="f05fe8de-e523-4e04-ae38-3e8de5e64be3" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("f05fe8de-e523-4e04-ae38-3e8de5e64be3")) {                    Plotly.newPlot(                        "f05fe8de-e523-4e04-ae38-3e8de5e64be3",                        [{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eBase: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#31362E","size":14,"symbol":"circle"},"mode":"markers","name":"Base","x":[95.5,65.0,62.0,96.5,92.0,90.0,86.25,23.0,13.5,19.0,16.5],"y":["Simple (Python), n=400","Simple (Java), n=100","Simple (JavaScript), n=50","Multiple functions, n=200","Parallel calls, n=200","Parallel multiple, n=200","Irrelevance detection, n=240","Multi-turn: base, n=200","Multi-turn: long context, n=200","Multi-turn: missing function, n=200","Multi-turn: missing parameter, n=200"],"type":"scatter","cliponaxis":true},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eTrained, no skills: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#4E728A","size":11,"symbol":"diamond"},"mode":"markers","name":"Trained, no skills","x":[94.25,66.0,62.0,92.5,88.0,89.0,87.5,21.5,13.5,19.0,14.499999999999998],"y":["Simple (Python), n=400","Simple (Java), n=100","Simple (JavaScript), n=50","Multiple functions, n=200","Parallel calls, n=200","Parallel multiple, n=200","Irrelevance detection, n=240","Multi-turn: base, n=200","Multi-turn: long context, n=200","Multi-turn: missing function, n=200","Multi-turn: missing parameter, n=200"],"type":"scatter","cliponaxis":true},{"hovertemplate":"\u003cb\u003e%{y}\u003c\u002fb\u003e\u003cbr\u003eTrained, with skills: %{x:.1f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C4650D","size":8,"symbol":"square"},"mode":"markers","name":"Trained, with skills","x":[94.75,63.0,64.0,91.0,89.0,86.0,86.25,21.0,12.5,17.5,13.0],"y":["Simple (Python), n=400","Simple (Java), n=100","Simple (JavaScript), n=50","Multiple functions, n=200","Parallel calls, n=200","Parallel multiple, n=200","Irrelevance detection, n=240","Multi-turn: base, n=200","Multi-turn: long context, n=200","Multi-turn: missing function, n=200","Multi-turn: missing parameter, n=200"],"type":"scatter","cliponaxis":true}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"yaxis":{"title":{"text":"BFCL category","font":{"size":13}},"autorange":"reversed","tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside"},"xaxis":{"title":{"text":"Accuracy (%)","font":{"size":13}},"range":[0,100],"tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside","autotickangles":[0,30]},"margin":{"t":40,"r":24,"b":24,"l":24,"autoexpand":true},"font":{"color":"#1D272A","family":"'Suisse Intl', -apple-system, BlinkMacSystemFont, Arial, sans-serif","size":13},"legend":{"font":{"color":"#1D272A","size":12},"title":{"side":"top"},"bgcolor":"rgba(0,0,0,0)","orientation":"h","xref":"container","x":0,"xanchor":"left","yref":"container","y":0,"yanchor":"bottom"},"hoverlabel":{"font":{"family":"ui-monospace, Menlo, monospace","size":12,"color":"#1D272A"},"bgcolor":"#FFFFFF","bordercolor":"#B4B4B4"},"modebar":{"orientation":"h","bgcolor":"rgba(0,0,0,0)","color":"#1D272A","activecolor":"#C4650D","remove":["lasso2d","select2d","autoScale2d"]},"uniformtext":{"minsize":10,"mode":"hide"},"height":560,"paper_bgcolor":"rgba(0,0,0,0)","plot_bgcolor":"rgba(0,0,0,0)","title":{},"colorway":["#C4650D","#4E728A","#2E6E4E","#988453","#B9605B","#7495AB","#84713A","#31362E"]},                        {"responsive": true, "displayModeBar": "hover", "displaylogo": false, "toImageButtonOptions": {"format": "png", "filename": "figure", "scale": 2}}                    )                };            </script>        </div></div>
+      <div class="figure-explanation">
+        <p class="figure-description">
+          Per-category accuracy for the 11 BFCL v4 categories, one row per category, one marker per checkpoint (base circle, no-skill diamond, with-skill square). Single-turn categories are listed first, then the four multi-turn categories. Category sample sizes range from 50 (JavaScript) to 400 (Python). Marker sizes are staggered so arms that tie on a category remain visible where markers overlap.
+        </p>
+        <p class="figure-findings">
+          The with-skill arm's deficit is not uniform. Against the no-skill control it gains on (a) parallel calls +1.0pp, (b) simple JavaScript +2.0pp, and (c) simple Python +0.5pp, but loses on multiple functions −1.5pp, parallel multiple −3.0pp, simple Java −3.0pp, and all four multi-turn categories (−0.5 to −1.5pp each). Multi-turn is hard for every checkpoint (16.0–18.0% overall, see Figure 1's stat strip), so the small per-category multi-turn sample sizes (n = 200) make individual category deltas noisy. The mixed texture is consistent with seed-level noise rather than a coherent category-specific effect; a multi-seed run would be needed to separate the two.
+        </p>
+      </div>
+    </section>
+
+    <p>Two concrete base-model failures from the official simple-Python score file illustrate what BFCL punishes. Asked for the structure of a human cell, the model called the right function but passed <code>cell_type="human cell"</code> where the scorer accepts only <code>"human"</code>. Asked to average a list of integers, it passed integer arrays where the scorer's schema requires float arrays. These examples are illustrative only: they show the benchmark's exact schema/type strictness, they are base-model errors, and they say nothing about the with-skill vs no-skill difference.</p>
+  </section>
+
+  <section class="section" data-sources="experiments/experiment-1/results/final_metrics.json;experiments/experiment-1/results/full_paired_analysis.json;experiments/experiment-1/results/mmlu_fixed500_results.json;experiments/experiment-1/src/run_eval_panel.py;experiments/experiment-1/src/build_tool_restraint_eval.py">
+    <h2>Capability preservation</h2>
+    <p>Training moved none of the preservation metrics beyond noise. IFEval prompt-strict (n = 541): base 81.33%, no-skill 80.96%, with-skill 80.96%. IFEval prompt-loose: 85.21%, 84.84%, 84.66%. MMLU fixed-500: 50.4%, 51.0%, 51.4%, all tied within the ~2.24pp per-checkpoint standard error. On the tool-restraint probe (n = 120 paired questions) accuracy with no tools offered was 95.83 / 95.00 / 94.17% and with irrelevant tools offered 94.17 / 92.50 / 95.00%; the unnecessary tool-call rate was 0 for all three checkpoints.</p>
+    <p>All four benchmark families were normalized to the shared task IDs and analyzed with a task-paired bootstrap (10,000 replicates, seed 17). Figure 4 shows the primary BFCL transfer interval and key preservation intervals; the full three-arm results are in <code>results/full_paired_analysis.json</code>.</p>
+
+    <section class="figure" data-sources="experiments/experiment-1/build_report.py;experiments/experiment-1/results/final_metrics.json">
+      <h3 class="figure-title">Figure 3: Preservation panel across checkpoints</h3>
+      <div class="plot"><div style="height:420px; width:100%;">                            <div id="370939ae-11b6-49fc-8ce1-326ec13f6fd5" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("370939ae-11b6-49fc-8ce1-326ec13f6fd5")) {                    Plotly.newPlot(                        "370939ae-11b6-49fc-8ce1-326ec13f6fd5",                        [{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eBase: %{y:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#31362E"},"name":"Base","x":["IFEval strict\u003cbr\u003e(n=541)","IFEval loose\u003cbr\u003e(n=541)","MMLU fixed-500\u003cbr\u003e(n=500)","Restraint: no tools\u003cbr\u003e(n=120)","Restraint: irrelevant tools\u003cbr\u003e(n=120)"],"y":[81.33086876,85.21256932,50.4,95.83333333,94.16666667],"type":"bar","textposition":"none","cliponaxis":true},{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eTrained, no skills: %{y:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#4E728A"},"name":"Trained, no skills","x":["IFEval strict\u003cbr\u003e(n=541)","IFEval loose\u003cbr\u003e(n=541)","MMLU fixed-500\u003cbr\u003e(n=500)","Restraint: no tools\u003cbr\u003e(n=120)","Restraint: irrelevant tools\u003cbr\u003e(n=120)"],"y":[80.96118299,84.84288355000001,51.0,95.0,92.5],"type":"bar","textposition":"none","cliponaxis":true},{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eTrained, with skills: %{y:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C4650D"},"name":"Trained, with skills","x":["IFEval strict\u003cbr\u003e(n=541)","IFEval loose\u003cbr\u003e(n=541)","MMLU fixed-500\u003cbr\u003e(n=500)","Restraint: no tools\u003cbr\u003e(n=120)","Restraint: irrelevant tools\u003cbr\u003e(n=120)"],"y":[80.96118299,84.65804067,51.4,94.16666667,95.0],"type":"bar","textposition":"none","cliponaxis":true}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"yaxis":{"title":{"text":"Accuracy (%)","font":{"size":13}},"range":[0,100],"tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside"},"xaxis":{"title":{"text":"Preservation benchmark","font":{"size":13}},"tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside","autotickangles":[0,30]},"margin":{"t":40,"r":24,"b":24,"l":24,"autoexpand":true},"font":{"color":"#1D272A","family":"'Suisse Intl', -apple-system, BlinkMacSystemFont, Arial, sans-serif","size":13},"legend":{"font":{"color":"#1D272A","size":12},"title":{"side":"top"},"bgcolor":"rgba(0,0,0,0)","orientation":"h","xref":"container","x":0,"xanchor":"left","yref":"container","y":0,"yanchor":"bottom"},"hoverlabel":{"font":{"family":"ui-monospace, Menlo, monospace","size":12,"color":"#1D272A"},"bgcolor":"#FFFFFF","bordercolor":"#B4B4B4"},"modebar":{"orientation":"h","bgcolor":"rgba(0,0,0,0)","color":"#1D272A","activecolor":"#C4650D","remove":["lasso2d","select2d","autoScale2d"]},"uniformtext":{"minsize":10,"mode":"hide"},"height":420,"paper_bgcolor":"rgba(0,0,0,0)","plot_bgcolor":"rgba(0,0,0,0)","title":{},"colorway":["#C4650D","#4E728A","#2E6E4E","#988453","#B9605B","#7495AB","#84713A","#31362E"]},                        {"responsive": true, "displayModeBar": "hover", "displaylogo": false, "toImageButtonOptions": {"format": "png", "filename": "figure", "scale": 2}}                    )                };            </script>        </div></div>
+      <div class="figure-explanation">
+        <p class="figure-description">
+          Accuracy on the five preservation measurements: IFEval prompt-strict and prompt-loose (n = 541), the fixed 500-item MMLU slice, and the two tool-restraint conditions (n = 120 pairs; questions answerable without tools, offered either no tools or irrelevant tools). Bars are grouped by benchmark; y-axis spans 0–100%.
+        </p>
+        <p class="figure-findings">
+          No preservation metric separates the three checkpoints. The largest movement anywhere in the panel is 2.5pp (irrelevant-tools restraint, no-skill 92.50% vs with-skill 95.00%), well within binomial noise at n = 120. MMLU trends fractionally upward with training (+0.6 and +1.0pp vs base) but the ~2.24pp standard error swallows it. These are aggregate counts except IFEval/MMLU, whose paired analysis follows in Figure 4.
+        </p>
+      </div>
+    </section>
+
+    <section class="figure" data-sources="experiments/experiment-1/build_report.py;experiments/experiment-1/results/full_paired_analysis.json;experiments/experiment-1/results/full_paired_rows.jsonl">
+      <h3 class="figure-title">Figure 4: Primary paired benchmark deltas</h3>
+      <div class="plot"><div style="height:360px; width:100%;">                            <div id="f04d1387-cde1-400a-b684-83935290b840" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("f04d1387-cde1-400a-b684-83935290b840")) {                    Plotly.newPlot(                        "f04d1387-cde1-400a-b684-83935290b840",                        [{"error_x":{"array":[1.0502283105022832],"arrayminus":[1.0502283105022832],"color":"#C4650D","symmetric":false,"thickness":1.6,"type":"data","width":7},"hovertemplate":"\u003cb\u003eBFCL: with \u2212 no-skill (2,190 pairs)\u003c\u002fb\u003e\u003cbr\u003e\u0394 = -0.87pp\u003cbr\u003e95% CI [-1.92, +0.18]\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C4650D","size":12},"mode":"markers","showlegend":false,"x":[-0.8675799086757991],"y":["BFCL: with \u2212 no-skill (2,190 pairs)"],"type":"scatter","cliponaxis":true},{"error_x":{"array":[1.095890410958904],"arrayminus":[1.0958904109589045],"color":"#31362E","symmetric":false,"thickness":1.6,"type":"data","width":7},"hovertemplate":"\u003cb\u003eBFCL: with \u2212 base (2,190 pairs)\u003c\u002fb\u003e\u003cbr\u003e\u0394 = -2.05pp\u003cbr\u003e95% CI [-3.15, -0.96]\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#31362E","size":12},"mode":"markers","showlegend":false,"x":[-2.054794520547945],"y":["BFCL: with \u2212 base (2,190 pairs)"],"type":"scatter","cliponaxis":true},{"error_x":{"array":[2.4029574861367835],"arrayminus":[2.4029574861367835],"color":"#C4650D","symmetric":false,"thickness":1.6,"type":"data","width":7},"hovertemplate":"\u003cb\u003eIFEval: with \u2212 no-skill (541 pairs)\u003c\u002fb\u003e\u003cbr\u003e\u0394 = +0.00pp\u003cbr\u003e95% CI [-2.40, +2.40]\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C4650D","size":12},"mode":"markers","showlegend":false,"x":[0.0],"y":["IFEval: with \u2212 no-skill (541 pairs)"],"type":"scatter","cliponaxis":true},{"error_x":{"array":[0.8],"arrayminus":[0.8],"color":"#C4650D","symmetric":false,"thickness":1.6,"type":"data","width":7},"hovertemplate":"\u003cb\u003eMMLU: with \u2212 no-skill (500 pairs)\u003c\u002fb\u003e\u003cbr\u003e\u0394 = +0.40pp\u003cbr\u003e95% CI [-0.40, +1.20]\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":"#C4650D","size":12},"mode":"markers","showlegend":false,"x":[0.4],"y":["MMLU: with \u2212 no-skill (500 pairs)"],"type":"scatter","cliponaxis":true}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"shapes":[{"line":{"color":"#B4B4B4","width":1},"type":"line","x0":0,"x1":0,"xref":"x","y0":0,"y1":1,"yref":"y domain"}],"yaxis":{"title":{"text":"Paired comparison","font":{"size":13}},"autorange":"reversed","tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside"},"xaxis":{"title":{"text":"Paired accuracy delta (percentage points)","font":{"size":13}},"tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside","autotickangles":[0,30]},"margin":{"t":40,"r":24,"b":24,"l":24,"autoexpand":true},"font":{"color":"#1D272A","family":"'Suisse Intl', -apple-system, BlinkMacSystemFont, Arial, sans-serif","size":13},"legend":{"font":{"color":"#1D272A","size":12},"title":{"side":"top"},"bgcolor":"rgba(0,0,0,0)","orientation":"h","xref":"container","x":0,"xanchor":"left","yref":"container","y":0,"yanchor":"bottom"},"hoverlabel":{"font":{"family":"ui-monospace, Menlo, monospace","size":12,"color":"#1D272A"},"bgcolor":"#FFFFFF","bordercolor":"#B4B4B4"},"modebar":{"orientation":"h","bgcolor":"rgba(0,0,0,0)","color":"#1D272A","activecolor":"#C4650D","remove":["lasso2d","select2d","autoScale2d"]},"uniformtext":{"minsize":10,"mode":"hide"},"height":360,"paper_bgcolor":"rgba(0,0,0,0)","plot_bgcolor":"rgba(0,0,0,0)","title":{},"colorway":["#C4650D","#4E728A","#2E6E4E","#988453","#B9605B","#7495AB","#84713A","#31362E"]},                        {"responsive": true, "displayModeBar": "hover", "displaylogo": false, "toImageButtonOptions": {"format": "png", "filename": "figure", "scale": 2}}                    )                };            </script>        </div></div>
+      <div class="figure-explanation">
+        <p class="figure-description">
+          Task-paired deltas for the primary with-skill minus no-skill BFCL comparison, the with-skill minus base BFCL comparison, and with-skill minus no-skill on IFEval and MMLU. Intervals are 95% CIs from 10,000 paired bootstrap replicates (seed 17); the vertical line marks zero.
+        </p>
+        <p class="figure-findings">
+          With-skill minus no-skill BFCL is −0.87pp [−1.92, +0.18], so the primary transfer interval includes zero. With-skill minus base BFCL is −2.05pp [−3.15, −0.96], a detected negative effect relative to base. Preservation remains tied: IFEval is 0.00pp [−2.40, +2.40] and MMLU is +0.40pp [−0.40, +1.20] for with-skill minus no-skill.
+        </p>
+      </div>
+    </section>
+  </section>
+
+  <section class="section" data-sources="experiments/experiment-1/results/corpus_v7_summary.json;experiments/experiment-1/results/skill_exclusion_diagnostic_summary.json;experiments/experiment-1/results/paired_training_metrics.json;experiments/experiment-1/src/build_skillsbench_corpus.py;experiments/experiment-1/src/train_lora.py">
+    <h2>Training corpus and audit</h2>
+    <p>The v7 corpus started from 482 reviewed-successful SkillsBench trials, of which 467 parsed. Fifteen were excluded: 5 with suspected compacted histories (all in the with-skill arm) and 10 with indivisible oversized assistant actions (5 per arm). Exact cross-arm matching then produced 238 training row pairs with 604,737 supervised tokens per arm across 34 task groups, plus 105 validation rows (250,476 tokens per arm) and 80 audit rows (165,166 tokens per arm). That is 12.1% of the planned 5M-token-per-arm cap, which is why the null carries pilot weight only.</p>
+    <p>Skill-text removal was verified two ways: zero residual explicit skill paths and zero task-subtracted 160-character skill chunks survive in the corpus. The guarantee is bounded, though. Arbitrary alignment of the scanning windows only guarantees detection of verbatim quotes of about 239 characters or longer; shorter verbatim quotes and paraphrases of skill content may remain in the with-skill arm's trajectories.</p>
+    <div class="warning-box">
+      Two corpus asymmetries plausibly bias this pilot toward a null. Selected rows contain 55 loss-masked redaction-marker tokens in the no-skill arm vs 583 in the with-skill arm, and the 5 compacted-history exclusions all came from the with-skill arm. Both remove or mask more with-skill content than no-skill content, which could dilute a real skill-derived signal.
+    </div>
+    <p>Training used LoRA rank 16, α = 32, dropout 0.05 (43.65M trainable parameters), one pass over the data, seed 17, identical for both arms. The training-input condition audit passed for both jobs.</p>
+
+    <section class="figure" data-sources="experiments/experiment-1/figures/paired_val_loss/plot.py;experiments/experiment-1/build_report.py;experiments/experiment-1/results/paired_training_metrics.json">
+      <h3 class="figure-title">Figure 5: Validation loss over training, both arms</h3>
+      <div class="plot"><div style="height:380px; width:100%;">                            <div id="03b8b68a-f8fd-40d5-b7d5-22141baeb813" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("03b8b68a-f8fd-40d5-b7d5-22141baeb813")) {                    Plotly.newPlot(                        "03b8b68a-f8fd-40d5-b7d5-22141baeb813",                        [{"hovertemplate":"step %{x}: loss %{y:.4f}\u003cextra\u003eTrained, no skills\u003c\u002fextra\u003e","line":{"color":"#4E728A"},"marker":{"color":"#4E728A","size":8},"mode":"lines+markers","name":"Trained, no skills","x":[7,14,21,28,30],"y":[0.8914,0.7692,0.7557,0.7501,0.7501],"type":"scatter","cliponaxis":true},{"hovertemplate":"step %{x}: loss %{y:.4f}\u003cextra\u003eTrained, with skills\u003c\u002fextra\u003e","line":{"color":"#C4650D"},"marker":{"color":"#C4650D","size":8},"mode":"lines+markers","name":"Trained, with skills","x":[7,14,21,28,30],"y":[0.9189,0.8019,0.7892,0.7851,0.7852],"type":"scatter","cliponaxis":true}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"title":{"text":"Optimizer step","font":{"size":13}},"tickformat":",d","tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside","autotickangles":[0,30]},"yaxis":{"title":{"text":"Validation loss (nats)","font":{"size":13}},"tickfont":{"size":12},"gridcolor":"#B4B4B4","zerolinecolor":"#B4B4B4","zerolinewidth":1,"automargin":true,"ticks":"outside"},"margin":{"t":40,"r":24,"b":24,"l":24,"autoexpand":true},"font":{"color":"#1D272A","family":"'Suisse Intl', -apple-system, BlinkMacSystemFont, Arial, sans-serif","size":13},"legend":{"font":{"color":"#1D272A","size":12},"title":{"side":"top"},"bgcolor":"rgba(0,0,0,0)","orientation":"h","xref":"container","x":0,"xanchor":"left","yref":"container","y":0,"yanchor":"bottom"},"hoverlabel":{"font":{"family":"ui-monospace, Menlo, monospace","size":12,"color":"#1D272A"},"bgcolor":"#FFFFFF","bordercolor":"#B4B4B4"},"modebar":{"orientation":"h","bgcolor":"rgba(0,0,0,0)","color":"#1D272A","activecolor":"#C4650D","remove":["lasso2d","select2d","autoScale2d"]},"uniformtext":{"minsize":10,"mode":"hide"},"height":380,"paper_bgcolor":"rgba(0,0,0,0)","plot_bgcolor":"rgba(0,0,0,0)","title":{},"colorway":["#C4650D","#4E728A","#2E6E4E","#988453","#B9605B","#7495AB","#84713A","#31362E"]},                        {"responsive": true, "displayModeBar": "hover", "displaylogo": false, "toImageButtonOptions": {"format": "png", "filename": "figure", "scale": 2}}                    )                };            </script>        </div></div>
+      <div class="figure-explanation">
+        <p class="figure-description">
+          Validation loss at optimizer steps 7–30 for the two training arms (105 held-out rows and 250,476 supervised tokens per arm; 30 optimizer steps total, seed 17 for both).
+        </p>
+        <p class="figure-findings">
+          Both arms train normally: validation loss falls from 0.891 to 0.750 (no-skill) and 0.919 to 0.785 (with-skill) and flattens by step 28. The with-skill arm's loss is uniformly higher (final difference +0.035), which reflects its corpus, not a training failure; the null on BFCL is therefore not explained by a broken run. Single run per arm, no uncertainty estimate.
+        </p>
+      </div>
+    </section>
+  </section>
+
+  <section class="section" data-sources="experiments/experiment-1/src/audit_overlap.py;experiments/experiment-1/src/build_eval_overlap_manifest.py;experiments/experiment-1/results/final_metrics.json">
+    <h2>Contamination audit</h2>
+    <p>An expanded overlap audit compared the training corpus against all 3,372 eval items (BFCL, IFEval, MMLU, tool restraint). It found zero exact instruction matches, zero exact token 5-gram matches, and zero exact canonical tool-schema matches. The 95th-percentile token 5-gram Jaccard similarity is 0 and the maximum is 0.00585. Eleven eval items share a single tool name with the corpus, the weakest possible form of overlap. The transfer numbers above are not explained by train–eval leakage. Full audit: <code>artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/analysis/overlap_v2/summary.json</code>.</p>
+  </section>
+
+  <section class="section" data-sources="experiments/experiment-1/results/toolathlon_subset_v1.json;experiments/experiment-1/results/toolathlon_model_params_v1.json">
+    <h2>Toolathlon: unavailable, not failed</h2>
+    <div class="callout">
+      The predeclared 21-task Toolathlon subset produced no data. The official evaluation service returned busy on seven clean admission attempts; no submission was accepted, and no preprocessing, model execution, or verification ran. There is consequently no Toolathlon score and no qualitative claim in either direction. The status is unavailable, not a failed benchmark.
+    </div>
+  </section>
+
+  <section class="section" data-sources="experiments/experiment-1/src/experiment_config.yaml;experiments/experiment-1/results/training_submission_manifest.json;experiments/experiment-1/results/lm_eval_fallback_audit.json">
+    <h2>Method</h2>
+    <ul>
+      <li><strong>Model:</strong> Qwen3-8B, LoRA rank 16, α = 32, dropout 0.05 on q/k/v/o/gate/up/down projections (43.65M trainable parameters), one pass, seed 17, training code commit <code>5432d10</code>.</li>
+      <li><strong>Training data:</strong> SkillsBench v7 matched corpus, 238 row pairs / 604,737 supervised tokens per arm, 34 task groups; corpus audit at <code>artifact://…/data/skillsbench_sft/v7/corpus_audit.json</code>, train summaries at <code>artifact://…/training/{no_skill,with_skill}_success/seed17-v1/train_summary.json</code>.</li>
+      <li><strong>Transfer metric:</strong> expanded BFCL v4 official scoring, 2,190 items across 7 single-turn/irrelevance and 4 multi-turn categories; score dirs <code>artifact://…/eval/base_v3/bfcl/score/</code>, <code>…/eval/no_skill_v3/bfcl/score/</code>, <code>…/eval/with_skill_bfcl_recovery_v1/bfcl/score/</code>.</li>
+      <li><strong>Preservation metrics:</strong> IFEval prompt-strict/loose (n = 541) via lm-eval-harness (task files byte-identical to upstream v0.4.9.2, see <code>results/lm_eval_fallback_audit.json</code>); MMLU fixed 500-item slice; tool-restraint probe (n = 120 pairs). IFEval roots <code>artifact://…/eval/{base_v3,no_skill_v3,with_skill_preservation_recovery_v1}/lm_eval/ifeval/</code>; MMLU roots <code>artifact://…/eval/mmlu_{base,no_skill,with_skill}_v1/</code>.</li>
+      <li><strong>Statistics:</strong> Wilson 95% intervals describe each aggregate; the primary comparisons use task-paired bootstrap intervals (10,000 replicates, seed 17) across BFCL, IFEval, MMLU, and both restraint conditions. Category deltas are reported without multiple-comparison correction.</li>
+      <li><strong>Analysis status:</strong> the BFCL panel, preservation panel, corpus audits, and contamination audit were the planned pilot analyses; the per-category breakdown in Figure 2 is exploratory texture, not a pre-registered contrast.</li>
+      <li><strong>Artifact prefix:</strong> all <code>artifact://…</code> refs above expand under <code>artifact://han-solo-757b7c/experiments/exp_01ky0ztpc9eqn9g67e30pjt5k9/</code>.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>What this pilot settles</h2>
+    <ul>
+      <li><strong>Answer: no positive short-horizon transfer detected.</strong> With-skill minus no-skill is −0.87pp on BFCL with paired 95% CI [−1.92, +0.18]. Both LoRAs are detectably below base on BFCL; long-horizon transfer remains unmeasured because Toolathlon was unavailable.</li>
+      <li><strong>The null is low-power.</strong> One seed and 12.1% of the planned token budget; a real effect of a few points in either direction is compatible with these intervals. This is a pilot reading, not a refutation of skill-trajectory transfer.</li>
+      <li><strong>Two biases point toward null.</strong> The 55 vs 583 loss-masked marker-token asymmetry and the five with-skill-only compaction exclusions both remove more with-skill content; residual sub-239-character skill quotes or paraphrases could also blur the arm contrast in the opposite direction. Neither is quantified.</li>
+      <li><strong>Preservation is clean.</strong> Training at this scale cost nothing measurable on IFEval, MMLU, or tool restraint, so a larger-budget rerun does not risk obvious capability damage.</li>
+      <li><strong>What would change the reading:</strong> a multi-seed run at or near the 5M-token cap and a functioning long-horizon agentic holdout. Toolathlon remains unanswered, not negative.</li>
+    </ul>
+  </section>
+</body>
+</html>

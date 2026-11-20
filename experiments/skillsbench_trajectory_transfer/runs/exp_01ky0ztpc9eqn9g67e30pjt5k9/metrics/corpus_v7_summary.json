@@ -1,0 +1,62 @@
+{
+  "reviewed_successful_candidates": 482,
+  "parsed_trials": 467,
+  "excluded_trials": {
+    "history_compaction_suspected": {
+      "no_skill_success": 0,
+      "with_skill_success": 5
+    },
+    "unsegmentable_assistant_unit": {
+      "no_skill_success": 5,
+      "with_skill_success": 5
+    }
+  },
+  "matched_splits": {
+    "train": {
+      "row_pairs": 238,
+      "supervised_tokens_per_condition": 604737,
+      "task_groups": 34,
+      "budget_masked_tokens": {
+        "no_skill_success": 87129,
+        "with_skill_success": 81567
+      }
+    },
+    "validation": {
+      "row_pairs": 105,
+      "supervised_tokens_per_condition": 250476,
+      "task_groups": 10
+    },
+    "audit": {
+      "row_pairs": 80,
+      "supervised_tokens_per_condition": 165166,
+      "task_groups": 10
+    }
+  },
+  "planned_train_token_cap_per_condition": 5000000,
+  "train_cap_utilization_fraction": 0.1209474,
+  "redaction_placeholder_tokens_masked": {
+    "before_matching": {
+      "no_skill_success": 121,
+      "with_skill_success": 1881
+    },
+    "selected_rows": {
+      "no_skill_success": 55,
+      "with_skill_success": 583
+    }
+  },
+  "omitted_tool_context_tokens": {
+    "no_skill_success": 328588,
+    "with_skill_success": 334988
+  },
+  "residual_skill_path_hits": 0,
+  "residual_known_skill_chunk_hits": 0,
+  "zero_loss_rows": 0,
+  "overlength_rows": 0,
+  "qwen_control_token_literal_rows": 0,
+  "split_task_overlaps": 0,
+  "authorization_floor": {
+    "minimum_train_row_pairs": 50,
+    "minimum_supervised_tokens_per_condition": 200000,
+    "passed": true
+  }
+}

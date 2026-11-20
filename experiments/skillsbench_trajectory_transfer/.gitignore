@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.parquet
+*.tar.gz
+!src/skillsbench_trajectory_transfer/evaluate.py
